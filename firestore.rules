@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permitir lectura pública de todo el contenido informativo (Ahorros, Créditos, Agencias, etc.)
+    match /sections/{document=**} { allow read: if true; }
+    match /content_items/{document=**} { allow read: if true; }
+    match /content_blocks/{document=**} { allow read: if true; }
+    match /agencias/{document=**} { allow read: if true; }
+    match /navigation_items/{document=**} { allow read: if true; }
+    match /categories/{document=**} { allow read: if true; }
+    match /global_config/{document=**} { allow read: if true; }
+
+    // Permitir lectura y escritura en usuarios y systemCounters para usuarios autenticados (incluyendo anónimos)
+    match /usuarios/{userId=**} {
+      allow read, write: if request.auth != null;
+    }
+    match /systemCounters/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Solo el administrador autenticado puede realizar cambios en otros documentos
+    match /{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+  }
+}

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/admin_tab_pantallas"
+        android:icon="@drawable/pantallas"
+        android:title="Pantallas" />
+    <item
+        android:id="@+id/admin_tab_contenido"
+        android:icon="@drawable/contenido_depantallas"
+        android:title="Contenido" />
+    <item
+        android:id="@+id/admin_tab_publicar"
+        android:icon="@drawable/publicar_cambios"
+        android:title="Publicar" />
+    <item
+        android:id="@+id/admin_tab_instrucciones"
+        android:icon="@drawable/instrucciones"
+        android:title="Instrucciones" />
+</menu>

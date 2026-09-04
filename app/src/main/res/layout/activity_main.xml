@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/background_light">
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/app_bar_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colua_navy"
+            app:elevation="4dp">
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="72dp"
+                app:contentInsetStart="0dp"
+                app:contentInsetStartWithNavigation="0dp"
+                app:contentInsetEnd="0dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingHorizontal="8dp">
+
+                    <!-- 1. ELEMENTO IZQUIERDA: Menú Hamburguesa -->
+                    <ImageView
+                        android:id="@+id/menu_icon"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_hamburger"
+                        app:tint="@color/white"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="Menú"
+                        android:focusable="true" />
+
+                    <!-- 2. ELEMENTO CENTRO: Logo Composite -->
+                    <ImageView
+                        android:id="@+id/img_header_logo"
+                        android:layout_width="180dp"
+                        android:layout_height="42dp"
+                        android:layout_centerInParent="true"
+                        android:src="@drawable/logo_composite"
+                        android:scaleType="fitCenter"
+                        android:adjustViewBounds="true" />
+
+                    <!-- 3. ELEMENTO DERECHA: Nosotros -->
+                    <LinearLayout
+                        android:id="@+id/btn_nosotros"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="8dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackgroundBorderless">
+
+                        <ImageView
+                            android:id="@+id/img_top_action_icon"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/ic_info"
+                            app:tint="@color/white" />
+
+                        <TextView
+                            android:id="@+id/tv_navbar_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Nosotros"
+                            android:textColor="@color/white"
+                            android:textSize="10sp"
+                            android:fontFamily="@font/poppins_regular" />
+                    </LinearLayout>
+
+                </RelativeLayout>
+            </androidx.appcompat.widget.Toolbar>
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/scroll_main_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="120dp">
+
+                <TextView
+                    android:id="@+id/tv_welcome_greeting"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="20dp"
+                    android:text="BIENVENIDO A\nCOLUA MICOOPE"
+                    android:textColor="@color/colua_navy"
+                    android:textSize="22sp"
+                    android:textStyle="bold|italic"
+                    android:fontFamily="@font/poppins_regular"
+                    android:gravity="center" />
+
+                <ProgressBar
+                    android:id="@+id/pb_main_loading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginVertical="24dp"
+                    android:visibility="gone" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_sections"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:nestedScrollingEnabled="false"
+                    app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                    app:spanCount="2"
+                    tools:listitem="@layout/item_service_card" />
+
+                <ImageView
+                    android:id="@+id/img_distintivo"
+                    android:layout_width="120dp"
+                    android:layout_height="80dp"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="40dp"
+                    android:src="@drawable/distintivo_colua"
+                    android:scaleType="centerInside"
+                    android:contentDescription="Distintivo COLUA" />
+
+                <TextView
+                    android:id="@+id/tv_slogan_1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:gravity="center"
+                    android:text="SOMOS EL LADO HUMANO"
+                    android:textColor="@color/colua_navy"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/poppins_regular" />
+
+                <TextView
+                    android:id="@+id/tv_slogan_2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="de los Ahorros y Créditos"
+                    android:textColor="@color/colua_navy"
+                    android:textSize="20sp"
+                    android:textStyle="bold|italic"
+                    android:fontFamily="@font/poppins_regular" />
+
+                <TextView
+                    android:id="@+id/tv_help_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="48dp"
+                    android:gravity="center"
+                    android:text="¿Necesitas ayuda\nadicional?"
+                    android:textColor="@color/colua_navy"
+                    android:textSize="18sp"
+                    android:fontFamily="@font/poppins_regular"
+                    android:textStyle="normal" />
+
+                <TextView
+                    android:id="@+id/tv_help_desc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="Comunícate a nuestro PBX central o búscanos en nuestras redes sociales oficiales."
+                    android:textColor="@color/colua_navy"
+                    android:textSize="13sp"
+                    android:paddingHorizontal="32dp"
+                    android:fontFamily="@font/poppins_regular" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_pbx"
+                    android:layout_width="250dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="24dp"
+                    android:text="PBX: 7795-7795"
+                    android:textAllCaps="false"
+                    android:paddingVertical="14dp"
+                    app:backgroundTint="@color/colua_navy"
+                    app:cornerRadius="8dp"
+                    android:fontFamily="@font/poppins_regular"
+                    android:textSize="16sp" />
+
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottom_navigation"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_gravity="bottom"
+            android:background="@color/colua_navy"
+            app:itemIconTint="@color/nav_item_color"
+            app:itemTextColor="@color/nav_item_color"
+            app:itemIconSize="24dp"
+            app:labelVisibilityMode="labeled"
+            app:itemPaddingTop="6dp"
+            app:itemPaddingBottom="6dp"
+            app:itemActiveIndicatorStyle="@style/App.CustomActiveIndicator"
+            app:menu="@menu/bottom_nav_menu" />
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:fitsSystemWindows="true"
+        android:background="@color/white"
+        android:theme="@style/Theme.LightNavigation"
+        app:headerLayout="@layout/nav_header"
+        app:itemTextColor="@color/black"
+        app:itemIconTint="@color/colua_navy"
+        app:itemBackground="@color/white" />
+
+</androidx.drawerlayout.widget.DrawerLayout>

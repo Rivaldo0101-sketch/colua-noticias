@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@drawable/distintivo_colua"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/distintivo_colua"
+        android:testOnly="false"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.ColuaInformativa">
+        <activity
+            android:name=".ProfileActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SectionEditorActivity"
+            android:exported="false" />
+        <activity
+            android:name=".DynamicSectionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminContentListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminContentEditActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminAgenciaEditActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminBlockEditActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminSectionEditActivity"
+            android:exported="false" />
+        <activity
+            android:name=".InstitutionalIdentityActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ConfigEstructuraActivity"
+            android:exported="false" />
+        <activity
+            android:name=".LoginActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".AgenciasActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true" />
+    </application>
+
+</manifest>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "237659968854",
+    "project_id": "colua-info",
+    "storage_bucket": "colua-info.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237659968854:android:0351e51817611c1af072f7",
+        "android_client_info": {
+          "package_name": "com.example.coluainformativa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDiTHf3__ssIQWpO2X2IzuTCwarYk2iETk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

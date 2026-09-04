@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="6dp"
+    app:strokeWidth="0dp">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="180dp">
+
+            <ImageView
+                android:id="@+id/iv_news_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/logo_composite" />
+
+            <TextView
+                android:id="@+id/tv_news_category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="12dp"
+                android:background="@drawable/circle_background"
+                android:backgroundTint="#80000000"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="4dp"
+                android:text="Institucional"
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                android:fontFamily="@font/poppins_regular" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tv_news_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="@color/text_grey"
+                android:textSize="12sp"
+                android:fontFamily="@font/poppins_regular" />
+
+            <TextView
+                android:id="@+id/tv_news_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text=""
+                android:textColor="@color/colua_navy"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/poppins_regular" />
+
+            <TextView
+                android:id="@+id/tv_news_snippet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:ellipsize="end"
+                android:maxLines="3"
+                android:text=""
+                android:textColor="@color/black"
+                android:textSize="13sp"
+                android:fontFamily="@font/poppins_regular" />
+
+            <TextView
+                android:id="@+id/btn_read_more"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Leer artículo >"
+                android:textColor="@color/colua_navy"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/poppins_regular"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btn_edit_content_item"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="top|end"
+            android:layout_margin="12dp"
+            android:src="@android:drawable/ic_menu_edit"
+            android:background="@drawable/circle_background"
+            android:backgroundTint="@color/colua_orange"
+            app:tint="@color/white"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+    <View
+        android:id="@+id/side_border_news"
+        android:layout_width="4dp"
+        android:layout_height="match_parent"
+        android:background="@color/colua_navy" />
+
+</com.google.android.material.card.MaterialCardView>

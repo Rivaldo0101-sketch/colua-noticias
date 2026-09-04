@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_agencias"
+        android:icon="@android:drawable/ic_menu_mylocation"
+        android:title="Agencias" />
+    <item
+        android:id="@+id/nav_servicios_digitales"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="Servicios Digitales" />
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@drawable/ic_home"
+        android:title="Inicio" />
+    <item
+        android:id="@+id/nav_beneficios"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:title="Beneficios" />
+    <item
+        android:id="@+id/nav_noticias"
+        android:icon="@drawable/noticias_colua"
+        android:title="Noticias" />
+</menu>
