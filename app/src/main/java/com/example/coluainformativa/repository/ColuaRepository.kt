@@ -385,25 +385,9 @@ class ColuaRepository(private val context: Context) {
     }
 
     private fun getNextGuestId(callback: (String) -> Unit, onError: (Exception) -> Unit = {}) {
-        val counterRef = firestore.collection("systemCounters").document("invitados")
-        firestore.runTransaction { transaction ->
-            val snapshot = transaction.get(counterRef)
-            var lastNum = 10000000L
-            if (snapshot.exists()) {
-                lastNum = snapshot.getLong("lastAssignedGuestNumber") ?: 10000000L
-            } else {
-                lastNum = 10000000L
-            }
-            val newNum = lastNum - 1L
-            transaction.set(counterRef, hashMapOf("lastAssignedGuestNumber" to newNum), SetOptions.merge())
-            String.format(Locale.getDefault(), "user%07d", newNum)
-        }.addOnSuccessListener { guestId ->
-            Log.i("FIRESTORE_COUNTER", "Generated descending guest userId: $guestId")
-            callback(guestId)
-        }.addOnFailureListener { e ->
-            Log.e("FIRESTORE_COUNTER", "Error getting guest id: ${e.message}", e)
-            callback("user9999999")
-        }
+        // Usar UUID para invitados según las reglas de identidad: guest_{uuid}
+        val guestId = "guest_${UUID.randomUUID().toString().substring(0, 8)}"
+        callback(guestId)
     }
 
     fun ensureFirebaseAuth(onAuthReady: () -> Unit) {
@@ -554,7 +538,7 @@ class ColuaRepository(private val context: Context) {
                     val telefonoCompleto = "+502$cleanPhone"
 
                     if (!isCloudEnabled()) {
-                        val fallbackId = "0000000"
+                        val fallbackId = "user0000000"
                         saveLocalUser(fallbackId, formattedDpi, nombre, cleanPhone, "MEMBER")
                         callback(true, fallbackId, null)
                         return@getInstallationId
@@ -574,14 +558,14 @@ class ColuaRepository(private val context: Context) {
                         }
                         .addOnFailureListener { e ->
                             Log.w("FIRESTORE_REG", "Fallo consulta DPI en nube (creando local): ${e.message}")
-                            val fallbackId = "0000000"
+                            val fallbackId = "user0000000"
                             saveLocalUser(fallbackId, formattedDpi, nombre, cleanPhone, "MEMBER")
                             callback(true, fallbackId, null)
                         }
                 }
             } catch (e: Exception) {
                 Log.w("FIRESTORE_REG", "Excepción en registro: ${e.message}")
-                val fallbackId = if (esInvitado) "guest_local" else "0000000"
+                val fallbackId = if (esInvitado) "guest_local" else "user0000000"
                 saveLocalUser(fallbackId, rawDpi, nombre, telefono, if (esInvitado) "GUEST" else "MEMBER")
                 callback(true, fallbackId, null)
             }
@@ -639,7 +623,7 @@ class ColuaRepository(private val context: Context) {
             val newNum = lastNum + 1L
             transaction.set(counterRef, hashMapOf("lastAssignedNumber" to newNum), SetOptions.merge())
             
-            val formattedId = String.format(Locale.getDefault(), "%07d", newNum)
+            val formattedId = String.format(Locale.getDefault(), "user%07d", newNum)
             Pair(newNum, formattedId)
         }.addOnSuccessListener { pair ->
             val idNumerico = pair.first
