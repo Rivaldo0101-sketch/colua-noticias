@@ -2,6 +2,7 @@ package com.example.coluainformativa;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,6 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -174,6 +176,17 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
+    private int calculateSpanCount() {
+        int screenWidthDp = getResources().getConfiguration().screenWidthDp;
+        if (screenWidthDp >= 840) {
+            return 4; // Escritorio / Tablets grandes (Expanded)
+        } else if (screenWidthDp >= 600) {
+            return 3; // Tablets / Foldables (Medium)
+        } else {
+            return 2; // Teléfonos (Compact)
+        }
+    }
+
     private void setupRecyclerView() {
         adapter = new HomeItemAdapter(gridItemList, item -> {
             if (item.targetSectionId != null && !item.targetSectionId.isEmpty()) {
@@ -185,8 +198,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         adapter.setEditMode(isVisualEditMode);
-        rvSections.setLayoutManager(new GridLayoutManager(this, 2));
+        int spanCount = calculateSpanCount();
+        rvSections.setLayoutManager(new GridLayoutManager(this, spanCount));
         rvSections.setAdapter(adapter);
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (rvSections != null && rvSections.getLayoutManager() instanceof GridLayoutManager) {
+            int spanCount = calculateSpanCount();
+            ((GridLayoutManager) rvSections.getLayoutManager()).setSpanCount(spanCount);
+        }
     }
 
     private void refreshContent() {

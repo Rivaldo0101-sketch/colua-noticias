@@ -103,8 +103,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingBottom="120dp"
-                android:padding="20dp">
+                android:paddingHorizontal="@dimen/content_padding_horizontal"
+                android:paddingTop="20dp"
+                android:paddingBottom="120dp">
 
                 <TextView
                     android:id="@+id/tv_dynamic_title"
