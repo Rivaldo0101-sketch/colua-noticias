@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.coluainformativa.repository.ColuaRepository;
@@ -23,6 +24,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import kotlin.Unit;
+
+import kotlin.Unit;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -233,8 +237,8 @@ public class ProfileActivity extends AppCompatActivity {
         if (phone.isEmpty()) {
             tilPhone.setError("Ingresa tu número de teléfono");
             isValid = false;
-        } else if (!phone.matches("\\d{8,15}")) {
-            tilPhone.setError("Ingresa un número de teléfono válido (mínimo 8 dígitos)");
+        } else if (!phone.matches("\\d{8}")) {
+            tilPhone.setError("El teléfono de Guatemala debe tener exactamente 8 dígitos");
             isValid = false;
         }
 
@@ -249,11 +253,12 @@ public class ProfileActivity extends AppCompatActivity {
         String newPhone = etPhone.getText().toString().trim();
         long now = System.currentTimeMillis();
 
-        layoutSavingProgress.setVisibility(View.VISIBLE);
+        // Deshabilitar botones y mostrar la pantalla de carga
         btnSaveProfile.setEnabled(false);
         btnCancelProfileEdit.setEnabled(false);
+        layoutSavingProgress.setVisibility(View.VISIBLE);
 
-        // 1. Guardar Localmente
+        // Actualizar SharedPreferences
         SharedPreferences pref = getSharedPreferences("UserPrefs", MODE_PRIVATE);
         pref.edit()
                 .putString("user_name", newName)
@@ -262,21 +267,32 @@ public class ProfileActivity extends AppCompatActivity {
                 .putLong("last_profile_update", now)
                 .apply();
 
-        // 2. Sincronizar en Segundo Plano con Firestore
-        repository.registrarUsuarioReal(newName, newPhone, newDpi, "GUEST".equals(currentRole));
+        // Directamente actualizar el perfil del usuario activo en Firestore
+        repository.actualizarPerfil(newName, newPhone, newDpi, (success, errorMsg) -> {
+            runOnUiThread(() -> {
+                // Ocultar carga y habilitar botones en ambos casos (éxito o error)
+                layoutSavingProgress.setVisibility(View.GONE);
+                btnSaveProfile.setEnabled(true);
+                btnCancelProfileEdit.setEnabled(true);
 
-        // 3. Actualizar UI Local Inmediatamente
-        currentName = newName;
-        currentDpi = newDpi;
-        currentPhone = newPhone;
-
-        loadProfileData();
-
-        layoutSavingProgress.setVisibility(View.GONE);
-        btnSaveProfile.setEnabled(true);
-        btnCancelProfileEdit.setEnabled(true);
-
-        cancelEditMode();
-        Toast.makeText(this, "Datos actualizados correctamente", Toast.LENGTH_SHORT).show();
+                if (success) {
+                    currentName = newName;
+                    currentDpi = newDpi;
+                    currentPhone = newPhone;
+                    loadProfileData();
+                    cancelEditMode();
+                    Toast.makeText(ProfileActivity.this, "Datos actualizados", Toast.LENGTH_SHORT).show();
+                } else {
+                    String msg = errorMsg != null ? errorMsg : "Error desconocido";
+                    new AlertDialog.Builder(ProfileActivity.this)
+                            .setTitle("Error al Guardar Perfil")
+                            .setMessage("No se pudieron guardar los cambios en la nube:\n\n" + msg + "\n\nPor favor verifique su conexión e intente de nuevo.")
+                            .setPositiveButton("Reintentar", (dialog, which) -> saveProfileChanges())
+                            .setNegativeButton("Cancelar", null)
+                            .show();
+                }
+            });
+            return Unit.INSTANCE;
+        });
     }
 }

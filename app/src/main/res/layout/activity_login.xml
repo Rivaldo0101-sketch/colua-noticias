@@ -43,7 +43,7 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="DPI (ID Único)"
+        android:hint="DPI (13 dígitos)"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:layout_marginBottom="16dp">
         <com.google.android.material.textfield.TextInputEditText
@@ -51,7 +51,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="number"
-            android:maxLength="13"
+            android:maxLength="15"
             android:singleLine="true"
             android:imeOptions="actionNext" />
     </com.google.android.material.textfield.TextInputLayout>
@@ -59,7 +59,8 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Teléfono (Opcional)"
+        android:hint="Teléfono (8 dígitos)"
+        app:prefixText="+502 "
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:layout_marginBottom="24dp">
         <com.google.android.material.textfield.TextInputEditText
@@ -67,6 +68,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="phone"
+            android:maxLength="8"
             android:singleLine="true"
             android:imeOptions="actionDone" />
     </com.google.android.material.textfield.TextInputLayout>

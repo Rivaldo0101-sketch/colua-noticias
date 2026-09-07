@@ -1,6 +1,10 @@
 package com.example.coluainformativa.repository
 
 import android.content.Context
+import android.app.Activity
+import android.app.AlertDialog
+import android.content.Intent
+import com.example.coluainformativa.LoginActivity
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -68,18 +72,28 @@ class ColuaRepository(private val context: Context) {
     }
 
     fun getInstallationId(callback: (String) -> Unit) {
-        FirebaseInstallations.getInstance().id.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                callback(task.result ?: UUID.randomUUID().toString())
-            } else {
-                callback(UUID.randomUUID().toString())
-            }
+        val pref = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+        var installId = pref.getString("installation_uuid", null)
+        if (installId.isNullOrEmpty()) {
+            installId = UUID.randomUUID().toString()
+            pref.edit().putString("installation_uuid", installId).apply()
         }
+        callback(installId)
+    }
+
+    fun getGuestId(callback: (String) -> Unit) {
+        val pref = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+        var guestId = pref.getString("guest_user_id", null)
+        if (guestId.isNullOrEmpty()) {
+            guestId = "guest_${UUID.randomUUID().toString().substring(0, 8)}"
+            pref.edit().putString("guest_user_id", guestId).apply()
+        }
+        callback(guestId)
     }
 
     private fun <T> await(task: com.google.android.gms.tasks.Task<T>): T? {
         if (Looper.myLooper() == Looper.getMainLooper()) return null
-        return try { Tasks.await(task, 15, TimeUnit.SECONDS) } catch (e: Exception) { null }
+        return try { Tasks.await(task, 2, TimeUnit.SECONDS) } catch (e: Exception) { null }
     }
 
     private fun isCloudEnabled(): Boolean = authManager.isCloudSyncEnabled
@@ -286,8 +300,35 @@ class ColuaRepository(private val context: Context) {
             .orderBy("displayOrder").get()
         
         val cloud = await(task)?.toObjects(NavigationItemEntity::class.java)
-        // SI LA NUBE ESTÁ VACÍA, USAMOS LOCAL. SIEMPRE.
         return if (cloud != null && cloud.isNotEmpty()) cloud else local
+    }
+
+    fun getRobustSidebarItems(): List<NavigationItemEntity> {
+        val items = getVisibleNavigation("SIDE_MENU").toMutableList()
+        if (items.isEmpty()) {
+            items.addAll(getVisibleNavigation("SIDEBAR"))
+        }
+
+        if (items.size >= 6) return items
+
+        val completeList = listOf(
+            NavigationItemEntity("side_profile", "Mi Perfil", "ic_person", "activity_profile", "SIDE_MENU", 1),
+            NavigationItemEntity("side_creditos", "Créditos", "credito", "sec_creditos", "SIDE_MENU", 2),
+            NavigationItemEntity("side_seguros", "Seguros", "seguro", "sec_seguros", "SIDE_MENU", 3),
+            NavigationItemEntity("side_remesas", "Remesas", "remesa", "sec_remesas", "SIDE_MENU", 4),
+            NavigationItemEntity("side_ahorros", "Ahorros", "ahorros", "sec_ahorros", "SIDE_MENU", 5),
+            NavigationItemEntity("side_sostenibilidad", "Sostenibilidad Cooperativa", "sostenibilidad_cooperativa", "sec_sostenibilidad", "SIDE_MENU", 6),
+            NavigationItemEntity("side_admin", "Portal administrativo", "portal_administrativo", "dialog_admin", "SIDE_MENU", 7),
+            NavigationItemEntity("side_logout", "Cerrar", "cerrar", "action_logout", "SIDE_MENU", 8)
+        )
+
+        val existingIds = items.map { it.id }.toSet()
+        for (item in completeList) {
+            if (!existingIds.contains(item.id)) {
+                items.add(item)
+            }
+        }
+        return items
     }
 
     fun insertNavigationItem(item: NavigationItemEntity) {
@@ -301,21 +342,41 @@ class ColuaRepository(private val context: Context) {
         return dpi.replace(Regex("[^0-9a-zA-Z]"), "").lowercase(Locale.getDefault())
     }
 
+    fun formatDpi(raw: String): String {
+        val digits = raw.replace(Regex("\\D"), "")
+        if (digits.length != 13) return raw
+        return "${digits.substring(0, 4)} ${digits.substring(4, 9)} ${digits.substring(9, 13)}"
+    }
+
+    fun validateDpi(raw: String): Boolean {
+        val digits = normalizeDpi(raw)
+        return digits.length == 13
+    }
+
+    fun validatePhone(raw: String): Boolean {
+        val digits = raw.replace(Regex("\\D"), "")
+        return digits.length == 8
+    }
+
+    fun formatPhone(raw: String): String {
+        return raw.replace(Regex("\\D"), "")
+    }
+
     private fun getNextUserId(callback: (String) -> Unit, onError: (Exception) -> Unit = {}) {
-        val counterRef = firestore.collection("systemCounters").document("users")
+        val counterRef = firestore.collection("systemCounters").document("usuarios")
         firestore.runTransaction { transaction ->
             val snapshot = transaction.get(counterRef)
-            var nextSeq = 0L
+            var lastNum = -1L
             if (snapshot.exists()) {
-                nextSeq = snapshot.getLong("nextSeq") ?: 0L
+                lastNum = snapshot.getLong("lastAssignedNumber") ?: -1L
             } else {
-                nextSeq = 0L
+                lastNum = -1L
             }
-            val newSeq = nextSeq + 1L
-            transaction.set(counterRef, hashMapOf("nextSeq" to newSeq), SetOptions.merge())
-            String.format(Locale.getDefault(), "user%08d", nextSeq)
+            val newNum = lastNum + 1L
+            transaction.set(counterRef, hashMapOf("lastAssignedNumber" to newNum), SetOptions.merge())
+            String.format(Locale.getDefault(), "user%07d", newNum)
         }.addOnSuccessListener { userId ->
-            Log.i("FIRESTORE_COUNTER", "Generated next userId: $userId")
+            Log.i("FIRESTORE_COUNTER", "Generated ascending associate userId: $userId")
             callback(userId)
         }.addOnFailureListener { e ->
             Log.e("FIRESTORE_COUNTER", "Error getting next user id: ${e.message}", e)
@@ -323,110 +384,337 @@ class ColuaRepository(private val context: Context) {
         }
     }
 
-    @JvmOverloads
-    fun registrarUsuarioReal(nombre: String, telefono: String, rawDpi: String, esInvitado: Boolean, callback: (Boolean, String, String?) -> Unit = { _, _, _ -> }) {
+    private fun getNextGuestId(callback: (String) -> Unit, onError: (Exception) -> Unit = {}) {
+        val counterRef = firestore.collection("systemCounters").document("invitados")
+        firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(counterRef)
+            var lastNum = 10000000L
+            if (snapshot.exists()) {
+                lastNum = snapshot.getLong("lastAssignedGuestNumber") ?: 10000000L
+            } else {
+                lastNum = 10000000L
+            }
+            val newNum = lastNum - 1L
+            transaction.set(counterRef, hashMapOf("lastAssignedGuestNumber" to newNum), SetOptions.merge())
+            String.format(Locale.getDefault(), "user%07d", newNum)
+        }.addOnSuccessListener { guestId ->
+            Log.i("FIRESTORE_COUNTER", "Generated descending guest userId: $guestId")
+            callback(guestId)
+        }.addOnFailureListener { e ->
+            Log.e("FIRESTORE_COUNTER", "Error getting guest id: ${e.message}", e)
+            callback("user9999999")
+        }
+    }
+
+    fun ensureFirebaseAuth(onAuthReady: () -> Unit) {
         val auth = FirebaseAuth.getInstance()
         if (auth.currentUser == null) {
-            auth.signInAnonymously().addOnCompleteListener { _ ->
-                proceedWithRegistration(nombre, telefono, rawDpi, esInvitado, callback)
-            }
+            auth.signInAnonymously()
+                .addOnSuccessListener {
+                    Log.i("FIREBASE_AUTH", "Autenticación anónima exitosa")
+                    onAuthReady()
+                }
+                .addOnFailureListener { e ->
+                    Log.e("FIREBASE_AUTH", "Error en autenticación anónima: ${e.message}")
+                    onAuthReady()
+                }
         } else {
+            onAuthReady()
+        }
+    }
+
+    @JvmOverloads
+    fun registrarUsuarioReal(nombre: String, telefono: String, rawDpi: String, esInvitado: Boolean, callback: (Boolean, String, String?) -> Unit = { _, _, _ -> }) {
+        ensureFirebaseAuth {
             proceedWithRegistration(nombre, telefono, rawDpi, esInvitado, callback)
+        }
+    }
+
+    private fun upsertDeviceSubcollection(userId: String, tipoUsuario: String, installId: String) {
+        val deviceData = linkedMapOf<String, Any>(
+            "installationId" to installId,
+            "userId" to userId,
+            "tipoUsuario" to tipoUsuario,
+            "modeloTelefono" to Build.MODEL,
+            "plataforma" to "ANDROID",
+            "versionApp" to "1.0.0",
+            "fechaRegistro" to FieldValue.serverTimestamp(),
+            "ultimaActividad" to FieldValue.serverTimestamp(),
+            "estado" to "ACTIVO"
+        )
+        firestore.collection("usuarios").document(userId)
+            .collection("dispositivos").document(installId)
+            .set(deviceData, SetOptions.merge())
+            .addOnSuccessListener {
+                Log.i("DEVICE_REG", "Dispositivo $installId registrado correctamente bajo usuarios/$userId/dispositivos")
+            }
+    }
+
+    @JvmOverloads
+    fun actualizarPerfil(nombre: String, telefono: String, rawDpi: String, callback: (Boolean, String?) -> Unit = { _, _ -> }) {
+        val pref = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+        val userId = pref.getString("user_id", "") ?: ""
+        val role = pref.getString("user_role", "MEMBER") ?: "MEMBER"
+
+        if (!validateDpi(rawDpi) || !validatePhone(telefono) || nombre.length < 3) {
+            callback(false, "Datos inválidos (Nombre >= 3, DPI = 13 dígitos, Teléfono = 8 dígitos).")
+            return
+        }
+
+        if ("GUEST".equals(role, ignoreCase = true) || userId.startsWith("guest_")) {
+            Log.i("PROFILE", "Convirtiendo cuenta de invitado ($userId) a Asociado mediante actualización de perfil...")
+            registrarUsuarioReal(nombre, telefono, rawDpi, false) { success, newId, errorMsg ->
+                callback(success, errorMsg)
+            }
+            return
+        }
+
+        val targetUserId = if (userId.isNotEmpty()) userId else "user0000000"
+        val formattedDpi = formatDpi(rawDpi)
+        val normalizedDpi = normalizeDpi(rawDpi)
+        val cleanPhone = formatPhone(telefono)
+        val telefonoCompleto = "+502$cleanPhone"
+
+        saveLocalUser(targetUserId, formattedDpi, nombre, cleanPhone, pref.getString("user_role", "MEMBER") ?: "MEMBER")
+
+        if (!isCloudEnabled()) {
+            callback(true, null)
+            return
+        }
+
+        ensureFirebaseAuth {
+            val updateData = linkedMapOf<String, Any>(
+                "userId" to targetUserId,
+                "tipoUsuario" to "ASOCIADO",
+                "nombre" to nombre,
+                "dpi" to formattedDpi,
+                "dpiNormalizado" to normalizedDpi,
+                "telefono" to cleanPhone,
+                "telefonoCompleto" to telefonoCompleto,
+                "ultimaActividad" to FieldValue.serverTimestamp(),
+                "schemaVersion" to 2
+            )
+
+            firestore.collection("usuarios").document(targetUserId)
+                .set(updateData, SetOptions.merge())
+                .addOnSuccessListener {
+                    Log.i("PROFILE_UPDATE", "PROFILE_UPDATE_SUCCESS")
+                    getInstallationId { installId ->
+                        upsertDeviceSubcollection(targetUserId, "ASOCIADO", installId)
+                    }
+                    callback(true, null)
+                }
+                .addOnFailureListener { e ->
+                    Log.e("PROFILE_UPDATE", "PROFILE_UPDATE_FAILURE: ${e.message}", e)
+                    callback(true, null)
+                }
         }
     }
 
     private fun proceedWithRegistration(nombre: String, telefono: String, rawDpi: String, esInvitado: Boolean, callback: (Boolean, String, String?) -> Unit) {
         getInstallationId { installId ->
-            val normalizedDpi = if (esInvitado || rawDpi.isEmpty()) "guest_${installId}" else normalizeDpi(rawDpi)
-            Log.i("FIRESTORE_REG", "Iniciando registro. Nombre: $nombre, DPI: $rawDpi, InstallId: $installId")
+            Log.i("FIRESTORE_REG", "Iniciando registro instantáneo. EsInvitado: $esInvitado, InstallId: $installId")
 
             try {
-                purgarUsuariosDuplicados()
+                if (esInvitado) {
+                    getNextGuestId({ guestId ->
+                        saveLocalUser(guestId, "", "Invitado", "", "GUEST")
+                        callback(true, guestId, null)
 
-                val query = if (!esInvitado && !rawDpi.isEmpty()) {
-                    firestore.collection("usuarios").whereEqualTo("dpiNormalizado", normalizedDpi).get()
-                } else {
-                    null
-                }
-
-                if (query != null) {
-                    query.addOnSuccessListener { querySnapshot ->
-                        if (querySnapshot != null && !querySnapshot.isEmpty) {
-                            val existingDoc = querySnapshot.documents[0]
-                            val existingUserId = existingDoc.getString("userId") ?: existingDoc.id
-                            Log.i("FIRESTORE_REG", "Usuario existente encontrado por DPI. Reutilizando userId: $existingUserId")
-                            updateExistingUser(existingUserId, nombre, telefono, rawDpi, normalizedDpi, installId, callback)
-                        } else {
-                            checkOrCreatePrimaryUser(nombre, telefono, rawDpi, normalizedDpi, esInvitado, installId, callback)
+                        if (isCloudEnabled()) {
+                            ensureFirebaseAuth {
+                                val profileData = linkedMapOf<String, Any>(
+                                    "userId" to guestId,
+                                    "tipoUsuario" to "INVITADO",
+                                    "installationId" to installId,
+                                    "fechaRegistro" to FieldValue.serverTimestamp(),
+                                    "ultimaActividad" to FieldValue.serverTimestamp(),
+                                    "schemaVersion" to 2
+                                )
+                                firestore.collection("usuarios").document(guestId).set(profileData, SetOptions.merge())
+                                    .addOnSuccessListener {
+                                        upsertDeviceSubcollection(guestId, "INVITADO", installId)
+                                    }
+                            }
                         }
-                    }.addOnFailureListener {
-                        checkOrCreatePrimaryUser(nombre, telefono, rawDpi, normalizedDpi, esInvitado, installId, callback)
-                    }
+                    }, { e ->
+                        val fallbackGuest = "user9999999"
+                        saveLocalUser(fallbackGuest, "", "Invitado", "", "GUEST")
+                        callback(true, fallbackGuest, null)
+                    })
                 } else {
-                    checkOrCreatePrimaryUser(nombre, telefono, rawDpi, normalizedDpi, esInvitado, installId, callback)
+                    if (!validateDpi(rawDpi) || !validatePhone(telefono) || nombre.length < 3) {
+                        callback(false, "", "Datos de asociado inválidos (Nombre >= 3, DPI = 13 dígitos, Teléfono = 8 dígitos).")
+                        return@getInstallationId
+                    }
+
+                    val normalizedDpi = normalizeDpi(rawDpi)
+                    val formattedDpi = formatDpi(rawDpi)
+                    val cleanPhone = formatPhone(telefono)
+                    val telefonoCompleto = "+502$cleanPhone"
+
+                    if (!isCloudEnabled()) {
+                        val fallbackId = "0000000"
+                        saveLocalUser(fallbackId, formattedDpi, nombre, cleanPhone, "MEMBER")
+                        callback(true, fallbackId, null)
+                        return@getInstallationId
+                    }
+
+                    firestore.collection("usuarios")
+                        .whereEqualTo("dpiNormalizado", normalizedDpi)
+                        .get()
+                        .addOnSuccessListener { querySnapshot ->
+                            if (querySnapshot != null && !querySnapshot.isEmpty) {
+                                val existingDoc = querySnapshot.documents[0]
+                                val existingUserId = existingDoc.getString("userId") ?: existingDoc.id
+                                updateExistingUser(existingUserId, nombre, telefono, rawDpi, normalizedDpi, installId, callback)
+                            } else {
+                                allocateNewUserAndSave("ASOCIADO", nombre, formatDpi(rawDpi), normalizedDpi, formatPhone(telefono), "+502" + formatPhone(telefono), installId, callback)
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            Log.w("FIRESTORE_REG", "Fallo consulta DPI en nube (creando local): ${e.message}")
+                            val fallbackId = "0000000"
+                            saveLocalUser(fallbackId, formattedDpi, nombre, cleanPhone, "MEMBER")
+                            callback(true, fallbackId, null)
+                        }
                 }
             } catch (e: Exception) {
-                createNewUser(nombre, telefono, rawDpi, normalizedDpi, esInvitado, installId, callback)
+                Log.w("FIRESTORE_REG", "Excepción en registro: ${e.message}")
+                val fallbackId = if (esInvitado) "guest_local" else "0000000"
+                saveLocalUser(fallbackId, rawDpi, nombre, telefono, if (esInvitado) "GUEST" else "MEMBER")
+                callback(true, fallbackId, null)
             }
         }
     }
 
     private fun updateExistingUser(userId: String, nombre: String, telefono: String, rawDpi: String, normalizedDpi: String, installId: String, callback: (Boolean, String, String?) -> Unit) {
-        firestore.collection("usuarios").document(userId).get().addOnSuccessListener { doc ->
-            val existingDpi = doc.getString("dpi") ?: ""
-            val finalDpi = if (rawDpi.isNotEmpty() && !rawDpi.startsWith("user") && !rawDpi.equals(userId)) rawDpi else existingDpi
-            val finalNormalizedDpi = if (finalDpi.isNotEmpty()) normalizeDpi(finalDpi) else (doc.getString("dpiNormalizado") ?: normalizedDpi)
+        val formattedDpi = formatDpi(rawDpi)
+        val cleanPhone = formatPhone(telefono)
+        val telefonoCompleto = "+502$cleanPhone"
 
-            val updateData = linkedMapOf<String, Any>(
-                "userId" to userId,
-                "nombre" to nombre,
-                "telefono" to telefono,
-                "dpi" to finalDpi,
-                "dpiNormalizado" to finalNormalizedDpi,
-                "ultimaActividad" to FieldValue.serverTimestamp()
-            )
-            firestore.collection("usuarios").document(userId).set(updateData, SetOptions.merge())
+        val updateData = linkedMapOf<String, Any>(
+            "userId" to userId,
+            "tipoUsuario" to "ASOCIADO",
+            "dpi" to formattedDpi,
+            "dpiNormalizado" to normalizedDpi,
+            "nombre" to nombre,
+            "telefono" to cleanPhone,
+            "telefonoCompleto" to telefonoCompleto,
+            "ultimaActividad" to FieldValue.serverTimestamp(),
+            "estadoCuenta" to "ACTIVA",
+            "schemaVersion" to 2
+        )
+        updateDeviceAndSession(userId, cleanPhone, formattedDpi, nombre, "MEMBER", installId)
 
-            val deviceData = hashMapOf<String, Any>(
+        firestore.collection("usuarios").document(userId)
+            .set(updateData, SetOptions.merge())
+            .addOnSuccessListener {
+                Log.i("FIRESTORE_REG", "Usuario existente actualizado (fechaRegistro conservada): $userId")
+                callback(true, userId, null)
+            }
+            .addOnFailureListener { e ->
+                Log.e("FIRESTORE_REG", "Error actualizando usuario existente: ${e.message}")
+                callback(true, userId, null)
+            }
+    }
+
+    private fun allocateNewUserAndSave(
+        tipoUsuario: String,
+        nombre: String?,
+        dpi: String?,
+        dpiNormalizado: String?,
+        telefono: String?,
+        telefonoCompleto: String?,
+        installId: String,
+        callback: (Boolean, String, String?) -> Unit
+    ) {
+        val counterRef = firestore.collection("systemCounters").document("usuarios")
+        firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(counterRef)
+            var lastNum = -1L
+            if (snapshot.exists()) {
+                lastNum = snapshot.getLong("lastAssignedNumber") ?: -1L
+            }
+            val newNum = lastNum + 1L
+            transaction.set(counterRef, hashMapOf("lastAssignedNumber" to newNum), SetOptions.merge())
+            
+            val formattedId = String.format(Locale.getDefault(), "%07d", newNum)
+            Pair(newNum, formattedId)
+        }.addOnSuccessListener { pair ->
+            val idNumerico = pair.first
+            val formattedId = pair.second
+
+            val userData = linkedMapOf<String, Any>(
+                "idNumerico" to idNumerico,
+                "tipoUsuario" to tipoUsuario,
+                "estado" to "ACTIVO",
                 "installationId" to installId,
-                "modeloDispositivo" to Build.MODEL,
-                "fabricante" to Build.MANUFACTURER,
-                "ultimaActividad" to FieldValue.serverTimestamp(),
-                "activo" to true
-            )
-            firestore.collection("usuarios").document(userId)
-                .collection("dispositivos").document(installId)
-                .set(deviceData, SetOptions.merge())
-
-            saveLocalUser(userId, finalDpi, nombre, telefono, "MEMBER")
-            callback(true, userId, null)
-        }.addOnFailureListener {
-            val updateData = linkedMapOf<String, Any>(
-                "userId" to userId,
-                "nombre" to nombre,
-                "telefono" to telefono,
-                "dpi" to rawDpi,
-                "dpiNormalizado" to normalizedDpi,
+                "fechaRegistro" to FieldValue.serverTimestamp(),
                 "ultimaActividad" to FieldValue.serverTimestamp()
             )
-            firestore.collection("usuarios").document(userId).set(updateData, SetOptions.merge())
-            saveLocalUser(userId, rawDpi, nombre, telefono, "MEMBER")
-            callback(true, userId, null)
+            if (nombre != null) userData["nombre"] = nombre
+            if (dpi != null) userData["dpi"] = dpi
+            if (dpiNormalizado != null) userData["dpiNormalizado"] = dpiNormalizado
+            if (telefono != null) userData["telefono"] = telefono
+            if (telefonoCompleto != null) userData["telefonoCompleto"] = telefonoCompleto
+
+            updateDeviceAndSession(formattedId, telefono ?: "", dpi ?: "", nombre ?: "Invitado", if ("ASOCIADO".equals(tipoUsuario)) "MEMBER" else "GUEST", installId)
+
+            firestore.collection("usuarios").document(formattedId)
+                .set(userData, SetOptions.merge())
+                .addOnSuccessListener {
+                    Log.i("REG", "Nuevo usuario creado con ID formateado: $formattedId para installId: $installId")
+                    val deviceData = hashMapOf<String, Any>(
+                        "installationId" to installId,
+                        "modeloDispositivo" to Build.MODEL,
+                        "fabricante" to Build.MANUFACTURER,
+                        "tipoUsuarioSesion" to tipoUsuario,
+                        "primeraActividad" to FieldValue.serverTimestamp(),
+                        "ultimaActividad" to FieldValue.serverTimestamp(),
+                        "activo" to true
+                    )
+                    firestore.collection("usuarios").document(formattedId)
+                        .collection("dispositivos").document(installId)
+                        .set(deviceData, SetOptions.merge())
+
+                    callback(true, formattedId, null)
+                }
+                .addOnFailureListener { e ->
+                    Log.e("REG", "Error guardando usuario: ${e.message}")
+                    callback(false, "", e.message)
+                }
+        }.addOnFailureListener { e ->
+            Log.e("REG", "Error en transacción de contador atómico: ${e.message}")
+            callback(false, "", e.message)
         }
     }
 
-    private fun checkOrCreatePrimaryUser(nombre: String, telefono: String, rawDpi: String, normalizedDpi: String, esInvitado: Boolean, installId: String, callback: (Boolean, String, String?) -> Unit) {
-        firestore.collection("usuarios").orderBy("fechaRegistro").limit(1).get().addOnSuccessListener { querySnapshot ->
-            if (querySnapshot != null && !querySnapshot.isEmpty) {
-                val existingDoc = querySnapshot.documents[0]
-                val existingUserId = existingDoc.getString("userId") ?: existingDoc.id
-                updateExistingUser(existingUserId, nombre, telefono, rawDpi, normalizedDpi, installId, callback)
-            } else {
-                createNewUser(nombre, telefono, rawDpi, normalizedDpi, esInvitado, installId, callback)
-            }
-        }.addOnFailureListener {
-            createNewUser(nombre, telefono, rawDpi, normalizedDpi, esInvitado, installId, callback)
-        }
+    private fun updateDeviceAndSession(userId: String, phone: String, dpi: String, name: String, role: String, installId: String) {
+        val pref = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+        pref.edit()
+            .putString("user_id", userId)
+            .putString("user_dpi", dpi)
+            .putString("user_name", name)
+            .putString("user_phone", phone)
+            .putString("user_role", role)
+            .apply()
+
+        Thread {
+            val localUser = UserEntity(userId, dpi, name, phone, role)
+            localDb.userDao().insert(localUser)
+        }.start()
+
+        val deviceData = hashMapOf<String, Any>(
+            "installationId" to installId,
+            "modeloDispositivo" to Build.MODEL,
+            "fabricante" to Build.MANUFACTURER,
+            "ultimaActividad" to FieldValue.serverTimestamp(),
+            "activo" to true
+        )
+        firestore.collection("usuarios").document(userId)
+            .collection("dispositivos").document(installId)
+            .set(deviceData, SetOptions.merge())
     }
 
     fun purgarUsuariosDuplicados() {
@@ -452,49 +740,6 @@ class ColuaRepository(private val context: Context) {
         }
     }
 
-    private fun createNewUser(nombre: String, telefono: String, rawDpi: String, normalizedDpi: String, esInvitado: Boolean, installId: String, callback: (Boolean, String, String?) -> Unit) {
-        getNextUserId({ userId ->
-            val userData = linkedMapOf<String, Any>(
-                "userId" to userId,
-                "nombre" to nombre,
-                "telefono" to telefono,
-                "dpi" to rawDpi,
-                "dpiNormalizado" to normalizedDpi,
-                "tipoUsuario" to (if (esInvitado) "INVITADO" else "ASOCIADO"),
-                "estado" to "ACTIVO",
-                "fechaRegistro" to FieldValue.serverTimestamp(),
-                "ultimaActividad" to FieldValue.serverTimestamp()
-            )
-
-            saveLocalUser(userId, rawDpi, nombre, telefono, if (esInvitado) "GUEST" else "MEMBER")
-
-            try {
-                firestore.collection("usuarios").document(userId).set(userData, SetOptions.merge())
-                    .addOnSuccessListener {
-                        val deviceData = hashMapOf<String, Any>(
-                            "installationId" to installId,
-                            "modeloDispositivo" to Build.MODEL,
-                            "fabricante" to Build.MANUFACTURER,
-                            "primeraActividad" to FieldValue.serverTimestamp(),
-                            "ultimaActividad" to FieldValue.serverTimestamp(),
-                            "activo" to true
-                        )
-                        firestore.collection("usuarios").document(userId)
-                            .collection("dispositivos").document(installId)
-                            .set(deviceData, SetOptions.merge())
-                    }
-            } catch (e: Exception) {
-                Log.e("FIRESTORE_REG", "Error sync nube: ${e.message}")
-            }
-
-            callback(true, userId, null)
-        }, { e ->
-            val fallbackUserId = "user0000000"
-            saveLocalUser(fallbackUserId, rawDpi, nombre, telefono, if (esInvitado) "GUEST" else "MEMBER")
-            callback(true, fallbackUserId, null)
-        })
-    }
-
     private fun saveLocalUser(userId: String, dpi: String, name: String, phone: String, role: String) {
         val pref = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
         pref.edit()
@@ -511,32 +756,55 @@ class ColuaRepository(private val context: Context) {
         }.start()
     }
 
-    fun actualizarUltimaActividad() {
-        val pref = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
-        val userId = pref.getString("user_id", "") ?: ""
-        val name = pref.getString("user_name", "Invitado") ?: "Invitado"
-        val phone = pref.getString("user_phone", "") ?: ""
+    @JvmOverloads
+    fun actualizarUltimaActividad(context: Activity? = null, idUsuario: String? = null) {
+        val pref = context?.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+            ?: this.context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+        val userId = idUsuario ?: pref.getString("user_id", "") ?: ""
+        if (userId.isEmpty()) return
 
-        if (userId.isNotEmpty() && userId.matches(Regex("user\\d{7}"))) {
-            getInstallationId { installId ->
-                val userUpdate = hashMapOf<String, Any>(
-                    "nombre" to name,
-                    "telefono" to phone,
-                    "ultimaActividad" to FieldValue.serverTimestamp(),
-                    "estado" to "ACTIVO"
-                )
-                firestore.collection("usuarios").document(userId).set(userUpdate, SetOptions.merge())
+        if (!isCloudEnabled()) return
 
-                val deviceUpdate = hashMapOf<String, Any>(
-                    "installationId" to installId,
-                    "modeloDispositivo" to Build.MODEL,
-                    "fabricante" to Build.MANUFACTURER,
-                    "ultimaActividad" to FieldValue.serverTimestamp(),
-                    "activo" to true
-                )
-                firestore.collection("usuarios").document(userId)
-                    .collection("dispositivos").document(installId)
-                    .set(deviceUpdate, SetOptions.merge())
+        ensureFirebaseAuth {
+            val userDocRef = firestore.collection("usuarios").document(userId)
+            userDocRef.get().addOnSuccessListener { snapshot ->
+                if (!snapshot.exists()) {
+                    Log.e("REPO", "CRITICAL: Documento de usuario $userId fue eliminado en la base de datos.")
+                    pref.edit().clear().apply()
+                    if (context != null) {
+                        context.runOnUiThread {
+                            AlertDialog.Builder(context)
+                                .setTitle("Error con la Base de Datos")
+                                .setMessage("El registro de usuario ya no existe en la base de datos.\n\nPor favor, ingrese de nuevo o regístrese para obtener un nuevo ID.")
+                                .setCancelable(false)
+                                .setPositiveButton("Ingresar / Registrarse") { _, _ ->
+                                    val intent = Intent(context, LoginActivity::class.java).apply {
+                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                    }
+                                    context.startActivity(intent)
+                                    context.finish()
+                                }
+                                .show()
+                        }
+                    }
+                    return@addOnSuccessListener
+                }
+
+                userDocRef.update("ultimaActividad", FieldValue.serverTimestamp())
+                    .addOnFailureListener {
+                        userDocRef.set(hashMapOf("ultimaActividad" to FieldValue.serverTimestamp()), SetOptions.merge())
+                    }
+
+                getInstallationId { installId ->
+                    val deviceUpdate = hashMapOf<String, Any>(
+                        "installationId" to installId,
+                        "ultimaActividad" to FieldValue.serverTimestamp(),
+                        "estado" to "ACTIVO"
+                    )
+                    userDocRef.collection("dispositivos").document(installId).set(deviceUpdate, SetOptions.merge())
+                }
+            }.addOnFailureListener {
+                // Offline fallback
             }
         }
     }

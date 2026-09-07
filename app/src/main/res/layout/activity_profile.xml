@@ -358,7 +358,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:hint="Teléfono (8 dígitos) *"
+                            android:hint="Teléfono *"
+                            app:prefixText="+502 "
                             app:errorEnabled="true"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
@@ -369,7 +370,7 @@
                                 android:fontFamily="@font/poppins_regular"
                                 android:imeOptions="actionDone"
                                 android:inputType="phone"
-                                android:maxLength="15"
+                                android:maxLength="8"
                                 android:singleLine="true" />
                         </com.google.android.material.textfield.TextInputLayout>
 

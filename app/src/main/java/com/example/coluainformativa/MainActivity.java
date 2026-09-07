@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
                     } else if (which == 3) {
-                        repository.actualizarUltimaActividad();
+                        repository.actualizarUltimaActividad(this);
                         Toast.makeText(this, "Sincronización solicitada", Toast.LENGTH_SHORT).show();
                     }
                 })
@@ -164,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
         setupNavigation();
         
         // Sincronizar actividad real con Firestore (basado en installationId)
-        repository.actualizarUltimaActividad();
+        repository.actualizarUltimaActividad(this);
     }
 
     private void initData() {
@@ -430,16 +430,26 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 // Configurar primer item de Navbar (ej. Nosotros)
-                if (!navItems.isEmpty()) {
-                    NavigationItemEntity item = navItems.get(0);
+                List<NavigationItemEntity> effectiveNavItems = navItems;
+                if (effectiveNavItems.isEmpty()) {
+                    effectiveNavItems = new ArrayList<>();
+                    effectiveNavItems.add(new NavigationItemEntity("nav_nosotros", "Nosotros", "public_service", "sec_nosotros", "TOP_ACTION", 1));
+                }
+
+                if (container != null && !effectiveNavItems.isEmpty()) {
+                    NavigationItemEntity item = effectiveNavItems.get(0);
                     container.setVisibility(View.VISIBLE);
-                    ((TextView) container.findViewById(R.id.tv_navbar_label)).setText(item.label);
+                    TextView tvLabel = container.findViewById(R.id.tv_navbar_label);
+                    if (tvLabel != null) tvLabel.setText(item.label);
                     int iconRes = getResources().getIdentifier(item.iconName, "drawable", getPackageName());
-                    if (iconRes != 0) ((ImageView) container.getChildAt(0)).setImageResource(iconRes);
+                    if (iconRes == 0 && "public_service".equalsIgnoreCase(item.iconName)) iconRes = R.drawable.public_service;
+                    if (iconRes != 0 && container.getChildCount() > 0 && container.getChildAt(0) instanceof ImageView) {
+                        ((ImageView) container.getChildAt(0)).setImageResource(iconRes);
+                    }
                     
                     container.setOnClickListener(v -> handleNavAction(item));
-                } else {
-                    container.setVisibility(View.GONE);
+                } else if (container != null) {
+                    container.setVisibility(View.VISIBLE);
                 }
             });
         }).start();
@@ -470,24 +480,9 @@ public class MainActivity extends AppCompatActivity {
             closeDrawerBtn.setOnClickListener(v -> drawerLayout.closeDrawer(GravityCompat.START));
         }
 
-        // Carga dinámica del SIDE_MENU
+        // Carga dinámica del SIDE_MENU garantizando robustez
         new Thread(() -> {
-            List<NavigationItemEntity> rawSideItems = repository.getVisibleNavigation("SIDE_MENU");
-            if (rawSideItems.isEmpty()) {
-                rawSideItems = repository.getVisibleNavigation("SIDEBAR");
-            }
-
-            if (rawSideItems.isEmpty()) {
-                rawSideItems = new ArrayList<>();
-                rawSideItems.add(new NavigationItemEntity("side_profile", "Mi Perfil", "ic_person", "activity_profile", "SIDE_MENU", 1));
-                rawSideItems.add(new NavigationItemEntity("side_creditos", "Créditos", "credito", "sec_creditos", "SIDE_MENU", 2));
-                rawSideItems.add(new NavigationItemEntity("side_seguros", "Seguros", "seguro", "sec_seguros", "SIDE_MENU", 3));
-                rawSideItems.add(new NavigationItemEntity("side_remesas", "Remesas", "remesa", "sec_remesas", "SIDE_MENU", 4));
-                rawSideItems.add(new NavigationItemEntity("side_ahorros", "Ahorros", "ahorros", "sec_ahorros", "SIDE_MENU", 5));
-                rawSideItems.add(new NavigationItemEntity("side_sostenibilidad", "Sostenibilidad Cooperativa", "sostenibilidad", "sec_sostenibilidad", "SIDE_MENU", 6));
-                rawSideItems.add(new NavigationItemEntity("side_admin", "Portal administrativo", "portal_administrativo", "dialog_admin", "SIDE_MENU", 7));
-                rawSideItems.add(new NavigationItemEntity("side_logout", "Cerrar", "cerrar", "action_logout", "SIDE_MENU", 8));
-            }
+            List<NavigationItemEntity> rawSideItems = repository.getRobustSidebarItems();
 
             List<NavigationItemEntity> sideItems = rawSideItems.stream()
                     .filter(item -> !"action_reset".equals(item.targetSectionId) 

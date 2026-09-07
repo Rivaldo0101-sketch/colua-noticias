@@ -128,7 +128,7 @@ public class DynamicSectionActivity extends AppCompatActivity {
                             }
                         });
                     } else if (which == 3) {
-                        repository.actualizarUltimaActividad();
+                        repository.actualizarUltimaActividad(this);
                         Toast.makeText(this, "Sincronización solicitada", Toast.LENGTH_SHORT).show();
                     }
                 })
@@ -164,22 +164,7 @@ public class DynamicSectionActivity extends AppCompatActivity {
         }
 
         new Thread(() -> {
-            List<NavigationItemEntity> rawSideItems = repository.getVisibleNavigation("SIDE_MENU");
-            if (rawSideItems.isEmpty()) {
-                rawSideItems = repository.getVisibleNavigation("SIDEBAR");
-            }
-
-            if (rawSideItems.isEmpty()) {
-                rawSideItems = new ArrayList<>();
-                rawSideItems.add(new NavigationItemEntity("side_profile", "Mi Perfil", "ic_person", "activity_profile", "SIDE_MENU", 1));
-                rawSideItems.add(new NavigationItemEntity("side_creditos", "Créditos", "credito", "sec_creditos", "SIDE_MENU", 2));
-                rawSideItems.add(new NavigationItemEntity("side_seguros", "Seguros", "seguro", "sec_seguros", "SIDE_MENU", 3));
-                rawSideItems.add(new NavigationItemEntity("side_remesas", "Remesas", "remesa", "sec_remesas", "SIDE_MENU", 4));
-                rawSideItems.add(new NavigationItemEntity("side_ahorros", "Ahorros", "ahorros", "sec_ahorros", "SIDE_MENU", 5));
-                rawSideItems.add(new NavigationItemEntity("side_sostenibilidad", "Sostenibilidad Cooperativa", "ic_security", "sec_comunidad", "SIDE_MENU", 6));
-                rawSideItems.add(new NavigationItemEntity("side_admin", "Portal administrativo", "ic_security", "dialog_admin", "SIDE_MENU", 7));
-                rawSideItems.add(new NavigationItemEntity("side_logout", "Cerrar", "ic_lock_power_off", "action_logout", "SIDE_MENU", 8));
-            }
+            List<NavigationItemEntity> rawSideItems = repository.getRobustSidebarItems();
 
             List<NavigationItemEntity> sideItems = rawSideItems.stream()
                     .filter(item -> !"action_reset".equalsIgnoreCase(item.targetSectionId)
