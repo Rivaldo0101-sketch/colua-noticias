@@ -443,6 +443,11 @@ public class DynamicSectionActivity extends AppCompatActivity {
                             }
                             ((TextView) findViewById(R.id.tv_dynamic_title)).setText(cleanFallback);
                             ((TextView) findViewById(R.id.tv_dynamic_description)).setText("");
+<<<<<<< Updated upstream
+=======
+                            findViewById(R.id.tv_dynamic_title).setVisibility(View.VISIBLE);
+                            findViewById(R.id.tv_dynamic_description).setVisibility(View.VISIBLE);
+>>>>>>> Stashed changes
                         }
                         
                         itemList.clear();
