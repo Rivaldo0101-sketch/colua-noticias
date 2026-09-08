@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -17,6 +18,7 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -33,6 +35,7 @@ import com.example.coluainformativa.ui.content.ContentItemAdapter;
 import com.example.coluainformativa.database.ContentBlockEntity;
 import com.example.coluainformativa.ui.content.BlockAdapter;
 import com.example.coluainformativa.utils.NavInsetHelper;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 import com.google.android.material.navigation.NavigationView;
@@ -85,6 +88,14 @@ public class DynamicSectionActivity extends AppCompatActivity {
         setupNavigation();
         setupNavbar();
         setupDrawer();
+
+        AppBarLayout appBarLayout = findViewById(R.id.app_bar_dynamic);
+        if (appBarLayout != null) {
+            appBarLayout.setLiftOnScroll(false);
+        }
+        if (getWindow() != null) {
+            getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.colua_navy));
+        }
 
         NavInsetHelper.applySystemWindowInsets(
                 findViewById(R.id.drawer_layout),
@@ -392,43 +403,64 @@ public class DynamicSectionActivity extends AppCompatActivity {
                 List<ContentBlockEntity> blocks = repository.getBlocksBySection(canonicalId);
                 
                 runOnUiThread(() -> {
-                    if (section != null) {
-                        String titleText = (section.title != null && !section.title.isEmpty()) ? section.title : sectionId;
-                        String descText = (section.description != null) ? section.description : "";
-                        ((TextView) findViewById(R.id.tv_dynamic_title)).setText(titleText);
-                        ((TextView) findViewById(R.id.tv_dynamic_description)).setText(descText);
-                        
-                        if ("sec_ahorros".equals(canonicalId)) {
-                            findViewById(R.id.tv_dynamic_title).setVisibility(View.GONE);
-                            findViewById(R.id.tv_dynamic_description).setVisibility(View.GONE);
-                        } else {
-                            findViewById(R.id.tv_dynamic_title).setVisibility(View.VISIBLE);
-                            findViewById(R.id.tv_dynamic_description).setVisibility(View.VISIBLE);
-                        }
-                    } else {
-                        String cleanFallback = sectionId.replace("sec_", "").replace("_", " ");
-                        if (!cleanFallback.isEmpty()) {
-                            cleanFallback = cleanFallback.substring(0, 1).toUpperCase() + cleanFallback.substring(1);
-                        }
-                        ((TextView) findViewById(R.id.tv_dynamic_title)).setText(cleanFallback);
-                        ((TextView) findViewById(R.id.tv_dynamic_description)).setText("");
-                    }
-                    
-                    itemList.clear();
-                    itemList.addAll(items);
-                    updatePagination();
-
-                    blockList.clear();
-                    blockList.addAll(blocks);
-                    blockAdapter.notifyDataSetChanged();
-                    
-                    if (itemList.isEmpty() && blockList.isEmpty()) {
-                        findViewById(R.id.tv_empty_state).setVisibility(View.VISIBLE);
-                    } else {
+                    FrameLayout containerNosotros = findViewById(R.id.container_nosotros_custom);
+                    if ("sec_nosotros".equalsIgnoreCase(canonicalId)) {
+                        findViewById(R.id.tv_dynamic_title).setVisibility(View.GONE);
+                        findViewById(R.id.tv_dynamic_description).setVisibility(View.GONE);
+                        findViewById(R.id.rv_dynamic_blocks).setVisibility(View.GONE);
+                        findViewById(R.id.rv_dynamic_items).setVisibility(View.GONE);
+                        findViewById(R.id.layout_pagination).setVisibility(View.GONE);
                         findViewById(R.id.tv_empty_state).setVisibility(View.GONE);
-                        findViewById(R.id.rv_dynamic_items).setVisibility(View.VISIBLE);
+                        if (pb != null) pb.setVisibility(View.GONE);
+
+                        if (containerNosotros != null) {
+                            containerNosotros.setVisibility(View.VISIBLE);
+                            if (containerNosotros.getChildCount() == 0) {
+                                LayoutInflater.from(this).inflate(R.layout.layout_nosotros_content, containerNosotros, true);
+                            }
+                        }
+                    } else {
+                        if (containerNosotros != null) {
+                            containerNosotros.setVisibility(View.GONE);
+                        }
+                        if (section != null) {
+                            String titleText = (section.title != null && !section.title.isEmpty()) ? section.title : sectionId;
+                            String descText = (section.description != null) ? section.description : "";
+                            ((TextView) findViewById(R.id.tv_dynamic_title)).setText(titleText);
+                            ((TextView) findViewById(R.id.tv_dynamic_description)).setText(descText);
+                            
+                            if ("sec_ahorros".equals(canonicalId)) {
+                                findViewById(R.id.tv_dynamic_title).setVisibility(View.GONE);
+                                findViewById(R.id.tv_dynamic_description).setVisibility(View.GONE);
+                            } else {
+                                findViewById(R.id.tv_dynamic_title).setVisibility(View.VISIBLE);
+                                findViewById(R.id.tv_dynamic_description).setVisibility(View.VISIBLE);
+                            }
+                        } else {
+                            String cleanFallback = sectionId.replace("sec_", "").replace("_", " ");
+                            if (!cleanFallback.isEmpty()) {
+                                cleanFallback = cleanFallback.substring(0, 1).toUpperCase() + cleanFallback.substring(1);
+                            }
+                            ((TextView) findViewById(R.id.tv_dynamic_title)).setText(cleanFallback);
+                            ((TextView) findViewById(R.id.tv_dynamic_description)).setText("");
+                        }
+                        
+                        itemList.clear();
+                        itemList.addAll(items);
+                        updatePagination();
+
+                        blockList.clear();
+                        blockList.addAll(blocks);
+                        blockAdapter.notifyDataSetChanged();
+                        
+                        if (itemList.isEmpty() && blockList.isEmpty()) {
+                            findViewById(R.id.tv_empty_state).setVisibility(View.VISIBLE);
+                        } else {
+                            findViewById(R.id.tv_empty_state).setVisibility(View.GONE);
+                            findViewById(R.id.rv_dynamic_items).setVisibility(View.VISIBLE);
+                        }
+                        if (pb != null) pb.setVisibility(View.GONE);
                     }
-                    if (pb != null) pb.setVisibility(View.GONE);
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {

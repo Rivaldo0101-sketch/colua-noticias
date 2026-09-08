@@ -18,12 +18,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/colua_navy"
+            app:backgroundTint="@color/colua_navy"
+            app:liftOnScroll="false"
+            app:liftOnScrollTargetViewId="@null"
             app:elevation="4dp">
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="72dp"
+                android:background="@color/colua_navy"
                 app:contentInsetStart="0dp"
                 app:contentInsetStartWithNavigation="0dp"
                 app:contentInsetEnd="0dp">
@@ -123,6 +127,12 @@
                     android:text="Descripción de la sección"
                     android:textColor="@color/text_grey"
                     android:textSize="14sp" />
+
+                <FrameLayout
+                    android:id="@+id/container_nosotros_custom"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone" />
 
                 <ProgressBar
                     android:id="@+id/pb_dynamic_loading"
