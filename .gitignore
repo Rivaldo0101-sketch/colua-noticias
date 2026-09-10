@@ -1,16 +1,47 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-/.idea/deploymentTargetSelector.xml
-.DS_Store
+# Built application files
+*.apk
+*.ap_
+*.aab
+*.dex
+
+# Java class files
+*.class
+
+# Generated files / Gradle build outputs
+build/
 /build
-/captures
+app/build/
+.gradle/
+.gradletaskdiskcache/
+
+# Android Studio / IntelliJ IDEA files
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Local configuration files (contains local SDK paths, device targets, etc.)
+local.properties
+
+# Keystore files
+*.jks
+*.keystore
+
+# Log files
+*.log
+
+# Android Studio captures, native builds & caches
+captures/
 .externalNativeBuild
 .cxx
-local.properties
+
+# Kotlin daemon and compiler caches
+.kotlin/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE Agent artifacts
+.artifacts/
