@@ -31,7 +31,7 @@ public class DataSeeder {
                 db.sectionDao().insert(new SectionEntity("sec_servicios", "Servicios Digitales", "servicios", "Banca en línea", "servicios_digitales", "#59B8A4", 7, true));
                 db.sectionDao().insert(new SectionEntity("sec_beneficios", "Beneficios", "beneficios", "Valor de ser asociado", "beneficios", "#EF8819", 8, true));
                 db.sectionDao().insert(new SectionEntity("sec_noticias", "Noticias", "noticias", "Actualidad COLUA", "noticias_colua", "#E42A67", 9, true));
-                db.sectionDao().insert(new SectionEntity("sec_nosotros", "Institución", "nosotros", "Valores, objetivos, historia e información institucional de la cooperativa", "public_service", "#173789", 10, true));
+                db.sectionDao().insert(new SectionEntity("sec_nosotros", "Nosotros", "nosotros", "Valores, objetivos, historia e información institucional de la cooperativa", "public_service", "#173789", 10, true));
                 db.sectionDao().insert(new SectionEntity("sec_sostenibilidad", "Sostenibilidad Cooperativa", "sostenibilidad", "Cursos y centros de innovación de la cooperativa", "sostenibilidad_cooperativa", "#59B8A4", 11, true));
 
                 // CONFIGURACIÓN GLOBAL
