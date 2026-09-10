@@ -12,7 +12,6 @@
         android:icon="@drawable/distintivo_colua"
         android:label="@string/app_name"
         android:roundIcon="@drawable/distintivo_colua"
-        android:testOnly="false"
         android:supportsRtl="true"
         android:theme="@style/Theme.ColuaInformativa">
         <provider
@@ -77,7 +76,7 @@
             android:exported="false" />
         <activity
             android:name=".MainActivity"
-            android:exported="true" />
+            android:exported="false" />
     </application>
 
 </manifest>
