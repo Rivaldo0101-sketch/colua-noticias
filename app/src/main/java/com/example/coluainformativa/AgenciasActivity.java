@@ -1,6 +1,8 @@
 package com.example.coluainformativa;
 
 import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
@@ -82,6 +84,7 @@ public class AgenciasActivity extends AppCompatActivity {
         setupNavigation();
         setupNavbar();
         setupDrawer();
+        setupPreviewBanner();
 
         NavInsetHelper.applySystemWindowInsets(
                 findViewById(R.id.drawer_layout),
@@ -91,6 +94,22 @@ public class AgenciasActivity extends AppCompatActivity {
         );
         
         loadData();
+    }
+
+    private void setupPreviewBanner() {
+        boolean isPreviewMode = getIntent().getBooleanExtra("extra_is_preview_mode", false) || isVisualEditMode;
+        View layoutPreviewBanner = findViewById(R.id.layout_preview_banner);
+        if (layoutPreviewBanner != null) {
+            if (isPreviewMode) {
+                layoutPreviewBanner.setVisibility(View.VISIBLE);
+                View btnExit = findViewById(R.id.btn_exit_preview);
+                if (btnExit != null) {
+                    btnExit.setOnClickListener(v -> finish());
+                }
+            } else {
+                layoutPreviewBanner.setVisibility(View.GONE);
+            }
+        }
     }
 
     @Override
@@ -471,26 +490,38 @@ public class AgenciasActivity extends AppCompatActivity {
     }
 
     private void setupPaginationBar(int totalPages) {
-        LinearLayout layout = findViewById(R.id.layout_page_numbers);
-        layout.removeAllViews();
-        
-        TextView tvItemsPerPage = findViewById(R.id.tv_items_per_page);
-            if (tvItemsPerPage != null) {
-            tvItemsPerPage.setText(itemsPerPage + " / page");
+        View layoutPag = findViewById(R.id.layout_pagination);
+        if (layoutPag == null) return;
+
+        if (totalPages <= 1) {
+            layoutPag.setVisibility(View.GONE);
+            return;
         }
 
+        layoutPag.setVisibility(View.VISIBLE);
+
+        LinearLayout layoutNumbers = findViewById(R.id.layout_page_numbers);
+        if (layoutNumbers == null) return;
+        layoutNumbers.removeAllViews();
+
         List<Integer> pagesToShow = new ArrayList<>();
-        if (totalPages <= 7) {
+        if (totalPages <= 5) {
             for (int i = 1; i <= totalPages; i++) pagesToShow.add(i);
         } else {
             pagesToShow.add(1);
-            if (currentPage > 3) pagesToShow.add(-1); 
+            if (currentPage > 3) pagesToShow.add(-1);
 
             int start = Math.max(2, currentPage - 1);
             int end = Math.min(totalPages - 1, currentPage + 1);
 
-            if (currentPage <= 3) end = 4;
-            if (currentPage >= totalPages - 2) start = totalPages - 3;
+            if (currentPage <= 3) {
+                start = 2;
+                end = Math.min(3, totalPages - 1);
+            }
+            if (currentPage >= totalPages - 2) {
+                start = Math.max(2, totalPages - 2);
+                end = totalPages - 1;
+            }
 
             for (int i = start; i <= end; i++) {
                 if (!pagesToShow.contains(i)) pagesToShow.add(i);
@@ -502,50 +533,63 @@ public class AgenciasActivity extends AppCompatActivity {
 
         for (Integer p : pagesToShow) {
             if (p == -1) {
-                TextView tv = new TextView(this);
-                tv.setText("...");
-                tv.setPadding(16, 0, 16, 0);
-                tv.setTextColor(getResources().getColor(R.color.text_grey));
-                layout.addView(tv);
+                TextView tvDots = new TextView(this);
+                tvDots.setText("...");
+                tvDots.setTextSize(14f);
+                tvDots.setGravity(Gravity.CENTER);
+                tvDots.setPadding(12, 0, 12, 0);
+                tvDots.setTextColor(Color.parseColor("#94A3B8"));
+                layoutNumbers.addView(tvDots);
                 continue;
             }
 
-            final int page = p;
-            TextView tv = new TextView(this);
-            tv.setText(String.valueOf(p));
-            tv.setPadding(12, 8, 12, 8);
-            tv.setTextSize(14);
-            tv.setGravity(Gravity.CENTER);
-            tv.setMinWidth(60);
-            
-            if (p == currentPage) {
-                tv.setTextColor(getResources().getColor(R.color.white));
-                tv.setBackgroundResource(R.drawable.circle_background);
-                tv.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colua_navy)));
+            final int pageNum = p;
+            TextView tvPage = new TextView(this);
+            tvPage.setText(String.valueOf(pageNum));
+            tvPage.setTextSize(13f);
+            tvPage.setTypeface(null, Typeface.BOLD);
+            tvPage.setGravity(Gravity.CENTER);
+
+            int boxSize = (int) (36 * getResources().getDisplayMetrics().density);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(boxSize, boxSize);
+            lp.setMargins(6, 0, 6, 0);
+            tvPage.setLayoutParams(lp);
+
+            if (pageNum == currentPage) {
+                tvPage.setTextColor(Color.WHITE);
+                tvPage.setBackgroundResource(R.drawable.bg_outlined_spinner);
+                tvPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#173789")));
             } else {
-                tv.setTextColor(getResources().getColor(R.color.black));
-                tv.setBackground(null);
+                tvPage.setTextColor(Color.parseColor("#334155"));
+                tvPage.setBackground(null);
             }
 
-            tv.setOnClickListener(v -> {
-                currentPage = page;
+            tvPage.setOnClickListener(v -> {
+                currentPage = pageNum;
                 updatePagination();
             });
-            layout.addView(tv);
+
+            layoutNumbers.addView(tvPage);
         }
 
-        findViewById(R.id.btn_pagination_prev).setOnClickListener(v -> {
-            if (currentPage > 1) {
-                currentPage--;
-                updatePagination();
-            }
-        });
+        View btnPrev = findViewById(R.id.btn_pagination_prev);
+        if (btnPrev != null) {
+            btnPrev.setOnClickListener(v -> {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updatePagination();
+                }
+            });
+        }
 
-        findViewById(R.id.btn_pagination_next).setOnClickListener(v -> {
-            if (currentPage < totalPages) {
-                currentPage++;
-                updatePagination();
-            }
-        });
+        View btnNext = findViewById(R.id.btn_pagination_next);
+        if (btnNext != null) {
+            btnNext.setOnClickListener(v -> {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updatePagination();
+                }
+            });
+        }
     }
 }

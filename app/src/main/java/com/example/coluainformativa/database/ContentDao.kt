@@ -58,4 +58,10 @@ interface ContentDao {
 
     @Query("DELETE FROM content_blocks WHERE sectionId = :sectionId")
     fun deleteBlocksBySection(sectionId: String)
+
+    @Query("SELECT * FROM content_blocks WHERE id = :id")
+    fun getBlockById(id: String): ContentBlockEntity?
+
+    @Query("DELETE FROM content_blocks WHERE id = :id")
+    fun deleteBlockById(id: String)
 }

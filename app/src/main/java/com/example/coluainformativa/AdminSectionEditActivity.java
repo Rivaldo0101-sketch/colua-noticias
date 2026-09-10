@@ -66,9 +66,14 @@ public class AdminSectionEditActivity extends AppCompatActivity {
     private static class IconOption {
         String displayName;
         String resName;
-        IconOption(String displayName, String resName) {
+        String iconKey;
+        String category;
+
+        IconOption(String displayName, String resName, String iconKey, String category) {
             this.displayName = displayName;
             this.resName = resName;
+            this.iconKey = iconKey;
+            this.category = category;
         }
     }
 
@@ -123,20 +128,81 @@ public class AdminSectionEditActivity extends AppCompatActivity {
 
     private void setupIconGallery() {
         iconGallery.clear();
-        iconGallery.add(new IconOption("Ahorros", "ahorros"));
-        iconGallery.add(new IconOption("Crédito", "credito"));
-        iconGallery.add(new IconOption("Seguros", "seguro"));
-        iconGallery.add(new IconOption("Remesas", "remesa"));
-        iconGallery.add(new IconOption("Agencias", "ubicacion"));
-        iconGallery.add(new IconOption("Servicios digitales", "servicios_digitales"));
-        iconGallery.add(new IconOption("Beneficios", "beneficios"));
-        iconGallery.add(new IconOption("Noticias", "noticias_colua"));
-        iconGallery.add(new IconOption("Comunidad", "grupo"));
-        iconGallery.add(new IconOption("Educación", "public_service"));
-        iconGallery.add(new IconOption("Sostenibilidad", "sostenibilidad_cooperativa"));
-        iconGallery.add(new IconOption("Teléfono", "ic_phone"));
-        iconGallery.add(new IconOption("Información", "ic_info"));
-        iconGallery.add(new IconOption("General / Otro", "ic_star"));
+
+        // 1. Finanzas & Productos
+        iconGallery.add(new IconOption("Ahorros / Alcancía", "ic_savings", "savings", "Finanzas"));
+        iconGallery.add(new IconOption("Ahorros (PNG)", "ahorros", "ahorros_png", "Finanzas"));
+        iconGallery.add(new IconOption("Ahorro Infanto Juvenil", "ahorro_infanto_juvenil", "ahorro_infanto_juvenil", "Finanzas"));
+        iconGallery.add(new IconOption("Ahorro Programado", "ahorro_programado", "ahorro_programado", "Finanzas"));
+        iconGallery.add(new IconOption("Tarjetas de Crédito", "ic_credit_card", "credit_card", "Finanzas"));
+        iconGallery.add(new IconOption("Cuentas / Banco", "ic_account_balance", "account_balance", "Finanzas"));
+        iconGallery.add(new IconOption("Créditos / Finanzas", "credito", "credito", "Finanzas"));
+        iconGallery.add(new IconOption("Credi Consumo", "credito_consumo", "credito_consumo", "Finanzas"));
+        iconGallery.add(new IconOption("Credi Vehículo", "credi_vehiculo", "credi_vehiculo", "Finanzas"));
+        iconGallery.add(new IconOption("Crédito Productivo", "credito_productivo", "credito_productivo", "Finanzas"));
+        iconGallery.add(new IconOption("Crédito Vivienda", "credito_vivienda", "credito_vivienda", "Finanzas"));
+        iconGallery.add(new IconOption("Remesas & Envíos", "ic_send", "send", "Finanzas"));
+        iconGallery.add(new IconOption("Remesas (PNG)", "remesa", "remesa_png", "Finanzas"));
+        iconGallery.add(new IconOption("Inversión / Crecimiento", "ic_trending_up", "trending_up", "Finanzas"));
+        iconGallery.add(new IconOption("Simulador / Calculadora", "ic_calculate", "calculate", "Finanzas"));
+        iconGallery.add(new IconOption("Comprobantes / Pagos", "ic_receipt", "receipt", "Finanzas"));
+
+        // 2. Servicios & Canales
+        iconGallery.add(new IconOption("Agencias & Puntos", "ic_location", "location", "Servicios"));
+        iconGallery.add(new IconOption("Agencias (PNG)", "ubicacion", "ubicacion_png", "Servicios"));
+        iconGallery.add(new IconOption("Punto de Agencia", "ic_agencias_pin", "agencias_pin", "Servicios"));
+        iconGallery.add(new IconOption("Cajeros & Agentes", "ic_atm", "atm", "Servicios"));
+        iconGallery.add(new IconOption("Servicios Digitales", "ic_phone_android", "phone_android", "Servicios"));
+        iconGallery.add(new IconOption("Servicios Digitales (PNG)", "servicios_digitales", "servicios_digitales_png", "Servicios"));
+        iconGallery.add(new IconOption("Atención PBX", "ic_phone", "phone", "Servicios"));
+        iconGallery.add(new IconOption("Soporte & Ayuda", "ic_support", "support", "Servicios"));
+        iconGallery.add(new IconOption("Tienda / Comercios", "ic_store", "store", "Servicios"));
+        iconGallery.add(new IconOption("Beneficios (PNG)", "beneficios", "beneficios_png", "Servicios"));
+
+        // 3. Seguridad & Protección
+        iconGallery.add(new IconOption("Seguros & Protección", "ic_security", "security", "Seguridad"));
+        iconGallery.add(new IconOption("Seguro (PNG)", "seguro", "seguro_png", "Seguridad"));
+        iconGallery.add(new IconOption("Seguro Accidentes Juvenil", "seguro_accidentes_infanto_juvenil", "seguro_accidentes_juvenil", "Seguridad"));
+        iconGallery.add(new IconOption("Seguro CV Personal", "seguro_cv_personal", "seguro_cv_personal", "Seguridad"));
+        iconGallery.add(new IconOption("Seguro de Cáncer", "seguro_de_cancer", "seguro_de_cancer", "Seguridad"));
+        iconGallery.add(new IconOption("Seguro de Vida", "seguro_de_vida_individual_o_familar", "seguro_de_vida", "Seguridad"));
+        iconGallery.add(new IconOption("Seguro Edad de Oro", "seguro_edad_de_oro", "seguro_edad_de_oro", "Seguridad"));
+        iconGallery.add(new IconOption("Seguro Vida Saludable", "seguro_vida_saludable", "seguro_vida_saludable", "Seguridad"));
+        iconGallery.add(new IconOption("Manejo Seguro", "manejo_seguro", "manejo_seguro", "Seguridad"));
+        iconGallery.add(new IconOption("Salud & Vida", "ic_health", "health", "Seguridad"));
+        iconGallery.add(new IconOption("Hospital & Asistencia", "ic_hospital", "hospital", "Seguridad"));
+        iconGallery.add(new IconOption("Protección Familiar", "ic_family_restroom", "family_restroom", "Seguridad"));
+        iconGallery.add(new IconOption("Seguridad & Claves", "ic_lock", "lock", "Seguridad"));
+        iconGallery.add(new IconOption("Garantía & Certificado", "ic_verified", "verified", "Seguridad"));
+
+        // 4. Comunidad & Sostenibilidad
+        iconGallery.add(new IconOption("Comunidad / Asociados", "ic_groups", "groups", "Comunidad"));
+        iconGallery.add(new IconOption("Comunidad (PNG)", "grupo", "grupo_png", "Comunidad"));
+        iconGallery.add(new IconOption("Sostenibilidad", "ic_volunteer_activism", "volunteer_activism", "Comunidad"));
+        iconGallery.add(new IconOption("Sostenibilidad Coope", "sostenibilidad_cooperativa", "sostenibilidad_cooperativa", "Comunidad"));
+        iconGallery.add(new IconOption("Convenios & Alianzas", "ic_handshake", "handshake", "Comunidad"));
+        iconGallery.add(new IconOption("Educación Cooperativa", "ic_school", "school", "Comunidad"));
+        iconGallery.add(new IconOption("Servicio Público / Edu", "public_service", "public_service", "Comunidad"));
+        iconGallery.add(new IconOption("Proyectos & Empleo", "ic_work", "work", "Comunidad"));
+        iconGallery.add(new IconOption("Empresas & Negocios", "ic_business", "business", "Comunidad"));
+        iconGallery.add(new IconOption("Agro & Desarrollo Rural", "ic_agriculture", "agriculture", "Comunidad"));
+
+        // 5. Novedades & General
+        iconGallery.add(new IconOption("Noticias & Boletín", "ic_newspaper", "newspaper", "General"));
+        iconGallery.add(new IconOption("Noticias COLUA (PNG)", "noticias_colua", "noticias_colua_png", "General"));
+        iconGallery.add(new IconOption("Beneficios & Ofertas", "ic_local_offer", "local_offer", "General"));
+        iconGallery.add(new IconOption("Inicio / Principal", "ic_home", "home", "General"));
+        iconGallery.add(new IconOption("Inicio (PNG)", "inicio", "inicio_png", "General"));
+        iconGallery.add(new IconOption("Especial / Destacado", "ic_star", "star", "General"));
+        iconGallery.add(new IconOption("Información / Nosotros", "ic_info", "info", "General"));
+        iconGallery.add(new IconOption("Alertas & Avisos", "ic_notifications", "notifications", "General"));
+        iconGallery.add(new IconOption("Campañas & Anuncios", "ic_campaign", "campaign", "General"));
+        iconGallery.add(new IconOption("Innovación & Ideas", "ic_lightbulb", "lightbulb", "General"));
+        iconGallery.add(new IconOption("Eventos & Calendario", "ic_event", "event", "General"));
+        iconGallery.add(new IconOption("Mi Perfil / Usuario", "ic_person", "person", "General"));
+        iconGallery.add(new IconOption("Perfil (PNG)", "perfil", "perfil_png", "General"));
+        iconGallery.add(new IconOption("Portal Admin (PNG)", "portal_administrativo", "portal_administrativo", "General"));
+        iconGallery.add(new IconOption("Instrucciones / Guía", "instrucciones", "instrucciones", "General"));
     }
 
     private void setupAutoSlugGenerator() {
@@ -245,23 +311,32 @@ public class AdminSectionEditActivity extends AppCompatActivity {
             int resId = getResources().getIdentifier(selectedIconName, "drawable", getPackageName());
             if (resId != 0) {
                 ivSelectedIconPreview.setImageResource(resId);
+                if (selectedIconName != null && selectedIconName.startsWith("ic_")) {
+                    ivSelectedIconPreview.setImageTintList(ColorStateList.valueOf(Color.parseColor("#173789")));
+                } else {
+                    ivSelectedIconPreview.setImageTintList(null);
+                }
                 tvSelectedIconName.setText(selectedIconName);
             }
         }
     }
 
     private void showIconSelectorDialog() {
-        RecyclerView rvGrid = new RecyclerView(this);
-        rvGrid.setPadding(24, 24, 24, 24);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_icon_selector, null);
+        EditText etSearch = dialogView.findViewById(R.id.et_search_icons);
+        ChipGroup cgCategories = dialogView.findViewById(R.id.chip_group_icon_categories);
+        RecyclerView rvGrid = dialogView.findViewById(R.id.rv_icon_grid);
+
         rvGrid.setLayoutManager(new GridLayoutManager(this, 3));
 
+        List<IconOption> filteredList = new ArrayList<>(iconGallery);
+
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("Seleccionar Ícono de Navegación")
-                .setView(rvGrid)
-                .setNegativeButton("Cancelar", null)
+                .setView(dialogView)
+                .setNegativeButton("Cerrar", null)
                 .create();
 
-        rvGrid.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+        RecyclerView.Adapter adapter = new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             @NonNull
             @Override
             public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -271,28 +346,91 @@ public class AdminSectionEditActivity extends AppCompatActivity {
 
             @Override
             public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-                IconOption opt = iconGallery.get(position);
+                IconOption opt = filteredList.get(position);
                 TextView tvName = holder.itemView.findViewById(R.id.tv_grid_icon_name);
+                TextView tvKey = holder.itemView.findViewById(R.id.tv_grid_icon_key);
                 ImageView ivImg = holder.itemView.findViewById(R.id.iv_grid_icon_image);
 
                 tvName.setText(opt.displayName);
+                if (tvKey != null) tvKey.setText("key: " + opt.iconKey);
+
                 int res = getResources().getIdentifier(opt.resName, "drawable", getPackageName());
-                if (res != 0) ivImg.setImageResource(res);
+                if (res != 0) {
+                    ivImg.setImageResource(res);
+                    if (opt.resName.startsWith("ic_")) {
+                        ivImg.setImageTintList(ColorStateList.valueOf(Color.parseColor("#173789")));
+                    } else {
+                        ivImg.setImageTintList(null);
+                    }
+                } else {
+                    ivImg.setImageResource(R.drawable.ic_star);
+                    ivImg.setImageTintList(ColorStateList.valueOf(Color.parseColor("#173789")));
+                }
 
                 holder.itemView.setOnClickListener(v -> {
                     selectedIconName = opt.resName;
                     selectedIconDisplayName = opt.displayName;
                     ivSelectedIconPreview.setImageResource(res != 0 ? res : R.drawable.ic_star);
-                    tvSelectedIconName.setText(opt.displayName);
+                    if (opt.resName.startsWith("ic_")) {
+                        ivSelectedIconPreview.setImageTintList(ColorStateList.valueOf(Color.parseColor("#173789")));
+                    } else {
+                        ivSelectedIconPreview.setImageTintList(null);
+                    }
+                    tvSelectedIconName.setText(opt.displayName + " (key: " + opt.iconKey + ")");
                     dialog.dismiss();
                 });
             }
 
             @Override
             public int getItemCount() {
-                return iconGallery.size();
+                return filteredList.size();
             }
-        });
+        };
+
+        rvGrid.setAdapter(adapter);
+
+        Runnable applyFilter = () -> {
+            String query = etSearch != null ? etSearch.getText().toString().trim().toLowerCase(Locale.getDefault()) : "";
+            int checkedId = cgCategories != null && !cgCategories.getCheckedChipIds().isEmpty() ? cgCategories.getCheckedChipIds().get(0) : R.id.chip_cat_todos;
+
+            String selectedCategory = "Todos";
+            if (checkedId == R.id.chip_cat_finanzas) selectedCategory = "Finanzas";
+            else if (checkedId == R.id.chip_cat_servicios) selectedCategory = "Servicios";
+            else if (checkedId == R.id.chip_cat_seguridad) selectedCategory = "Seguridad";
+            else if (checkedId == R.id.chip_cat_comunidad) selectedCategory = "Comunidad";
+            else if (checkedId == R.id.chip_cat_general) selectedCategory = "General";
+
+            filteredList.clear();
+            for (IconOption opt : iconGallery) {
+                boolean matchesCategory = "Todos".equals(selectedCategory) || selectedCategory.equalsIgnoreCase(opt.category);
+                boolean matchesQuery = query.isEmpty()
+                        || opt.displayName.toLowerCase(Locale.getDefault()).contains(query)
+                        || opt.iconKey.toLowerCase(Locale.getDefault()).contains(query)
+                        || opt.category.toLowerCase(Locale.getDefault()).contains(query);
+
+                if (matchesCategory && matchesQuery) {
+                    filteredList.add(opt);
+                }
+            }
+            adapter.notifyDataSetChanged();
+        };
+
+        if (cgCategories != null) {
+            cgCategories.setOnCheckedStateChangeListener((group, checkedIds) -> applyFilter.run());
+        }
+
+        if (etSearch != null) {
+            etSearch.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    applyFilter.run();
+                }
+                @Override
+                public void afterTextChanged(Editable s) {}
+            });
+        }
 
         dialog.show();
     }

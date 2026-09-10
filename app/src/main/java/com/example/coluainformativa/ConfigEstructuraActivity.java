@@ -36,22 +36,10 @@ public class ConfigEstructuraActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_config_estructura);
-
-        repository = new ColuaRepository(this);
-        authManager = new AdminAuthManager(this);
-
-        findViewById(R.id.btn_back_config).setOnClickListener(v -> finish());
-
-        RecyclerView rvScreens = findViewById(R.id.rv_screens);
-        rvScreens.setLayoutManager(new LinearLayoutManager(this));
-
-        adapter = new ScreensAdapter();
-        rvScreens.setAdapter(adapter);
-
-        findViewById(R.id.btn_add_section).setOnClickListener(v -> showAddSectionDialog());
-
-        loadSections();
+        // Redirigir la vista legacy de configuración al Portal Administrativo Unificado
+        Intent intent = new Intent(this, AdminActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     private void loadSections() {

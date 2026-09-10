@@ -1,73 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
+    android:id="@+id/layout_pagination"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_margin="16dp"
-    app:cardCornerRadius="30dp"
+    android:layout_gravity="center_horizontal"
+    android:layout_marginVertical="12dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="12dp"
     app:cardElevation="2dp"
-    app:strokeWidth="0dp">
+    app:strokeWidth="1dp"
+    app:strokeColor="#E2E8F0">
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
         android:gravity="center"
         android:orientation="horizontal"
-        android:paddingHorizontal="16dp">
+        android:paddingHorizontal="8dp">
 
-        <com.google.android.material.button.MaterialButton
+        <ImageButton
             android:id="@+id/btn_pagination_prev"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:insetLeft="0dp"
-            android:insetRight="0dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:padding="0dp"
-            app:icon="@android:drawable/ic_media_previous"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:iconSize="20dp"
-            app:iconTint="@color/colua_navy" />
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Anterior"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_chevron_left"
+            app:tint="#64748B" />
 
         <LinearLayout
             android:id="@+id/layout_page_numbers"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="horizontal" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_pagination_next"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:insetLeft="0dp"
-            android:insetRight="0dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:padding="0dp"
-            app:icon="@android:drawable/ic_media_next"
-            app:iconGravity="textStart"
-            app:iconPadding="0dp"
-            app:iconSize="20dp"
-            app:iconTint="@color/colua_navy" />
-
-        <View
-            android:layout_width="1dp"
-            android:layout_height="24dp"
-            android:layout_marginHorizontal="8dp"
-            android:background="#EEEEEE" />
-
-        <TextView
-            android:id="@+id/tv_items_per_page"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="6 / page"
-            android:textColor="@color/text_grey"
-            android:textSize="12sp"
-            android:fontFamily="@font/poppins_regular" />
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="4dp" />
+
+        <ImageButton
+            android:id="@+id/btn_pagination_next"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Siguiente"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_chevron_right"
+            app:tint="#64748B" />
 
     </LinearLayout>
 

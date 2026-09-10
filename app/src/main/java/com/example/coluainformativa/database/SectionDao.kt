@@ -10,6 +10,9 @@ interface SectionDao {
     @Query("SELECT * FROM sections WHERE isVisible = 1 AND deletedAt IS NULL ORDER BY displayOrder ASC")
     fun getVisibleSections(): List<SectionEntity>
 
+    @Query("SELECT * FROM sections WHERE isVisible = 1 AND isPublished = 1 AND deletedAt IS NULL ORDER BY displayOrder ASC")
+    fun getPublishedSections(): List<SectionEntity>
+
     @Query("SELECT * FROM sections WHERE id = :id AND deletedAt IS NULL")
     fun getSectionById(id: String): SectionEntity?
 

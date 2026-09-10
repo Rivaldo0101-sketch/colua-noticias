@@ -1,6 +1,7 @@
 package com.example.coluainformativa.repository
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
@@ -14,10 +15,12 @@ import com.example.coluainformativa.database.*
 import com.example.coluainformativa.security.AdminAuthManager
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.installations.FirebaseInstallations
 import java.util.*
@@ -96,46 +99,41 @@ class ColuaRepository(private val context: Context) {
         return try { Tasks.await(task, 2, TimeUnit.SECONDS) } catch (e: Exception) { null }
     }
 
+    private var activeConfigListener: ListenerRegistration? = null
+
+    fun unsubscribeAll() {
+        try {
+            activeConfigListener?.remove()
+            activeConfigListener = null
+        } catch (e: Exception) {
+            Log.e("REPO", "Error al desuscribir listeners: ${e.message}")
+        }
+    }
+
     private fun isCloudEnabled(): Boolean = authManager.isCloudSyncEnabled
 
-    // --- SECCIONES (ROBUSTO) ---
+    // --- SECCIONES (ROBUSTO Y LOCAL-FIRST PARA EVITAR DESTELLOS) ---
     fun getAllSections(): List<SectionEntity> {
         cleanupOrphanNavigationItems()
-        val local = localDb.sectionDao().getAllSections()
-        if (!isCloudEnabled()) return local
-        
-        try {
-            val task = firestore.collection("sections").orderBy("displayOrder").get()
-            val cloud = await(task)?.toObjects(SectionEntity::class.java)
-            if (cloud != null && cloud.isNotEmpty()) {
-                val map = linkedMapOf<String, SectionEntity>()
-                for (s in local) { map[s.id] = s }
-                for (s in cloud) { map[s.id] = s }
-                return map.values.sortedBy { it.displayOrder }
-            }
-        } catch (e: Exception) {
-            // Fallback to local
+        var local = localDb.sectionDao().getAllSections()
+        if (local.isEmpty()) {
+            DataSeeder.seedIfEmpty(context)
+            local = localDb.sectionDao().getAllSections()
         }
         return local
     }
 
     fun getVisibleSections(): List<SectionEntity> {
-        val local = localDb.sectionDao().getVisibleSections()
-        if (!isCloudEnabled()) return local
-
-        try {
-            val task = firestore.collection("sections").whereEqualTo("isVisible", true).orderBy("displayOrder").get()
-            val cloud = await(task)?.toObjects(SectionEntity::class.java)
-            if (cloud != null && cloud.isNotEmpty()) {
-                val map = linkedMapOf<String, SectionEntity>()
-                for (s in local) { map[s.id] = s }
-                for (s in cloud) { map[s.id] = s }
-                return map.values.filter { it.isVisible }.sortedBy { it.displayOrder }
-            }
-        } catch (e: Exception) {
-            // Fallback to local
+        var local = localDb.sectionDao().getPublishedSections()
+        if (local.isEmpty()) {
+            DataSeeder.seedIfEmpty(context)
+            local = localDb.sectionDao().getPublishedSections()
         }
         return local
+    }
+
+    fun getArchivedSections(): List<SectionEntity> {
+        return localDb.sectionDao().getDeletedSections()
     }
 
     fun insertSection(section: SectionEntity) {
@@ -144,12 +142,60 @@ class ColuaRepository(private val context: Context) {
         if (isCloudEnabled()) firestore.collection("sections").document(section.id).set(section)
     }
 
+    fun archiveSection(id: String) {
+        if ("sec_home".equals(id, ignoreCase = true)) {
+            Log.e("REPO", "No se permite archivar la pantalla de Inicio (sec_home).")
+            return
+        }
+        val section = localDb.sectionDao().getSectionById(id) ?: return
+        section.deletedAt = System.currentTimeMillis()
+        section.isVisible = false
+        section.isPublished = false
+        section.updatedAt = System.currentTimeMillis()
+        localDb.sectionDao().insert(section)
+        localDb.navigationDao().deleteByTargetSection(id)
+
+        context.getSharedPreferences("ConfigSyncPrefs", Context.MODE_PRIVATE)
+            .edit().putBoolean("has_unpublished_changes", true).apply()
+
+        if (isCloudEnabled()) {
+            firestore.collection("sections").document(id).set(section)
+            firestore.collection("navigation_items").whereEqualTo("targetSectionId", id).get().addOnSuccessListener { docs ->
+                docs.forEach { it.reference.delete() }
+            }
+        }
+    }
+
+    fun restoreArchivedSection(id: String) {
+        val section = localDb.sectionDao().getDeletedSections().firstOrNull { it.id == id } ?: return
+        section.deletedAt = null
+        section.isVisible = true
+        section.updatedAt = System.currentTimeMillis()
+        localDb.sectionDao().insert(section)
+
+        context.getSharedPreferences("ConfigSyncPrefs", Context.MODE_PRIVATE)
+            .edit().putBoolean("has_unpublished_changes", true).apply()
+
+        if (isCloudEnabled()) {
+            firestore.collection("sections").document(id).set(section)
+        }
+    }
+
     fun deleteSection(id: String) {
+        archiveSection(id)
+    }
+
+    fun purgeSectionPermanently(id: String) {
+        if ("sec_home".equals(id, ignoreCase = true)) return
         localDb.sectionDao().deleteById(id)
         localDb.navigationDao().deleteByTargetSection(id)
         localDb.navigationDao().deleteById("nav_$id")
         localDb.contentDao().deleteItemsBySection(id)
         localDb.contentDao().deleteBlocksBySection(id)
+
+        context.getSharedPreferences("ConfigSyncPrefs", Context.MODE_PRIVATE)
+            .edit().putBoolean("has_unpublished_changes", true).apply()
+
         if (isCloudEnabled()) {
             firestore.collection("sections").document(id).delete()
             firestore.collection("navigation_items").document("nav_$id").delete()
@@ -189,31 +235,40 @@ class ColuaRepository(private val context: Context) {
     }
 
     fun getItemsBySection(sectionId: String): List<ContentItemEntity> {
-        val resolvedId = resolveSectionId(sectionId)
-        val local = localDb.contentDao().getItemsBySection(resolvedId)
-        val fallbackLocal = if (local.isEmpty() && resolvedId != sectionId) localDb.contentDao().getItemsBySection(sectionId) else local
-        
-        if (!isCloudEnabled()) return if (local.isNotEmpty()) local else fallbackLocal
+        val cleanId = sectionId.lowercase(Locale.getDefault())
+        val altId = if (cleanId.startsWith("sec_")) cleanId.replace("sec_", "") else "sec_$cleanId"
 
-        val task = firestore.collection("content_items").whereEqualTo("sectionId", resolvedId).orderBy("displayOrder").get()
-        val docs = await(task)?.documents ?: return if (local.isNotEmpty()) local else fallbackLocal
-        val list = docs.mapNotNull { it.toObject(ContentItemEntity::class.java) }
-        return if (list.isNotEmpty()) list else (if (local.isNotEmpty()) local else fallbackLocal)
+        val local = localDb.contentDao().getItemsBySection(cleanId).toMutableList()
+        val altLocal = localDb.contentDao().getItemsBySection(altId)
+
+        for (item in altLocal) {
+            if (local.none { it.id == item.id }) {
+                local.add(item)
+            }
+        }
+
+        for (item in local) {
+            if (item.likesCount == 184 || item.likesCount == 183 || item.likesCount == 96 || item.likesCount == 112) {
+                item.likesCount = 0
+                item.sharesCount = 0
+                localDb.contentDao().insertItem(item)
+            }
+        }
+
+        if (local.isNotEmpty()) return local.sortedBy { it.displayOrder }
+
+        if (!isCloudEnabled()) return local
+        val task = firestore.collection("content_items").whereIn("sectionId", listOf(cleanId, altId)).get()
+        val cloud = await(task)?.toObjects(ContentItemEntity::class.java)
+        if (cloud != null && cloud.isNotEmpty()) {
+            cloud.forEach { localDb.contentDao().insertItem(it) }
+            return cloud.sortedBy { it.displayOrder }
+        }
+        return local
     }
 
     fun getPublishedItemsBySection(sectionId: String): List<ContentItemEntity> {
-        val resolvedId = resolveSectionId(sectionId)
-        val local = localDb.contentDao().getPublishedItemsBySection(resolvedId, System.currentTimeMillis())
-        val fallbackLocal = if (local.isEmpty() && resolvedId != sectionId) localDb.contentDao().getPublishedItemsBySection(sectionId, System.currentTimeMillis()) else local
-
-        if (!isCloudEnabled()) return if (local.isNotEmpty()) local else fallbackLocal
-
-        val task = firestore.collection("content_items").whereEqualTo("sectionId", resolvedId).whereEqualTo("isDraft", false).get()
-        val docs = await(task)?.documents ?: return if (local.isNotEmpty()) local else fallbackLocal
-        val list = docs.mapNotNull { it.toObject(ContentItemEntity::class.java) }
-        val now = System.currentTimeMillis()
-        val filtered = list.filter { it.isVisible && it.publicationDate <= now }.sortedBy { it.displayOrder }
-        return if (filtered.isNotEmpty()) filtered else (if (local.isNotEmpty()) local else fallbackLocal)
+        return getItemsBySection(sectionId).filter { !it.isDraft && it.isVisible }
     }
 
     fun getItemById(itemId: String): ContentItemEntity? {
@@ -235,13 +290,42 @@ class ColuaRepository(private val context: Context) {
         if (isCloudEnabled()) firestore.collection("content_items").document(itemId).delete()
     }
 
+    fun getAllItems(): List<ContentItemEntity> {
+        return localDb.contentDao().getAllItems()
+    }
+
+    fun getAllBlocks(): List<ContentBlockEntity> {
+        return localDb.contentDao().getAllBlocks()
+    }
+
     // --- BLOQUES ---
     fun getBlocksBySection(sectionId: String): List<ContentBlockEntity> {
-        val local = localDb.contentDao().getBlocksBySection(sectionId)
+        val cleanId = sectionId.lowercase(Locale.getDefault())
+        val altId = if (cleanId.startsWith("sec_")) cleanId.replace("sec_", "") else "sec_$cleanId"
+
+        val local = localDb.contentDao().getBlocksBySection(cleanId).toMutableList()
+        val altLocal = localDb.contentDao().getBlocksBySection(altId)
+
+        for (b in altLocal) {
+            if (local.none { it.id == b.id }) {
+                local.add(b)
+            }
+        }
+
+        if (local.isNotEmpty()) return local.sortedBy { it.displayOrder }
+
         if (!isCloudEnabled()) return local
-        val task = firestore.collection("content_blocks").whereEqualTo("sectionId", sectionId).orderBy("displayOrder").get()
+        val task = firestore.collection("content_blocks").whereIn("sectionId", listOf(cleanId, altId)).get()
         val cloud = await(task)?.toObjects(ContentBlockEntity::class.java)
-        return if (cloud != null && cloud.isNotEmpty()) cloud else local
+        if (cloud != null && cloud.isNotEmpty()) {
+            cloud.forEach { localDb.contentDao().insertBlock(it) }
+            return cloud.sortedBy { it.displayOrder }
+        }
+        return local
+    }
+
+    fun getPublishedBlocksBySection(sectionId: String): List<ContentBlockEntity> {
+        return getBlocksBySection(sectionId).filter { !it.isDraft && it.isVisible }
     }
 
     fun getBlocksByItem(itemId: String): List<ContentBlockEntity> {
@@ -258,16 +342,30 @@ class ColuaRepository(private val context: Context) {
         if (isCloudEnabled()) firestore.collection("content_blocks").document(block.id).set(block)
     }
 
+    fun getBlockById(blockId: String): ContentBlockEntity? {
+        return localDb.contentDao().getBlockById(blockId)
+    }
+
+    fun deleteBlockById(blockId: String) {
+        localDb.contentDao().deleteBlockById(blockId)
+        if (isCloudEnabled()) firestore.collection("content_blocks").document(blockId).delete()
+    }
+
     // --- AGENCIAS ---
     fun getAllAgencias(): List<AgenciaEntity> {
         val local = localDb.agenciaDao().getAllAgencias()
+        if (local.isNotEmpty()) return local.sortedBy { it.departamento }
         if (!isCloudEnabled()) return local
         val task = firestore.collection("agencias").get()
         val docs = await(task)?.documents ?: return local
         val list = docs.mapNotNull { doc ->
             doc.toObject(AgenciaEntity::class.java)?.apply { if (id.isEmpty()) id = doc.id }
         }
-        return if (list.isNotEmpty()) list.sortedBy { it.departamento } else local
+        if (list.isNotEmpty()) {
+            list.forEach { localDb.agenciaDao().insertAll(it) }
+            return list.sortedBy { it.departamento }
+        }
+        return local
     }
 
     fun getAgenciaById(id: String): AgenciaEntity? {
@@ -284,6 +382,47 @@ class ColuaRepository(private val context: Context) {
         }
     }
 
+    fun purgarAgenciasDuplicadas(callback: () -> Unit = {}) {
+        Thread {
+            try {
+                if (!isCloudEnabled()) {
+                    callback()
+                    return@Thread
+                }
+
+                val task = firestore.collection("agencias").get()
+                val snapshot = await(task) ?: return@Thread
+                val docs = snapshot.documents
+
+                val seen = HashSet<String>()
+                val toDelete = ArrayList<DocumentReference>()
+
+                for (doc in docs) {
+                    val nombre = doc.getString("nombre") ?: ""
+                    val depto = doc.getString("departamento") ?: ""
+                    val key = "${nombre.trim().lowercase(Locale.getDefault())}_${depto.trim().lowercase(Locale.getDefault())}"
+
+                    if (key.length > 1 && seen.contains(key)) {
+                        toDelete.add(doc.reference)
+                    } else if (key.length > 1) {
+                        seen.add(key)
+                    }
+                }
+
+                if (toDelete.isNotEmpty()) {
+                    Log.i("REPO", "Eliminando ${toDelete.size} agencias duplicadas en Firestore...")
+                    for (ref in toDelete) {
+                        ref.delete()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("REPO", "Error al purgar agencias duplicadas: ${e.message}")
+            } finally {
+                callback()
+            }
+        }.start()
+    }
+
     fun deleteAgencia(agencia: AgenciaEntity) {
         localDb.agenciaDao().delete(agencia)
         if (isCloudEnabled()) firestore.collection("agencias").document(agencia.id).delete()
@@ -291,44 +430,30 @@ class ColuaRepository(private val context: Context) {
 
     // --- NAVEGACIÓN (Navbar, Sidebar, BottomNav) ---
     fun getVisibleNavigation(type: String): List<NavigationItemEntity> {
-        val local = localDb.navigationDao().getVisibleItemsByType(type)
-        if (!isCloudEnabled()) return local
-        
-        val task = firestore.collection("navigation_items")
-            .whereEqualTo("type", type)
-            .whereEqualTo("isVisible", true)
-            .orderBy("displayOrder").get()
-        
-        val cloud = await(task)?.toObjects(NavigationItemEntity::class.java)
-        return if (cloud != null && cloud.isNotEmpty()) cloud else local
+        val publishedSectionIds = localDb.sectionDao().getPublishedSections().map { it.id }.toSet()
+        var local = localDb.navigationDao().getVisibleItemsByType(type)
+        if (local.isEmpty()) {
+            DataSeeder.seedIfEmpty(context)
+            local = localDb.navigationDao().getVisibleItemsByType(type)
+        }
+        return local.filter { item ->
+            !item.targetSectionId.startsWith("sec_") || publishedSectionIds.contains(item.targetSectionId)
+        }
     }
 
     fun getRobustSidebarItems(): List<NavigationItemEntity> {
-        val items = getVisibleNavigation("SIDE_MENU").toMutableList()
+        val publishedSectionIds = localDb.sectionDao().getPublishedSections().map { it.id }.toSet()
+        var items = localDb.navigationDao().getVisibleItemsByType("SIDEBAR").toMutableList()
         if (items.isEmpty()) {
-            items.addAll(getVisibleNavigation("SIDEBAR"))
+            items = localDb.navigationDao().getVisibleItemsByType("SIDE_MENU").toMutableList()
         }
-
-        if (items.size >= 6) return items
-
-        val completeList = listOf(
-            NavigationItemEntity("side_profile", "Mi Perfil", "ic_person", "activity_profile", "SIDE_MENU", 1),
-            NavigationItemEntity("side_creditos", "Créditos", "credito", "sec_creditos", "SIDE_MENU", 2),
-            NavigationItemEntity("side_seguros", "Seguros", "seguro", "sec_seguros", "SIDE_MENU", 3),
-            NavigationItemEntity("side_remesas", "Remesas", "remesa", "sec_remesas", "SIDE_MENU", 4),
-            NavigationItemEntity("side_ahorros", "Ahorros", "ahorros", "sec_ahorros", "SIDE_MENU", 5),
-            NavigationItemEntity("side_sostenibilidad", "Sostenibilidad Cooperativa", "sostenibilidad_cooperativa", "sec_sostenibilidad", "SIDE_MENU", 6),
-            NavigationItemEntity("side_admin", "Portal administrativo", "portal_administrativo", "dialog_admin", "SIDE_MENU", 7),
-            NavigationItemEntity("side_logout", "Cerrar", "cerrar", "action_logout", "SIDE_MENU", 8)
-        )
-
-        val existingIds = items.map { it.id }.toSet()
-        for (item in completeList) {
-            if (!existingIds.contains(item.id)) {
-                items.add(item)
-            }
+        if (items.isEmpty()) {
+            DataSeeder.seedIfEmpty(context, true)
+            items = localDb.navigationDao().getVisibleItemsByType("SIDEBAR").toMutableList()
         }
-        return items
+        return items.filter { item ->
+            !item.targetSectionId.startsWith("sec_") || publishedSectionIds.contains(item.targetSectionId)
+        }.sortedBy { it.displayOrder }
     }
 
     fun insertNavigationItem(item: NavigationItemEntity) {
@@ -374,7 +499,7 @@ class ColuaRepository(private val context: Context) {
             }
             val newNum = lastNum + 1L
             transaction.set(counterRef, hashMapOf("lastAssignedNumber" to newNum), SetOptions.merge())
-            String.format(Locale.getDefault(), "user%07d", newNum)
+            String.format(Locale.getDefault(), "%07d", newNum)
         }.addOnSuccessListener { userId ->
             Log.i("FIRESTORE_COUNTER", "Generated ascending associate userId: $userId")
             callback(userId)
@@ -396,13 +521,13 @@ class ColuaRepository(private val context: Context) {
             }
             val newNum = lastNum - 1L
             transaction.set(counterRef, hashMapOf("lastAssignedGuestNumber" to newNum), SetOptions.merge())
-            String.format(Locale.getDefault(), "user%07d", newNum)
+            String.format(Locale.getDefault(), "%07d", newNum)
         }.addOnSuccessListener { guestId ->
             Log.i("FIRESTORE_COUNTER", "Generated descending guest userId: $guestId")
             callback(guestId)
         }.addOnFailureListener { e ->
             Log.e("FIRESTORE_COUNTER", "Error getting guest id: ${e.message}", e)
-            callback("user9999999")
+            callback("9999999")
         }
     }
 
@@ -469,7 +594,7 @@ class ColuaRepository(private val context: Context) {
             return
         }
 
-        val targetUserId = if (userId.isNotEmpty()) userId else "user0000000"
+        val targetUserId = if (userId.isNotEmpty()) userId.removePrefix("user") else "0000000"
         val formattedDpi = formatDpi(rawDpi)
         val normalizedDpi = normalizeDpi(rawDpi)
         val cleanPhone = formatPhone(telefono)
@@ -538,7 +663,7 @@ class ColuaRepository(private val context: Context) {
                             }
                         }
                     }, { e ->
-                        val fallbackGuest = "user9999999"
+                        val fallbackGuest = "9999999"
                         saveLocalUser(fallbackGuest, "", "Invitado", "", "GUEST")
                         callback(true, fallbackGuest, null)
                     })
@@ -567,7 +692,8 @@ class ColuaRepository(private val context: Context) {
                             if (querySnapshot != null && !querySnapshot.isEmpty) {
                                 val existingDoc = querySnapshot.documents[0]
                                 val existingUserId = existingDoc.getString("userId") ?: existingDoc.id
-                                updateExistingUser(existingUserId, nombre, telefono, rawDpi, normalizedDpi, installId, callback)
+                                val cleanExistingUserId = existingUserId.removePrefix("user")
+                                updateExistingUser(cleanExistingUserId, nombre, telefono, rawDpi, normalizedDpi, installId, callback)
                             } else {
                                 allocateNewUserAndSave("ASOCIADO", nombre, formatDpi(rawDpi), normalizedDpi, formatPhone(telefono), "+502" + formatPhone(telefono), installId, callback)
                             }
@@ -589,12 +715,13 @@ class ColuaRepository(private val context: Context) {
     }
 
     private fun updateExistingUser(userId: String, nombre: String, telefono: String, rawDpi: String, normalizedDpi: String, installId: String, callback: (Boolean, String, String?) -> Unit) {
+        val cleanUserId = userId.removePrefix("user")
         val formattedDpi = formatDpi(rawDpi)
         val cleanPhone = formatPhone(telefono)
         val telefonoCompleto = "+502$cleanPhone"
 
         val updateData = linkedMapOf<String, Any>(
-            "userId" to userId,
+            "userId" to cleanUserId,
             "tipoUsuario" to "ASOCIADO",
             "dpi" to formattedDpi,
             "dpiNormalizado" to normalizedDpi,
@@ -605,17 +732,17 @@ class ColuaRepository(private val context: Context) {
             "estadoCuenta" to "ACTIVA",
             "schemaVersion" to 2
         )
-        updateDeviceAndSession(userId, cleanPhone, formattedDpi, nombre, "MEMBER", installId)
+        updateDeviceAndSession(cleanUserId, cleanPhone, formattedDpi, nombre, "MEMBER", installId)
 
-        firestore.collection("usuarios").document(userId)
+        firestore.collection("usuarios").document(cleanUserId)
             .set(updateData, SetOptions.merge())
             .addOnSuccessListener {
-                Log.i("FIRESTORE_REG", "Usuario existente actualizado (fechaRegistro conservada): $userId")
-                callback(true, userId, null)
+                Log.i("FIRESTORE_REG", "Usuario existente actualizado (fechaRegistro conservada): $cleanUserId")
+                callback(true, cleanUserId, null)
             }
             .addOnFailureListener { e ->
                 Log.e("FIRESTORE_REG", "Error actualizando usuario existente: ${e.message}")
-                callback(true, userId, null)
+                callback(true, cleanUserId, null)
             }
     }
 
@@ -646,12 +773,14 @@ class ColuaRepository(private val context: Context) {
             val formattedId = pair.second
 
             val userData = linkedMapOf<String, Any>(
+                "userId" to formattedId,
                 "idNumerico" to idNumerico,
                 "tipoUsuario" to tipoUsuario,
                 "estado" to "ACTIVO",
                 "installationId" to installId,
                 "fechaRegistro" to FieldValue.serverTimestamp(),
-                "ultimaActividad" to FieldValue.serverTimestamp()
+                "ultimaActividad" to FieldValue.serverTimestamp(),
+                "schemaVersion" to 2
             )
             if (nombre != null) userData["nombre"] = nombre
             if (dpi != null) userData["dpi"] = dpi
@@ -664,20 +793,8 @@ class ColuaRepository(private val context: Context) {
             firestore.collection("usuarios").document(formattedId)
                 .set(userData, SetOptions.merge())
                 .addOnSuccessListener {
-                    Log.i("REG", "Nuevo usuario creado con ID formateado: $formattedId para installId: $installId")
-                    val deviceData = hashMapOf<String, Any>(
-                        "installationId" to installId,
-                        "modeloDispositivo" to Build.MODEL,
-                        "fabricante" to Build.MANUFACTURER,
-                        "tipoUsuarioSesion" to tipoUsuario,
-                        "primeraActividad" to FieldValue.serverTimestamp(),
-                        "ultimaActividad" to FieldValue.serverTimestamp(),
-                        "activo" to true
-                    )
-                    firestore.collection("usuarios").document(formattedId)
-                        .collection("dispositivos").document(installId)
-                        .set(deviceData, SetOptions.merge())
-
+                    Log.i("REG", "Nuevo usuario creado con ID numerico: $formattedId para installId: $installId")
+                    upsertDeviceSubcollection(formattedId, tipoUsuario, installId)
                     callback(true, formattedId, null)
                 }
                 .addOnFailureListener { e ->
@@ -718,32 +835,14 @@ class ColuaRepository(private val context: Context) {
     }
 
     fun purgarUsuariosDuplicados() {
-        if (!isCloudEnabled()) return
-        try {
-            firestore.collection("usuarios").get().addOnSuccessListener { query ->
-                val docs = query.documents.sortedBy { it.getString("fechaRegistro").toString() }
-                if (docs.size > 1) {
-                    val primaryDoc = docs[0]
-                    val primaryId = primaryDoc.id
-                    for (i in 1 until docs.size) {
-                        val duplicateDoc = docs[i]
-                        val duplicateId = duplicateDoc.id
-                        if (duplicateId != primaryId) {
-                            Log.i("REPO", "Purgando usuario duplicado: $duplicateId")
-                            firestore.collection("usuarios").document(duplicateId).delete()
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("REPO", "Error purgando duplicados: ${e.message}")
-        }
+        Log.i("REPO", "purgarUsuariosDuplicados omitido para proteger usuarios reales de Firestore.")
     }
 
     private fun saveLocalUser(userId: String, dpi: String, name: String, phone: String, role: String) {
         val pref = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+        val cleanUserId = userId.removePrefix("user")
         pref.edit()
-            .putString("user_id", userId)
+            .putString("user_id", cleanUserId)
             .putString("user_dpi", dpi)
             .putString("user_name", name)
             .putString("user_phone", phone)
@@ -751,7 +850,7 @@ class ColuaRepository(private val context: Context) {
             .apply()
 
         Thread {
-            val localUser = UserEntity(userId, dpi, name, phone, role)
+            val localUser = UserEntity(cleanUserId, dpi, name, phone, role)
             localDb.userDao().insert(localUser)
         }.start()
     }
@@ -760,51 +859,154 @@ class ColuaRepository(private val context: Context) {
     fun actualizarUltimaActividad(context: Activity? = null, idUsuario: String? = null) {
         val pref = context?.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
             ?: this.context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
-        val userId = idUsuario ?: pref.getString("user_id", "") ?: ""
-        if (userId.isEmpty()) return
+        val rawUserId = idUsuario ?: pref.getString("user_id", "") ?: ""
+        if (rawUserId.isEmpty()) return
+        val userId = rawUserId.removePrefix("user")
 
         if (!isCloudEnabled()) return
 
         ensureFirebaseAuth {
             val userDocRef = firestore.collection("usuarios").document(userId)
             userDocRef.get().addOnSuccessListener { snapshot ->
-                if (!snapshot.exists()) {
-                    Log.e("REPO", "CRITICAL: Documento de usuario $userId fue eliminado en la base de datos.")
-                    pref.edit().clear().apply()
-                    if (context != null) {
-                        context.runOnUiThread {
-                            AlertDialog.Builder(context)
-                                .setTitle("Error con la Base de Datos")
-                                .setMessage("El registro de usuario ya no existe en la base de datos.\n\nPor favor, ingrese de nuevo o regístrese para obtener un nuevo ID.")
-                                .setCancelable(false)
-                                .setPositiveButton("Ingresar / Registrarse") { _, _ ->
-                                    val intent = Intent(context, LoginActivity::class.java).apply {
-                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                                    }
-                                    context.startActivity(intent)
-                                    context.finish()
-                                }
-                                .show()
-                        }
-                    }
+                if (snapshot.exists()) {
+                    pref.edit().putString("user_id", userId).apply()
+                    performActivityUpdate(userDocRef, userId, pref)
                     return@addOnSuccessListener
                 }
 
-                userDocRef.update("ultimaActividad", FieldValue.serverTimestamp())
-                    .addOnFailureListener {
-                        userDocRef.set(hashMapOf("ultimaActividad" to FieldValue.serverTimestamp()), SetOptions.merge())
-                    }
+                Log.w("REPO", "Documento numerico $userId no encontrado directamente. Buscando formato alternativo user$userId...")
 
-                getInstallationId { installId ->
-                    val deviceUpdate = hashMapOf<String, Any>(
-                        "installationId" to installId,
-                        "ultimaActividad" to FieldValue.serverTimestamp(),
-                        "estado" to "ACTIVO"
-                    )
-                    userDocRef.collection("dispositivos").document(installId).set(deviceUpdate, SetOptions.merge())
+                val altId = "user$userId"
+
+                firestore.collection("usuarios").document(altId).get().addOnSuccessListener { altSnapshot ->
+                    if (altSnapshot.exists()) {
+                        Log.i("REPO", "Documento encontrado con ID alternativo: $altId. Normalizando sesion a numeric ID...")
+                        pref.edit().putString("user_id", userId).apply()
+                        val altDocRef = firestore.collection("usuarios").document(altId)
+                        performActivityUpdate(altDocRef, userId, pref)
+                    } else {
+                        val userDpi = pref.getString("user_dpi", "") ?: ""
+                        val normalizedDpi = normalizeDpi(userDpi)
+
+                        firestore.collection("usuarios").whereEqualTo("userId", userId).get().addOnSuccessListener { qSnap ->
+                            if (qSnap != null && !qSnap.isEmpty) {
+                                val foundDoc = qSnap.documents[0]
+                                val foundId = foundDoc.id.removePrefix("user")
+                                Log.i("REPO", "Documento encontrado via campo userId: $foundId")
+                                pref.edit().putString("user_id", foundId).apply()
+                                performActivityUpdate(foundDoc.reference, foundId, pref)
+                            } else if (normalizedDpi.isNotEmpty()) {
+                                firestore.collection("usuarios").whereEqualTo("dpiNormalizado", normalizedDpi).get().addOnSuccessListener { dpiSnap ->
+                                    if (dpiSnap != null && !dpiSnap.isEmpty) {
+                                        val foundDoc = dpiSnap.documents[0]
+                                        val foundId = foundDoc.id.removePrefix("user")
+                                        Log.i("REPO", "Documento encontrado via dpiNormalizado: $foundId")
+                                        pref.edit().putString("user_id", foundId).apply()
+                                        performActivityUpdate(foundDoc.reference, foundId, pref)
+                                    } else {
+                                        restoreOrCreateMissingUserDocument(userId, context, pref)
+                                    }
+                                }.addOnFailureListener {
+                                    restoreOrCreateMissingUserDocument(userId, context, pref)
+                                }
+                            } else {
+                                restoreOrCreateMissingUserDocument(userId, context, pref)
+                            }
+                        }.addOnFailureListener {
+                            restoreOrCreateMissingUserDocument(userId, context, pref)
+                        }
+                    }
+                }.addOnFailureListener {
+                    restoreOrCreateMissingUserDocument(userId, context, pref)
                 }
             }.addOnFailureListener {
                 // Offline fallback
+            }
+        }
+    }
+
+    private fun performActivityUpdate(docRef: DocumentReference, activeUserId: String, pref: SharedPreferences) {
+        docRef.update("ultimaActividad", FieldValue.serverTimestamp())
+            .addOnFailureListener {
+                docRef.set(hashMapOf("ultimaActividad" to FieldValue.serverTimestamp()), SetOptions.merge())
+            }
+
+        getInstallationId { installId ->
+            val deviceUpdate = hashMapOf<String, Any>(
+                "installationId" to installId,
+                "ultimaActividad" to FieldValue.serverTimestamp(),
+                "estado" to "ACTIVO"
+            )
+            docRef.collection("dispositivos").document(installId).set(deviceUpdate, SetOptions.merge())
+        }
+    }
+
+    private fun restoreOrCreateMissingUserDocument(userId: String, context: Activity?, pref: SharedPreferences) {
+        val cleanUserId = userId.removePrefix("user")
+        val userName = pref.getString("user_name", "") ?: ""
+        val userDpi = pref.getString("user_dpi", "") ?: ""
+        val userPhone = pref.getString("user_phone", "") ?: ""
+        val userRole = pref.getString("user_role", "MEMBER") ?: "MEMBER"
+
+        if (userName.isNotEmpty() && userName != "Invitado") {
+            Log.i("REPO", "Restaurando documento de usuario $cleanUserId en Firestore con datos locales...")
+            val formattedDpi = formatDpi(userDpi)
+            val normalizedDpi = normalizeDpi(userDpi)
+            val cleanPhone = formatPhone(userPhone)
+
+            val userData = linkedMapOf<String, Any>(
+                "userId" to cleanUserId,
+                "nombre" to userName,
+                "dpi" to formattedDpi,
+                "dpiNormalizado" to normalizedDpi,
+                "telefono" to cleanPhone,
+                "telefonoCompleto" to "+502$cleanPhone",
+                "tipoUsuario" to if ("GUEST".equals(userRole, ignoreCase = true)) "INVITADO" else "ASOCIADO",
+                "estado" to "ACTIVO",
+                "fechaRegistro" to FieldValue.serverTimestamp(),
+                "ultimaActividad" to FieldValue.serverTimestamp(),
+                "schemaVersion" to 2
+            )
+
+            pref.edit().putString("user_id", cleanUserId).apply()
+            val targetRef = firestore.collection("usuarios").document(cleanUserId)
+            targetRef.set(userData, SetOptions.merge()).addOnSuccessListener {
+                performActivityUpdate(targetRef, cleanUserId, pref)
+            }
+        } else if ("GUEST".equals(userRole, ignoreCase = true) || userName == "Invitado") {
+            Log.i("REPO", "Restaurando usuario invitado $cleanUserId en Firestore...")
+            val userData = linkedMapOf<String, Any>(
+                "userId" to cleanUserId,
+                "nombre" to "Invitado",
+                "tipoUsuario" to "INVITADO",
+                "estado" to "ACTIVO",
+                "fechaRegistro" to FieldValue.serverTimestamp(),
+                "ultimaActividad" to FieldValue.serverTimestamp(),
+                "schemaVersion" to 2
+            )
+            pref.edit().putString("user_id", cleanUserId).apply()
+            val targetRef = firestore.collection("usuarios").document(cleanUserId)
+            targetRef.set(userData, SetOptions.merge()).addOnSuccessListener {
+                performActivityUpdate(targetRef, cleanUserId, pref)
+            }
+        } else {
+            Log.e("REPO", "Documento $cleanUserId no existe y no hay datos locales para restaurar.")
+            pref.edit().clear().apply()
+            if (context != null && !context.isFinishing) {
+                context.runOnUiThread {
+                    AlertDialog.Builder(context)
+                        .setTitle("Error con la Base de Datos")
+                        .setMessage("El registro de usuario ya no existe en la base de datos.\n\nPor favor, ingrese de nuevo o regístrese para obtener un nuevo ID.")
+                        .setCancelable(false)
+                        .setPositiveButton("Ingresar / Registrarse") { _, _ ->
+                            val intent = Intent(context, LoginActivity::class.java).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            }
+                            context.startActivity(intent)
+                            context.finish()
+                        }
+                        .show()
+                }
             }
         }
     }
@@ -822,93 +1024,24 @@ class ColuaRepository(private val context: Context) {
                 return@addOnSuccessListener
             }
 
-            val dpiMap = HashMap<String, MutableList<DocumentSnapshot>>()
             val legacyDocsToClean = mutableListOf<String>()
 
             for (doc in documents) {
                 val id = doc.id
-                if (id.startsWith("mock_user_")) {
+                if (id.startsWith("mock_user_") || id.startsWith("test_user_")) {
                     legacyDocsToClean.add(id)
-                    continue
-                }
-
-                if (id.matches(Regex("user\\d{7}"))) {
-                    continue
-                }
-
-                legacyDocsToClean.add(id)
-                val data = doc.data
-                val dpi = data?.get("dpi")?.toString() ?: id
-                val normalized = normalizeDpi(dpi)
-                if (normalized.isNotEmpty()) {
-                    val list = dpiMap.getOrPut(normalized) { mutableListOf() }
-                    list.add(doc)
                 }
             }
 
-            processNextMigrationGroup(dpiMap.entries.iterator(), legacyDocsToClean, callback)
+            if (legacyDocsToClean.isNotEmpty()) {
+                for (legacyId in legacyDocsToClean) {
+                    firestore.collection("usuarios").document(legacyId).delete()
+                }
+            }
+            callback?.invoke()
         }.addOnFailureListener {
             callback?.invoke()
         }
-    }
-
-    private fun processNextMigrationGroup(
-        iterator: MutableIterator<MutableMap.MutableEntry<String, MutableList<DocumentSnapshot>>>,
-        legacyDocsToClean: MutableList<String>,
-        callback: (() -> Unit)?
-    ) {
-        if (!iterator.hasNext()) {
-            for (legacyId in legacyDocsToClean) {
-                firestore.collection("usuarios").document(legacyId).delete()
-            }
-            callback?.invoke()
-            return
-        }
-
-        val entry = iterator.next()
-        val docs = entry.value
-        val sampleData = docs[0].data ?: emptyMap<String, Any>()
-        val nombre = sampleData["nombre"]?.toString() ?: "Usuario"
-        val telefono = sampleData["telefono"]?.toString() ?: ""
-        val dpi = sampleData["dpi"]?.toString() ?: ""
-        val normalizedDpi = entry.key
-
-        getNextUserId({ userId ->
-            val userData = hashMapOf<String, Any>(
-                "userId" to userId,
-                "nombre" to nombre,
-                "telefono" to telefono,
-                "dpi" to dpi,
-                "dpiNormalizado" to normalizedDpi,
-                "tipoUsuario" to (sampleData["tipoUsuario"] ?: "ASOCIADO"),
-                "estado" to "ACTIVO",
-                "fechaRegistro" to (sampleData["fechaRegistro"] ?: FieldValue.serverTimestamp()),
-                "ultimaActividad" to FieldValue.serverTimestamp()
-            )
-
-            firestore.collection("usuarios").document(userId).set(userData).addOnSuccessListener {
-                for (doc in docs) {
-                    val data = doc.data ?: continue
-                    val installId = data["installationId"]?.toString() ?: doc.id
-                    val deviceData = hashMapOf<String, Any>(
-                        "installationId" to installId,
-                        "modeloDispositivo" to (data["modeloDispositivo"]?.toString() ?: Build.MODEL),
-                        "fabricante" to (data["fabricanteDispositivo"]?.toString() ?: Build.MANUFACTURER),
-                        "primeraActividad" to (data["fechaRegistro"] ?: FieldValue.serverTimestamp()),
-                        "ultimaActividad" to (data["ultimaActividad"] ?: FieldValue.serverTimestamp()),
-                        "activo" to true
-                    )
-                    firestore.collection("usuarios").document(userId)
-                        .collection("dispositivos").document(installId)
-                        .set(deviceData, SetOptions.merge())
-                }
-                processNextMigrationGroup(iterator, legacyDocsToClean, callback)
-            }.addOnFailureListener {
-                processNextMigrationGroup(iterator, legacyDocsToClean, callback)
-            }
-        }, { e ->
-            processNextMigrationGroup(iterator, legacyDocsToClean, callback)
-        })
     }
 
     fun purgarUsuariosDuplicadosYPrueba(callback: (() -> Unit)? = null) {
@@ -923,7 +1056,7 @@ class ColuaRepository(private val context: Context) {
                     val list = ArrayList<Map<String, Any>>()
                     for (doc in query.documents) {
                         val id = doc.id
-                        if (id.startsWith("mock_user_") || !id.matches(Regex("user\\d{7}"))) continue
+                        if (id.startsWith("mock_user_") || id.startsWith("test_user_")) continue
                         val data = doc.data ?: continue
                         list.add(data)
                     }
@@ -1011,6 +1144,7 @@ class ColuaRepository(private val context: Context) {
             try {
                 val sections = localDb.sectionDao().getAllSections()
                 val items = localDb.contentDao().getAllItems()
+                val blocks = localDb.contentDao().getAllBlocks()
                 val navigation = localDb.navigationDao().getAllItems()
                 val configs = localDb.globalConfigDao().getAllConfigs()
 
@@ -1061,6 +1195,11 @@ class ColuaRepository(private val context: Context) {
                     it.updatedAt = timestamp
                     localDb.contentDao().insertItem(it)
                 }
+                blocks.forEach {
+                    it.isDraft = false
+                    it.updatedAt = timestamp
+                    localDb.contentDao().insertBlock(it)
+                }
 
                 // 4. Construir payload completo para Firestore
                 val payload = hashMapOf(
@@ -1069,6 +1208,7 @@ class ColuaRepository(private val context: Context) {
                     "updatedBy" to "Admin_Device_${Build.MODEL}",
                     "sectionsCount" to sections.size,
                     "itemsCount" to items.size,
+                    "blocksCount" to blocks.size,
                     "isPublished" to true
                 )
 
@@ -1078,8 +1218,11 @@ class ColuaRepository(private val context: Context) {
                 // Publicar cada entidad a Firestore
                 sections.forEach { firestore.collection("sections").document(it.id).set(it) }
                 items.forEach { firestore.collection("content_items").document(it.id).set(it) }
+                blocks.forEach { firestore.collection("content_blocks").document(it.id).set(it) }
                 navigation.forEach { firestore.collection("navigation_items").document(it.id).set(it) }
                 configs.forEach { firestore.collection("global_config").document(it.key).set(hashMapOf("value" to it.value)) }
+
+                Log.d("COLUA_CMS", "Published version $newVersion with ${sections.size} sections, ${items.size} items, ${blocks.size} blocks")
 
                 // 5. Guardar versión e info localmente
                 pref.edit()
@@ -1274,12 +1417,11 @@ class ColuaRepository(private val context: Context) {
             docs.forEach { it.reference.delete() }
         }
 
-        // 2. Limpiar documentos fantasma y registros antiguos en 'usuarios'
+        // 2. Limpiar únicamente registros de prueba mock_user_ o test_user_ en 'usuarios'
         firestore.collection("usuarios").get().addOnSuccessListener { docs ->
             docs.forEach { doc ->
                 val id = doc.id
-                // Borrar si es un ID de instalación antiguo de la versión previa (sin guion bajo) o si es un usuario mock
-                if (!id.contains("_") || id.startsWith("mock_user_")) {
+                if (id.startsWith("mock_user_") || id.startsWith("test_user_")) {
                     doc.reference.delete()
                 }
             }
