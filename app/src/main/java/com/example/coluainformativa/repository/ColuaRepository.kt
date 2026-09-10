@@ -679,7 +679,7 @@ class ColuaRepository(private val context: Context) {
                     val telefonoCompleto = "+502$cleanPhone"
 
                     if (!isCloudEnabled()) {
-                        val fallbackId = "0000000"
+                        val fallbackId = "user0000000"
                         saveLocalUser(fallbackId, formattedDpi, nombre, cleanPhone, "MEMBER")
                         callback(true, fallbackId, null)
                         return@getInstallationId
@@ -700,14 +700,14 @@ class ColuaRepository(private val context: Context) {
                         }
                         .addOnFailureListener { e ->
                             Log.w("FIRESTORE_REG", "Fallo consulta DPI en nube (creando local): ${e.message}")
-                            val fallbackId = "0000000"
+                            val fallbackId = "user0000000"
                             saveLocalUser(fallbackId, formattedDpi, nombre, cleanPhone, "MEMBER")
                             callback(true, fallbackId, null)
                         }
                 }
             } catch (e: Exception) {
                 Log.w("FIRESTORE_REG", "Excepción en registro: ${e.message}")
-                val fallbackId = if (esInvitado) "guest_local" else "0000000"
+                val fallbackId = if (esInvitado) "guest_local" else "user0000000"
                 saveLocalUser(fallbackId, rawDpi, nombre, telefono, if (esInvitado) "GUEST" else "MEMBER")
                 callback(true, fallbackId, null)
             }
@@ -766,7 +766,7 @@ class ColuaRepository(private val context: Context) {
             val newNum = lastNum + 1L
             transaction.set(counterRef, hashMapOf("lastAssignedNumber" to newNum), SetOptions.merge())
             
-            val formattedId = String.format(Locale.getDefault(), "%07d", newNum)
+            val formattedId = String.format(Locale.getDefault(), "user%07d", newNum)
             Pair(newNum, formattedId)
         }.addOnSuccessListener { pair ->
             val idNumerico = pair.first
