@@ -1,5 +1,6 @@
 package com.example.coluainformativa;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -26,24 +27,13 @@ public class SectionEditorActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_section_editor);
-
-        repository = new ColuaRepository(this);
-        sectionId = getIntent().getStringExtra(EXTRA_SECTION_ID);
-
-        etTitle = findViewById(R.id.et_section_title);
-        etDesc = findViewById(R.id.et_section_desc);
-        switchPublished = findViewById(R.id.switch_published);
-        switchVisible = findViewById(R.id.switch_visible_nav);
-
-        findViewById(R.id.btn_back_section_edit).setOnClickListener(v -> finish());
-        findViewById(R.id.btn_save_section).setOnClickListener(v -> saveSection());
-
-        if (sectionId != null) {
-            loadSection();
-        } else {
-            section = new SectionEntity(UUID.randomUUID().toString(), "", "", "", "ic_custom", "#173789", 0, true);
+        // Redirigir el editor legacy de secciones al editor unificado del Portal Administrativo
+        Intent intent = new Intent(this, AdminSectionEditActivity.class);
+        if (getIntent().hasExtra(EXTRA_SECTION_ID)) {
+            intent.putExtra(AdminSectionEditActivity.EXTRA_SECTION_ID, getIntent().getStringExtra(EXTRA_SECTION_ID));
         }
+        startActivity(intent);
+        finish();
     }
 
     private void loadSection() {

@@ -4,33 +4,42 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:background="#F8FAFC">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/colua_navy">
+
         <androidx.appcompat.widget.Toolbar
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:contentInsetStart="0dp">
+
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
+
                 <ImageView
                     android:id="@+id/btn_back_content_list"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
+                    android:layout_alignParentStart="true"
                     android:layout_centerVertical="true"
                     android:padding="12dp"
                     android:src="@android:drawable/ic_menu_revert"
                     app:tint="@color/white" />
-                <ImageView
+
+                <TextView
                     android:layout_width="wrap_content"
-                    android:layout_height="32dp"
+                    android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
-                    android:src="@android:drawable/ic_menu_gallery"
-                    android:adjustViewBounds="true" />
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Editor Visual Canvas CMS"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
             </RelativeLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
@@ -44,90 +53,316 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingHorizontal="16dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="160dp">
 
-            <TextView
-                android:id="@+id/tv_admin_section_title"
+            <!-- Card Perfil Emisor (Solo visible para Noticias) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_admin_issuer_profile"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Gestionar Contenido"
-                android:textColor="@color/colua_navy"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:fontFamily="@font/poppins_regular"
-                android:layout_marginBottom="8dp" />
+                android:layout_marginBottom="12dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/white"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#E2E8F0">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_edit_section_properties"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:text="Editar Propiedades de Pantalla (Nombre, Ubicación, Color)"
-                android:textSize="12sp"
-                android:textColor="@color/colua_navy"
-                app:strokeColor="@color/colua_navy" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/til_search_admin"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:hintEnabled="false"
-                app:startIconDrawable="@drawable/ic_search"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_search_admin"
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Buscar actividad..."
-                    android:textSize="14sp"
-                    android:paddingVertical="12dp" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:padding="14dp">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cv_admin_issuer_logo"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        app:cardCornerRadius="22dp"
+                        app:strokeWidth="1dp"
+                        app:strokeColor="@color/colua_navy">
+
+                        <ImageView
+                            android:id="@+id/iv_admin_issuer_avatar"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/distintivo_colua" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="12dp"
+                        android:layout_toEndOf="@id/cv_admin_issuer_logo"
+                        android:layout_toStartOf="@id/btn_edit_admin_issuer_profile"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="PERFIL EMISOR"
+                            android:textColor="#64748B"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_admin_issuer_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:fontFamily="@font/poppins_regular"
+                            android:maxLines="1"
+                            android:text="Cooperativa COLUA"
+                            android:textColor="@color/black"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_admin_issuer_role"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:fontFamily="@font/poppins_regular"
+                            android:maxLines="1"
+                            android:text="Publicando como cuenta oficial"
+                            android:textColor="@color/text_grey"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_edit_admin_issuer_profile"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:fontFamily="@font/poppins_regular"
+                        android:paddingHorizontal="12dp"
+                        android:text="Editar"
+                        android:textColor="@color/colua_navy"
+                        android:textSize="11sp"
+                        app:cornerRadius="8dp"
+                        app:icon="@drawable/editar"
+                        app:iconSize="14dp"
+                        app:strokeColor="@color/colua_navy" />
+
+                </RelativeLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Card Superior: Selector de Pantalla + Controles de Publicación/Borrador/Preview -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/white"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#E2E8F0">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="Pantalla en edición"
+                        android:textColor="#334155"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <!-- Spinner Selector de Pantalla con caja de selección bordeadas de 10dp -->
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_outlined_spinner"
+                        android:paddingHorizontal="4dp">
+
+                        <Spinner
+                            android:id="@+id/spinner_canvas_screen"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:paddingHorizontal="12dp"
+                            android:spinnerMode="dropdown" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tv_admin_section_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="Canvas de Inicio"
+                        android:textColor="@color/colua_navy"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <!-- Botones de Acción de Canvas: Guardar Borrador | Vista Previa | Publicar -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_save_draft_canvas"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="42dp"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/poppins_regular"
+                            android:paddingHorizontal="2dp"
+                            android:text="Borrador"
+                            android:textColor="@color/colua_navy"
+                            android:textSize="11sp"
+                            app:cornerRadius="8dp"
+                            app:strokeColor="@color/colua_navy" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_preview_canvas"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="42dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1.1"
+                            android:fontFamily="@font/poppins_regular"
+                            android:paddingHorizontal="2dp"
+                            android:text="Vista previa"
+                            android:textColor="@color/colua_navy"
+                            android:textSize="11sp"
+                            app:cornerRadius="8dp"
+                            app:strokeColor="@color/colua_navy" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_publish_canvas"
+                            style="@style/Widget.Material3.Button.UnelevatedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="42dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/poppins_regular"
+                            android:paddingHorizontal="2dp"
+                            android:text="Publicar"
+                            android:textColor="@color/white"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="@color/colua_navy"
+                            app:cornerRadius="8dp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Buscador y Filtro Opcional -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/til_search_admin"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:hintEnabled="false"
+                    app:startIconDrawable="@drawable/ic_search">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_search_admin"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_regular"
+                        android:hint="Buscar bloque en canvas..."
+                        android:paddingVertical="10dp"
+                        android:textSize="13sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_edit_section_properties"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="8dp"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Propiedades"
+                    android:textColor="@color/colua_navy"
+                    android:textSize="11sp"
+                    app:cornerRadius="8dp"
+                    app:strokeColor="@color/colua_navy" />
+            </LinearLayout>
 
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="8dp"
                 android:scrollbars="none">
+
                 <com.google.android.material.chip.ChipGroup
                     android:id="@+id/cg_filters_admin"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:singleSelection="true"
-                    app:selectionRequired="true">
+                    app:selectionRequired="true"
+                    app:singleSelection="true">
+
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chip_filter_all"
                         style="@style/Widget.Material3.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Todos"
-                        android:checked="true" />
+                        android:checked="true"
+                        android:text="Todos los bloques" />
+
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chip_filter_credits"
                         style="@style/Widget.Material3.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Créditos" />
+                        android:text="Tarjetas de Productos" />
+
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chip_filter_savings"
                         style="@style/Widget.Material3.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Ahorros" />
+                        android:text="Encabezados &amp; Texto" />
+
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chip_filter_digital"
                         style="@style/Widget.Material3.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Digital" />
+                        android:text="Botones &amp; Enlaces" />
                 </com.google.android.material.chip.ChipGroup>
             </HorizontalScrollView>
 
+            <!-- Título del Canvas -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:fontFamily="@font/poppins_regular"
+                android:text="Canvas Visual de Contenido"
+                android:textColor="@color/colua_navy"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <!-- Lista / Canvas de Bloques Reordenables -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_admin_items"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="8dp"
                 android:nestedScrollingEnabled="false" />
 
             <ProgressBar
@@ -142,14 +377,14 @@
                 android:id="@+id/tv_admin_empty"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:background="#F8FAFC"
+                android:layout_marginTop="16dp"
+                android:background="#FFFFFF"
                 android:fontFamily="@font/poppins_regular"
                 android:gravity="center"
                 android:padding="24dp"
-                android:text="Esta pantalla aún no tiene contenido.\n\nToca el botón '+' abajo para agregar tarjetas, texto, imágenes o botones."
+                android:text="Esta pantalla aún no tiene bloques internos.\n\nToca '+ Agregar Elemento' abajo para diseñar tarjetas, títulos, imágenes o botones."
                 android:textColor="@color/text_grey"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:visibility="gone" />
 
             <include
@@ -159,18 +394,27 @@
                 android:layout_height="wrap_content"
                 android:visibility="gone" />
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="80dp" />
+
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <!-- Botón Principal Flotante para Agregar Bloque al Canvas -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/btn_add_item"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="24dp"
-        app:srcCompat="@android:drawable/ic_input_add"
-        app:tint="@color/white"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="24dp"
+        android:fontFamily="@font/poppins_regular"
+        android:text="Agregar Elemento al Canvas"
+        android:textColor="@color/white"
+        android:textSize="13sp"
+        android:textStyle="bold"
         app:backgroundTint="@color/colua_navy"
-        app:fabSize="normal" />
+        app:icon="@android:drawable/ic_input_add"
+        app:iconTint="@color/white" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1,9 +1,15 @@
 package com.example.coluainformativa;
 
 import android.app.DatePickerDialog;
+import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -13,6 +19,7 @@ import com.example.coluainformativa.database.ContentBlockEntity;
 import com.example.coluainformativa.database.ContentItemEntity;
 import com.example.coluainformativa.database.SectionEntity;
 import com.example.coluainformativa.repository.ColuaRepository;
+import com.example.coluainformativa.utils.DialogHelper;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputLayout;
@@ -34,13 +41,18 @@ public class AdminContentEditActivity extends AppCompatActivity {
     private String itemId;
     private String sectionId;
     private ContentItemEntity item;
-    
+
     private EditText etTitle, etSubtitle, etShortDesc, etLongDesc, etTargetId, etImage, etColor, etValue;
     private EditText etPubDate, etEventDate;
     private MaterialSwitch switchVisible;
     private ChipGroup cgColors;
     private TextInputLayout tilCustomColor;
     private List<ContentBlockEntity> blockList = new ArrayList<>();
+
+    // Vistas de Previsualización en Vivo
+    private TextView tvLiveTitle, tvLivePill, tvLiveDesc, tvLiveValue, tvActiveColorLabel, tvBlocksCount;
+    private ImageView ivLiveIcon;
+    private View btnBrowseScreen;
 
     private Calendar pubCal = Calendar.getInstance();
     private Calendar eventCal = Calendar.getInstance();
@@ -69,6 +81,16 @@ public class AdminContentEditActivity extends AppCompatActivity {
         cgColors = findViewById(R.id.cg_accent_colors);
         tilCustomColor = findViewById(R.id.til_custom_color);
 
+        // Vistas de Previsualización en Vivo
+        tvLiveTitle = findViewById(R.id.tv_live_title);
+        tvLivePill = findViewById(R.id.tv_live_pill);
+        tvLiveDesc = findViewById(R.id.tv_live_desc);
+        tvLiveValue = findViewById(R.id.tv_live_value);
+        ivLiveIcon = findViewById(R.id.iv_live_icon);
+        tvActiveColorLabel = findViewById(R.id.tv_active_color_label);
+        tvBlocksCount = findViewById(R.id.tv_blocks_count);
+        btnBrowseScreen = findViewById(R.id.btn_browse_screen);
+
         findViewById(R.id.btn_back_edit).setOnClickListener(v -> finish());
         findViewById(R.id.btn_save_item).setOnClickListener(v -> saveItem(item != null ? item.isDraft : false));
         findViewById(R.id.btn_add_block).setOnClickListener(v -> showAddBlockDialog());
@@ -78,13 +100,109 @@ public class AdminContentEditActivity extends AppCompatActivity {
         setupColorSelector();
         setupDatePickers();
         setupTargetScreenPicker();
+        setupLivePreviewListeners();
+        setupIconChooserAndSuggestions();
 
         if (itemId != null) {
             loadItem();
         } else {
-            // Nuevo item
-            item = new ContentItemEntity(UUID.randomUUID().toString(), sectionId, "", "", "", "#77839A", 0);
+            item = new ContentItemEntity(UUID.randomUUID().toString(), sectionId, "", "", "", "#173789", 0);
             updateDateFields();
+            updateLivePreview();
+        }
+    }
+
+    private void setupIconChooserAndSuggestions() {
+        View btnChoose = findViewById(R.id.btn_choose_icon);
+        if (btnChoose != null) {
+            btnChoose.setOnClickListener(v -> {
+                DialogHelper.showResourcePickerDialog(this, (resName, displayLabel) -> {
+                    if (resName != null && !resName.isEmpty()) {
+                        if (etImage != null) etImage.setText(resName);
+                        updateLivePreview();
+                    }
+                }, null);
+            });
+        }
+
+        View chipCredito = findViewById(R.id.chip_sug_credito);
+        if (chipCredito != null) chipCredito.setOnClickListener(v -> { if (etImage != null) etImage.setText("credito"); updateLivePreview(); });
+
+        View chipAhorro = findViewById(R.id.chip_sug_ahorro);
+        if (chipAhorro != null) chipAhorro.setOnClickListener(v -> { if (etImage != null) etImage.setText("ahorros"); updateLivePreview(); });
+
+        View chipSeguro = findViewById(R.id.chip_sug_seguro);
+        if (chipSeguro != null) chipSeguro.setOnClickListener(v -> { if (etImage != null) etImage.setText("seguro"); updateLivePreview(); });
+
+        View chipStar = findViewById(R.id.chip_sug_star);
+        if (chipStar != null) chipStar.setOnClickListener(v -> { if (etImage != null) etImage.setText("ic_star"); updateLivePreview(); });
+
+        if (btnBrowseScreen != null) {
+            btnBrowseScreen.setOnClickListener(v -> showScreenPicker());
+        }
+    }
+
+    private void setupLivePreviewListeners() {
+        TextWatcher watcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                updateLivePreview();
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        };
+
+        if (etTitle != null) etTitle.addTextChangedListener(watcher);
+        if (etSubtitle != null) etSubtitle.addTextChangedListener(watcher);
+        if (etShortDesc != null) etShortDesc.addTextChangedListener(watcher);
+        if (etValue != null) etValue.addTextChangedListener(watcher);
+        if (etImage != null) etImage.addTextChangedListener(watcher);
+        if (etColor != null) etColor.addTextChangedListener(watcher);
+    }
+
+    private void updateLivePreview() {
+        String titleStr = etTitle != null ? etTitle.getText().toString().trim() : "";
+        String pillStr = etSubtitle != null ? etSubtitle.getText().toString().trim() : "";
+        String descStr = etShortDesc != null ? etShortDesc.getText().toString().trim() : "";
+        String valStr = etValue != null ? etValue.getText().toString().trim() : "";
+        String iconStr = etImage != null ? etImage.getText().toString().trim() : "";
+        String colorStr = etColor != null ? etColor.getText().toString().trim() : "#173789";
+
+        if (tvLiveTitle != null) {
+            tvLiveTitle.setText(!titleStr.isEmpty() ? titleStr : "Título de la tarjeta");
+        }
+        if (tvLivePill != null) {
+            if (!pillStr.isEmpty()) {
+                tvLivePill.setText(pillStr);
+                tvLivePill.setVisibility(View.VISIBLE);
+            } else {
+                tvLivePill.setVisibility(View.GONE);
+            }
+        }
+        if (tvLiveDesc != null) {
+            tvLiveDesc.setText(!descStr.isEmpty() ? descStr : "Descripción corta de la tarjeta o servicio...");
+        }
+        if (tvLiveValue != null) {
+            if (!valStr.isEmpty()) {
+                tvLiveValue.setText("DESDE " + valStr);
+                tvLiveValue.setVisibility(View.VISIBLE);
+            } else {
+                tvLiveValue.setVisibility(View.GONE);
+            }
+        }
+        if (ivLiveIcon != null) {
+            AdminNewsEditActivity.loadNewsImageIntoView(this, ivLiveIcon, !iconStr.isEmpty() ? iconStr : "credito");
+        }
+
+        if (tvActiveColorLabel != null && !colorStr.isEmpty()) {
+            try {
+                int parsedColor = Color.parseColor(colorStr);
+                tvActiveColorLabel.setText(colorStr.toUpperCase(Locale.getDefault()));
+                tvActiveColorLabel.setTextColor(parsedColor);
+                if (tvLiveValue != null) tvLiveValue.setTextColor(parsedColor);
+            } catch (Exception ignored) {}
         }
     }
 
@@ -102,7 +220,6 @@ public class AdminContentEditActivity extends AppCompatActivity {
                 List<String> labels = new ArrayList<>();
                 List<String> ids = new ArrayList<>();
 
-                // Añadir opciones fijas
                 labels.add("Ninguna (Solo informativo)"); ids.add("");
                 labels.add("Inicio (ID: sec_home)"); ids.add("sec_home");
                 labels.add("Mi Perfil (ID: activity_profile)"); ids.add("activity_profile");
@@ -114,10 +231,11 @@ public class AdminContentEditActivity extends AppCompatActivity {
                     ids.add(s.id);
                 }
 
-                new AlertDialog.Builder(this)
+                new AlertDialog.Builder(this, androidx.appcompat.R.style.Theme_AppCompat_Light_Dialog_Alert)
                         .setTitle("Seleccionar Pantalla de Destino")
                         .setItems(labels.toArray(new CharSequence[0]), (dialog, which) -> {
                             etTargetId.setText(ids.get(which));
+                            updateLivePreview();
                         })
                         .setNegativeButton("Cancelar", null)
                         .show();
@@ -126,45 +244,53 @@ public class AdminContentEditActivity extends AppCompatActivity {
     }
 
     private void setupDatePickers() {
-        etPubDate.setOnClickListener(v -> {
-            new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
-                pubCal.set(year, month, dayOfMonth);
-                updateDateFields();
-            }, pubCal.get(Calendar.YEAR), pubCal.get(Calendar.MONTH), pubCal.get(Calendar.DAY_OF_MONTH)).show();
-        });
+        if (etPubDate != null) {
+            etPubDate.setOnClickListener(v -> {
+                new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
+                    pubCal.set(year, month, dayOfMonth);
+                    updateDateFields();
+                }, pubCal.get(Calendar.YEAR), pubCal.get(Calendar.MONTH), pubCal.get(Calendar.DAY_OF_MONTH)).show();
+            });
+        }
 
-        etEventDate.setOnClickListener(v -> {
-            new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
-                eventCal.set(year, month, dayOfMonth);
-                updateDateFields();
-            }, eventCal.get(Calendar.YEAR), eventCal.get(Calendar.MONTH), eventCal.get(Calendar.DAY_OF_MONTH)).show();
-        });
+        if (etEventDate != null) {
+            etEventDate.setOnClickListener(v -> {
+                new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
+                    eventCal.set(year, month, dayOfMonth);
+                    updateDateFields();
+                }, eventCal.get(Calendar.YEAR), eventCal.get(Calendar.MONTH), eventCal.get(Calendar.DAY_OF_MONTH)).show();
+            });
+        }
     }
 
     private void updateDateFields() {
-        etPubDate.setText(sdf.format(pubCal.getTime()));
-        if (item != null && item.eventDate > 0) {
-            etEventDate.setText(sdf.format(new Date(item.eventDate)));
-        } else if (eventCal.getTimeInMillis() != pubCal.getTimeInMillis()) {
-             etEventDate.setText(sdf.format(eventCal.getTime()));
+        if (etPubDate != null) etPubDate.setText(sdf.format(pubCal.getTime()));
+        if (etEventDate != null) {
+            if (item != null && item.eventDate > 0) {
+                etEventDate.setText(sdf.format(new Date(item.eventDate)));
+            } else if (eventCal.getTimeInMillis() != pubCal.getTimeInMillis()) {
+                etEventDate.setText(sdf.format(eventCal.getTime()));
+            }
         }
     }
 
     private void setupColorSelector() {
+        if (cgColors == null) return;
         cgColors.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.isEmpty()) return;
             int id = checkedIds.get(0);
-            tilCustomColor.setVisibility(View.GONE);
-            
-            if (id == R.id.chip_color_white) etColor.setText("#FFFFFF");
-            else if (id == R.id.chip_color_blue) etColor.setText("#173789");
-            else if (id == R.id.chip_color_orange) etColor.setText("#EF8819");
-            else if (id == R.id.chip_color_lila) etColor.setText("#E42A67");
-            else if (id == R.id.chip_color_green) etColor.setText("#59B8A4");
-            else if (id == R.id.chip_color_purple) etColor.setText("#634794");
-            else if (id == R.id.chip_color_custom) {
+            if (tilCustomColor != null) tilCustomColor.setVisibility(View.GONE);
+
+            if (id == R.id.chip_color_white && etColor != null) etColor.setText("#FFFFFF");
+            else if (id == R.id.chip_color_blue && etColor != null) etColor.setText("#173789");
+            else if (id == R.id.chip_color_orange && etColor != null) etColor.setText("#EF8819");
+            else if (id == R.id.chip_color_lila && etColor != null) etColor.setText("#E42A67");
+            else if (id == R.id.chip_color_green && etColor != null) etColor.setText("#59B8A4");
+            else if (id == R.id.chip_color_purple && etColor != null) etColor.setText("#634794");
+            else if (id == R.id.chip_color_custom && tilCustomColor != null) {
                 tilCustomColor.setVisibility(View.VISIBLE);
             }
+            updateLivePreview();
         });
     }
 
@@ -174,76 +300,76 @@ public class AdminContentEditActivity extends AppCompatActivity {
             if (item != null) {
                 List<ContentBlockEntity> blocks = repository.getBlocksByItem(item.id);
                 runOnUiThread(() -> {
-                    etTitle.setText(item.title);
-                    etSubtitle.setText(item.subtitle);
-                    etShortDesc.setText(item.shortDescription);
-                    etLongDesc.setText(item.description);
-                    etTargetId.setText(item.targetSectionId);
-                    etImage.setText(item.imagePath != null && !item.imagePath.isEmpty() ? item.imagePath : item.iconName);
-                    etColor.setText(item.accentColor);
-                    switchVisible.setChecked(item.isVisible);
-                    
+                    if (isFinishing() || isDestroyed()) return;
+                    if (etTitle != null) etTitle.setText(item.title != null ? item.title : "");
+                    if (etSubtitle != null) etSubtitle.setText(item.subtitle != null ? item.subtitle : "");
+                    if (etShortDesc != null) etShortDesc.setText(item.shortDescription != null ? item.shortDescription : "");
+                    if (etLongDesc != null) etLongDesc.setText(item.description != null ? item.description : "");
+                    if (etTargetId != null) etTargetId.setText(item.targetSectionId != null ? item.targetSectionId : "");
+                    if (etImage != null) etImage.setText(item.imagePath != null && !item.imagePath.isEmpty() ? item.imagePath : (item.iconName != null ? item.iconName : "credito"));
+                    if (etColor != null) etColor.setText(item.accentColor != null ? item.accentColor : "#173789");
+                    if (switchVisible != null) switchVisible.setChecked(item.isVisible);
+
                     if (item.publicationDate > 0) pubCal.setTimeInMillis(item.publicationDate);
                     if (item.eventDate > 0) eventCal.setTimeInMillis(item.eventDate);
                     updateDateFields();
 
-                    // Pre-seleccionar chip de color
-                    if ("#FFFFFF".equalsIgnoreCase(item.accentColor)) cgColors.check(R.id.chip_color_white);
-                    else if ("#173789".equalsIgnoreCase(item.accentColor)) cgColors.check(R.id.chip_color_blue);
-                    else if ("#EF8819".equalsIgnoreCase(item.accentColor)) cgColors.check(R.id.chip_color_orange);
-                    else if ("#E42A67".equalsIgnoreCase(item.accentColor)) cgColors.check(R.id.chip_color_lila);
-                    else if ("#59B8A4".equalsIgnoreCase(item.accentColor)) cgColors.check(R.id.chip_color_green);
-                    else if ("#634794".equalsIgnoreCase(item.accentColor)) cgColors.check(R.id.chip_color_purple);
-                    else if (item.accentColor != null && !item.accentColor.isEmpty()) {
-                        cgColors.check(R.id.chip_color_custom);
-                        tilCustomColor.setVisibility(View.VISIBLE);
+                    if (cgColors != null && item.accentColor != null) {
+                        if ("#FFFFFF".equalsIgnoreCase(item.accentColor)) cgColors.check(R.id.chip_color_white);
+                        else if ("#173789".equalsIgnoreCase(item.accentColor)) cgColors.check(R.id.chip_color_blue);
+                        else if ("#EF8819".equalsIgnoreCase(item.accentColor)) cgColors.check(R.id.chip_color_orange);
+                        else if ("#E42A67".equalsIgnoreCase(item.accentColor)) cgColors.check(R.id.chip_color_lila);
+                        else if ("#59B8A4".equalsIgnoreCase(item.accentColor)) cgColors.check(R.id.chip_color_green);
+                        else if ("#634794".equalsIgnoreCase(item.accentColor)) cgColors.check(R.id.chip_color_purple);
+                        else if (!item.accentColor.isEmpty()) {
+                            cgColors.check(R.id.chip_color_custom);
+                            if (tilCustomColor != null) tilCustomColor.setVisibility(View.VISIBLE);
+                        }
                     }
-                    
+
                     blockList.clear();
-                    blockList.addAll(blocks);
+                    if (blocks != null) blockList.addAll(blocks);
+                    if (tvBlocksCount != null) tvBlocksCount.setText(blockList.size() + " bloques activos");
+
+                    updateLivePreview();
                 });
             }
         }).start();
     }
 
     private void publishNow() {
-        new AlertDialog.Builder(this)
-                .setTitle("Confirmar Publicación")
-                .setMessage("¿Desea publicar este contenido ahora mismo? Será visible para todos los asociados.")
-                .setPositiveButton("PUBLICAR", (dialog, which) -> saveItem(false))
-                .setNegativeButton("CANCELAR", null)
-                .show();
+        DialogHelper.showLightReportDialog(
+                this,
+                "Confirmar Publicación",
+                "¿Desea publicar este contenido en la nube? Los asociados lo verán inmediatamente en la aplicación.",
+                "PUBLICAR AHORA",
+                () -> saveItem(false),
+                "CANCELAR"
+        );
     }
 
     private void showPreview() {
-        // Guardar cambios temporales en el objeto 'item' antes de mostrar preview
         updateItemFromFields();
-        
-        View dialogView = getLayoutInflater().inflate(R.layout.item_news_card, null);
-        // Configurar la vista previa usando el layout de noticias o el de tarjetas
-        // (Dependiendo de la sección, por simplicidad usaremos un diálogo genérico que muestre el card)
-        
-        new AlertDialog.Builder(this)
-                .setTitle("Previsualización")
-                .setView(dialogView)
-                .setPositiveButton("Cerrar", null)
-                .show();
-        
-        // Aquí deberías vincular los datos al dialogView similar a como lo hace el ContentItemAdapter
-        // Para mayor fidelidad, se puede abrir una nueva actividad de Preview
+        Intent intent = new Intent(this, DynamicSectionActivity.class);
+        intent.putExtra(DynamicSectionActivity.EXTRA_SECTION_ID, sectionId != null ? sectionId : "sec_home");
+        intent.putExtra("extra_is_preview_mode", true);
+        startActivity(intent);
     }
 
     private void updateItemFromFields() {
         if (item == null) return;
-        item.title = etTitle.getText().toString();
-        item.subtitle = etSubtitle.getText().toString();
-        item.shortDescription = etShortDesc.getText().toString();
-        item.description = etLongDesc.getText().toString();
-        item.targetSectionId = etTargetId.getText().toString();
-        item.imagePath = etImage.getText().toString();
-        item.iconName = etImage.getText().toString();
-        item.accentColor = etColor.getText().toString();
-        item.isVisible = switchVisible.isChecked();
+        if (etTitle != null) item.title = etTitle.getText().toString().trim();
+        if (etSubtitle != null) item.subtitle = etSubtitle.getText().toString().trim();
+        if (etShortDesc != null) item.shortDescription = etShortDesc.getText().toString().trim();
+        if (etLongDesc != null) item.description = etLongDesc.getText().toString().trim();
+        if (etTargetId != null) item.targetSectionId = etTargetId.getText().toString().trim();
+        if (etImage != null) {
+            String img = etImage.getText().toString().trim();
+            item.imagePath = img;
+            item.iconName = img;
+        }
+        if (etColor != null) item.accentColor = etColor.getText().toString().trim();
+        if (switchVisible != null) item.isVisible = switchVisible.isChecked();
         item.publicationDate = pubCal.getTimeInMillis();
         item.eventDate = eventCal.getTimeInMillis();
     }
@@ -251,41 +377,13 @@ public class AdminContentEditActivity extends AppCompatActivity {
     private void saveItem(boolean isDraft) {
         if (item == null) return;
         updateItemFromFields();
-
-        // Validar destino si no está vacío
-        String target = item.targetSectionId != null ? item.targetSectionId.trim() : "";
-        if (!target.isEmpty()) {
-            boolean isKnownTarget = "sec_home".equalsIgnoreCase(target) ||
-                    "sec_agencias".equalsIgnoreCase(target) ||
-                    "activity_profile".equalsIgnoreCase(target) ||
-                    "dialog_admin".equalsIgnoreCase(target) ||
-                    "action_logout".equalsIgnoreCase(target);
-
-            if (!isKnownTarget) {
-                new Thread(() -> {
-                    List<SectionEntity> sections = repository.getAllSections();
-                    boolean exists = sections.stream().anyMatch(s -> s.id.equalsIgnoreCase(target) || (s.slug != null && s.slug.equalsIgnoreCase(target)));
-
-                    runOnUiThread(() -> {
-                        if (!exists) {
-                            Toast.makeText(this, "ERROR: La pantalla de destino '" + target + "' no existe o fue eliminada.", Toast.LENGTH_LONG).show();
-                        } else {
-                            executeSaveItem(isDraft);
-                        }
-                    });
-                }).start();
-                return;
-            }
-        }
-
         executeSaveItem(isDraft);
     }
 
     private void executeSaveItem(boolean isDraft) {
         item.isDraft = isDraft;
         item.updatedAt = System.currentTimeMillis();
-        
-        // Marcar borrador local con cambios pendientes
+
         getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
                 .edit()
                 .putBoolean("has_unpublished_changes", true)
@@ -294,14 +392,16 @@ public class AdminContentEditActivity extends AppCompatActivity {
         new Thread(() -> {
             repository.insertItem(item);
             runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
                 if (isDraft) {
-                    new AlertDialog.Builder(this)
-                            .setTitle("Borrador Guardado Localmente")
-                            .setMessage("El contenido se ha guardado en tu borrador local y no será visible para los usuarios hasta que lo publiques.\n\n¿Qué deseas hacer ahora?")
-                            .setPositiveButton("PREVISUALIZAR PANTALLA", (d, w) -> showPreview())
-                            .setNeutralButton("SEGUIR EDITANDO", null)
-                            .setNegativeButton("VOLVER A LISTA", (d, w) -> finish())
-                            .show();
+                    DialogHelper.showLightReportDialog(
+                            this,
+                            "Borrador Guardado",
+                            "El contenido se ha guardado en tu borrador local y no será visible para los usuarios hasta que lo publiques.",
+                            "VOLVER AL CANVAS",
+                            () -> finish(),
+                            "SEGUIR EDITANDO"
+                    );
                 } else {
                     Toast.makeText(this, "¡Contenido publicado exitosamente!", Toast.LENGTH_SHORT).show();
                     finish();
@@ -313,12 +413,12 @@ public class AdminContentEditActivity extends AppCompatActivity {
     private void showAddBlockDialog() {
         EditText et = new EditText(this);
         et.setHint("Escribe el contenido del bloque...");
-        
-        new AlertDialog.Builder(this)
+
+        new AlertDialog.Builder(this, androidx.appcompat.R.style.Theme_AppCompat_Light_Dialog_Alert)
                 .setTitle("Nuevo Bloque de Texto")
                 .setView(et)
                 .setPositiveButton("Agregar", (dialog, which) -> {
-                    String text = et.getText().toString();
+                    String text = et.getText().toString().trim();
                     if (!text.isEmpty()) {
                         ContentBlockEntity block = new ContentBlockEntity(
                                 UUID.randomUUID().toString(),
@@ -331,7 +431,8 @@ public class AdminContentEditActivity extends AppCompatActivity {
                             repository.insertBlock(block);
                             runOnUiThread(() -> {
                                 blockList.add(block);
-                                Toast.makeText(this, "Bloque guardado", Toast.LENGTH_SHORT).show();
+                                if (tvBlocksCount != null) tvBlocksCount.setText(blockList.size() + " bloques activos");
+                                Toast.makeText(this, "Bloque agregado", Toast.LENGTH_SHORT).show();
                             });
                         }).start();
                     }

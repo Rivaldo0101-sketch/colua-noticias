@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="6dp"
+    android:layout_margin="5dp"
     app:cardBackgroundColor="#F8FAFC"
     app:cardCornerRadius="12dp"
     app:cardElevation="1dp"
@@ -15,14 +15,14 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="10dp">
 
         <ImageView
             android:id="@+id/iv_grid_icon_image"
             android:layout_width="38dp"
             android:layout_height="38dp"
-            android:src="@drawable/ic_star"
-            app:tint="@color/colua_navy" />
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_star" />
 
         <TextView
             android:id="@+id/tv_grid_icon_name"
@@ -31,9 +31,22 @@
             android:layout_marginTop="6dp"
             android:fontFamily="@font/poppins_regular"
             android:gravity="center"
-            android:singleLine="true"
+            android:maxLines="2"
             android:text="Nombre"
             android:textColor="@color/black"
-            android:textSize="11sp" />
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_grid_icon_key"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="@font/poppins_regular"
+            android:gravity="center"
+            android:singleLine="true"
+            android:text="key: star"
+            android:textColor="#64748B"
+            android:textSize="9sp" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
