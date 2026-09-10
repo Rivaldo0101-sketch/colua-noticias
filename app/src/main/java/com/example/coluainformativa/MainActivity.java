@@ -458,6 +458,9 @@ public class MainActivity extends AppCompatActivity {
         } else if ("sec_agencias".equalsIgnoreCase(nav.targetSectionId)) {
             Intent intent = new Intent(this, AgenciasActivity.class);
             startActivity(intent);
+        } else if ("sec_beneficios".equalsIgnoreCase(nav.targetSectionId)) {
+            Intent intent = new Intent(this, BeneficiosActivity.class);
+            startActivity(intent);
         } else if ("activity_profile".equalsIgnoreCase(nav.targetSectionId)) {
             Intent intent = new Intent(this, ProfileActivity.class);
             startActivity(intent);
