@@ -303,6 +303,10 @@ public class AgenciasActivity extends AppCompatActivity {
             finish();
         } else if ("sec_agencias".equals(nav.targetSectionId)) {
             // Ya estamos aquí
+        } else if ("sec_beneficios".equalsIgnoreCase(nav.targetSectionId)) {
+            Intent intent = new Intent(this, BeneficiosActivity.class);
+            startActivity(intent);
+            finish();
         } else if (nav.targetSectionId.startsWith("sec_")) {
             Intent intent = new Intent(this, DynamicSectionActivity.class);
             intent.putExtra(DynamicSectionActivity.EXTRA_SECTION_ID, nav.targetSectionId);

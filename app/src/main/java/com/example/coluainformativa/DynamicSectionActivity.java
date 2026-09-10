@@ -343,6 +343,9 @@ public class DynamicSectionActivity extends AppCompatActivity {
         } else if ("sec_agencias".equals(target) || "agencias".equals(target)) {
             startActivity(new Intent(this, AgenciasActivity.class));
             finish();
+        } else if ("sec_beneficios".equals(target) || "beneficios".equals(target)) {
+            startActivity(new Intent(this, BeneficiosActivity.class));
+            finish();
         } else if ("activity_profile".equals(target)) {
             startActivity(new Intent(this, ProfileActivity.class));
         } else if ("action_logout".equals(target)) {

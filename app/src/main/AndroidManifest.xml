@@ -60,6 +60,9 @@
             android:name=".AgenciasActivity"
             android:exported="false" />
         <activity
+            android:name=".BeneficiosActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true" />
     </application>
