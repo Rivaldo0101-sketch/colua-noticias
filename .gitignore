@@ -19,6 +19,12 @@ app/build/
 *.iml
 *.iws
 *.ipr
+*.atlassian-ide-plugin.xml
+.navigation/
+
+# Emulator related
+*.lock
+checkpoint_incremental.xml
 
 # Local configuration files (contains local SDK paths, device targets, etc.)
 local.properties
