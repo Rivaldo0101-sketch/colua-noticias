@@ -107,8 +107,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingBottom="120dp"
-                android:padding="20dp">
+                android:paddingHorizontal="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="160dp">
 
                 <TextView
                     android:id="@+id/tv_dynamic_title"
@@ -190,6 +191,9 @@
             app:itemPaddingBottom="6dp"
             app:itemActiveIndicatorStyle="@style/App.CustomActiveIndicator"
             app:menu="@menu/bottom_nav_menu" />
+
+        <!-- Capa superpuesta de vista previa flotante para administradores -->
+        <include layout="@layout/layout_preview_banner" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

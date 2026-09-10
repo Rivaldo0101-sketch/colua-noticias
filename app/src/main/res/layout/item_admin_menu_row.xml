@@ -120,86 +120,165 @@
             android:layout_height="1dp"
             android:background="#F1F5F9" />
 
-        <!-- Fila 3 (Bottom): Los 4 botones de acción con sus imágenes PNG sin tintado negro -->
+        <!-- Fila 3 (Bottom): Los 4 botones de acción con ícono y texto centrado debajo -->
         <LinearLayout
             android:id="@+id/layout_actions_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="horizontal"
-            android:paddingVertical="6dp"
+            android:paddingVertical="8dp"
             android:background="#FAFAFA">
 
-            <!-- Botón 1: Cambiar ubicación (direccion.png) -->
-            <ImageView
-                android:id="@+id/btn_add_content"
+            <!-- Botón 1: Cambiar sitio (direccion.png) -->
+            <LinearLayout
+                android:id="@+id/col_add_content"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:background="?attr/selectableItemBackground"
                 android:clickable="true"
-                android:contentDescription="Cambiar ubicación"
                 android:focusable="true"
-                android:padding="6dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/direccion" />
+                android:paddingVertical="4dp">
+
+                <ImageView
+                    android:id="@+id/btn_add_content"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="Cambiar sitio"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/direccion" />
+
+                <TextView
+                    android:id="@+id/tv_btn_add_content"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Cambiar sitio"
+                    android:textColor="#334155"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <View
                 android:layout_width="1dp"
-                android:layout_height="20dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center_vertical"
                 android:background="#E2E8F0" />
 
-            <!-- Botón 2: Editar (Lápiz editar.png) -->
-            <ImageView
-                android:id="@+id/btn_edit_section"
+            <!-- Botón 2: Detalles (editar.png) -->
+            <LinearLayout
+                android:id="@+id/col_edit_section"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:background="?attr/selectableItemBackground"
                 android:clickable="true"
-                android:contentDescription="Editar pantalla"
                 android:focusable="true"
-                android:padding="6dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/editar" />
+                android:paddingVertical="4dp">
+
+                <ImageView
+                    android:id="@+id/btn_edit_section"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="Detalles"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/editar" />
+
+                <TextView
+                    android:id="@+id/tv_btn_edit_section"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Detalles"
+                    android:textColor="#334155"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <View
                 android:layout_width="1dp"
-                android:layout_height="20dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center_vertical"
                 android:background="#E2E8F0" />
 
-            <!-- Botón 3: Vista Previa (Ojo ver.png) -->
-            <ImageView
-                android:id="@+id/btn_preview_section"
+            <!-- Botón 3: Vista previa (ver.png) -->
+            <LinearLayout
+                android:id="@+id/col_preview_section"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:background="?attr/selectableItemBackground"
                 android:clickable="true"
-                android:contentDescription="Vista previa"
                 android:focusable="true"
-                android:padding="6dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ver" />
+                android:paddingVertical="4dp">
+
+                <ImageView
+                    android:id="@+id/btn_preview_section"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="Vista previa"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ver" />
+
+                <TextView
+                    android:id="@+id/tv_btn_preview_section"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Vista previa"
+                    android:textColor="#334155"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <View
                 android:layout_width="1dp"
-                android:layout_height="20dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center_vertical"
                 android:background="#E2E8F0" />
 
-            <!-- Botón 4: Eliminar (Papelera borrar.png) -->
-            <ImageView
-                android:id="@+id/btn_delete_section"
+            <!-- Botón 4: Eliminar (borrar.png) -->
+            <LinearLayout
+                android:id="@+id/col_delete_section"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:background="?attr/selectableItemBackground"
                 android:clickable="true"
-                android:contentDescription="Eliminar pantalla"
                 android:focusable="true"
-                android:padding="6dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/borrar" />
+                android:paddingVertical="4dp">
+
+                <ImageView
+                    android:id="@+id/btn_delete_section"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="Eliminar"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/borrar" />
+
+                <TextView
+                    android:id="@+id/tv_btn_delete_section"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Eliminar"
+                    android:textColor="#334155"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
         </LinearLayout>
 

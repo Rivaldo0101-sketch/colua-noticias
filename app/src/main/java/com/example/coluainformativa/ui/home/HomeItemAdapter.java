@@ -12,9 +12,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.coluainformativa.AdminContentEditActivity;
 import com.example.coluainformativa.R;
 import com.example.coluainformativa.database.ContentItemEntity;
-import com.google.android.material.button.MaterialButton;
 
 import java.util.List;
 
@@ -60,9 +60,10 @@ public class HomeItemAdapter extends RecyclerView.Adapter<HomeItemAdapter.ViewHo
         private final View sideBorder;
         private final View iconBackground;
         private final ImageView serviceIcon;
-        private final MaterialButton serviceButton;
+        private final TextView serviceButton;
         private final TextView serviceDescription;
         private final TextView serviceFooter;
+        private final View viewDivider;
         private final View btnEdit;
 
         public ViewHolder(@NonNull View itemView) {
@@ -73,45 +74,66 @@ public class HomeItemAdapter extends RecyclerView.Adapter<HomeItemAdapter.ViewHo
             serviceButton = itemView.findViewById(R.id.service_button);
             serviceDescription = itemView.findViewById(R.id.service_description);
             serviceFooter = itemView.findViewById(R.id.service_footer);
+            viewDivider = itemView.findViewById(R.id.view_divider);
             btnEdit = itemView.findViewById(R.id.btn_edit_item);
         }
 
         public void bind(ContentItemEntity item, OnItemClickListener listener, boolean isEditMode) {
-            int color = Color.GRAY;
+            int color = Color.parseColor("#173789"); // Default Navy
             try {
-                if (item.accentColor != null && !item.accentColor.isEmpty()) {
-                    color = Color.parseColor(item.accentColor);
+                if (item.accentColor != null && !item.accentColor.trim().isEmpty()) {
+                    color = Color.parseColor(item.accentColor.trim());
                 }
-            } catch (Exception e) {
-                // Use default gray
-            }
+            } catch (Exception ignored) {}
 
             sideBorder.setBackgroundColor(color);
-            iconBackground.setBackgroundTintList(ColorStateList.valueOf(color));
-            
+
+            // Tinte pastel suave (15% de opacidad del color institucional)
+            int softBg = Color.argb(35, Color.red(color), Color.green(color), Color.blue(color));
+            iconBackground.setBackgroundTintList(ColorStateList.valueOf(softBg));
+
             // Cargar icono según iconName
-            if (item.iconName != null) {
-                int iconRes = itemView.getContext().getResources().getIdentifier(item.iconName, "drawable", itemView.getContext().getPackageName());
+            if (item.iconName != null && !item.iconName.trim().isEmpty()) {
+                String iconKey = item.iconName.trim();
+                int iconRes = itemView.getContext().getResources().getIdentifier(iconKey, "drawable", itemView.getContext().getPackageName());
                 if (iconRes != 0) {
                     serviceIcon.setImageResource(iconRes);
+                    if (iconKey.startsWith("ic_")) {
+                        serviceIcon.setImageTintList(ColorStateList.valueOf(color));
+                    } else {
+                        serviceIcon.setImageTintList(null);
+                    }
+                } else {
+                    serviceIcon.setImageResource(R.drawable.ic_star);
+                    serviceIcon.setImageTintList(ColorStateList.valueOf(color));
                 }
+            } else {
+                serviceIcon.setImageResource(R.drawable.ic_star);
+                serviceIcon.setImageTintList(ColorStateList.valueOf(color));
             }
 
-            serviceButton.setText(item.subtitle); // Usamos subtitle para la etiqueta tipo cápsula
-            serviceDescription.setText(item.title); // Usamos title para la descripción principal
-            serviceFooter.setText(item.shortDescription); // Usamos shortDescription para el texto auxiliar
+            // Título / Cabecera (ej: ¡Ahorro!, ¡Crédito!)
+            String headerText = item.subtitle != null && !item.subtitle.trim().isEmpty() ? item.subtitle : item.title;
+            serviceButton.setText(headerText);
 
-            if (item.shortDescription == null || item.shortDescription.isEmpty()) {
+            // Descripción de secciones (ej: Cuentas de Ahorro, Ahorro Infantil y Juvenil)
+            serviceDescription.setText(item.title != null ? item.title : "");
+
+            // Pie / Frase de Valor (ej: Seguridad para tu futuro)
+            if (item.shortDescription == null || item.shortDescription.trim().isEmpty()) {
                 serviceFooter.setVisibility(View.GONE);
+                if (viewDivider != null) viewDivider.setVisibility(View.GONE);
             } else {
                 serviceFooter.setVisibility(View.VISIBLE);
+                if (viewDivider != null) viewDivider.setVisibility(View.VISIBLE);
+                serviceFooter.setText(item.shortDescription.trim());
             }
 
             btnEdit.setVisibility(isEditMode ? View.VISIBLE : View.GONE);
             btnEdit.setOnClickListener(v -> {
-                Intent intent = new Intent(itemView.getContext(), com.example.coluainformativa.AdminContentEditActivity.class);
-                intent.putExtra(com.example.coluainformativa.AdminContentEditActivity.EXTRA_ITEM_ID, item.id);
-                intent.putExtra(com.example.coluainformativa.AdminContentEditActivity.EXTRA_SECTION_ID, item.sectionId);
+                Intent intent = new Intent(itemView.getContext(), AdminContentEditActivity.class);
+                intent.putExtra(AdminContentEditActivity.EXTRA_ITEM_ID, item.id);
+                intent.putExtra(AdminContentEditActivity.EXTRA_SECTION_ID, item.sectionId);
                 itemView.getContext().startActivity(intent);
             });
 

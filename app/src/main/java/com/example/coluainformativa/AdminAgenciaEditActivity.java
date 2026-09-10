@@ -1,7 +1,9 @@
 package com.example.coluainformativa;
 
 import android.os.Bundle;
+import android.text.InputType;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 import android.view.ViewGroup;
 
@@ -10,6 +12,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.coluainformativa.database.AgenciaEntity;
 import com.example.coluainformativa.database.AppDatabase;
 import com.example.coluainformativa.repository.ColuaRepository;
+import com.example.coluainformativa.security.AdminAuthManager;
+import com.example.coluainformativa.utils.DialogHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -56,35 +60,15 @@ public class AdminAgenciaEditActivity extends AppCompatActivity {
     }
 
     private void confirmDelete() {
-        android.widget.EditText et = new android.widget.EditText(this);
-        et.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        et.setHint("Clave de Administrador");
-        
-        android.widget.FrameLayout container = new android.widget.FrameLayout(this);
-        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.leftMargin = params.rightMargin = 60;
-        et.setLayoutParams(params);
-        container.addView(et);
-
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Confirmar Eliminación")
-                .setMessage("Ingrese su clave para eliminar esta agencia:")
-                .setView(container)
-                .setPositiveButton("ELIMINAR", (d, w) -> {
-                    if (repository.checkAdminPassword(et.getText().toString())) {
-                        new Thread(() -> {
-                            repository.deleteAgencia(agencia);
-                            runOnUiThread(() -> {
-                                Toast.makeText(this, "Agencia eliminada", Toast.LENGTH_SHORT).show();
-                                finish();
-                            });
-                        }).start();
-                    } else {
-                        Toast.makeText(this, "Clave incorrecta", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("CANCELAR", null)
-                .show();
+        DialogHelper.showPasswordConfirmationDialog(this, new AdminAuthManager(this), "Confirmar Eliminación", "Ingrese su clave para eliminar esta agencia:", () -> {
+            new Thread(() -> {
+                repository.deleteAgencia(agencia);
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Agencia eliminada", Toast.LENGTH_SHORT).show();
+                    finish();
+                });
+            }).start();
+        });
     }
 
     private void loadAgencia() {

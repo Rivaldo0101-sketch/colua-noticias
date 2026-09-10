@@ -15,6 +15,16 @@
         android:testOnly="false"
         android:supportsRtl="true"
         android:theme="@style/Theme.ColuaInformativa">
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <activity
             android:name=".ProfileActivity"
             android:exported="false" />
@@ -35,6 +45,9 @@
             android:exported="false" />
         <activity
             android:name=".AdminBlockEditActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminNewsEditActivity"
             android:exported="false" />
         <activity
             android:name=".AdminActivity"
@@ -58,6 +71,9 @@
         </activity>
         <activity
             android:name=".AgenciasActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BeneficiosActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

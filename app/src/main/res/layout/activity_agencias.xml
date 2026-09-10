@@ -103,6 +103,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
+                android:paddingHorizontal="@dimen/content_padding_horizontal"
                 android:paddingBottom="120dp">
 
                 <TextView
@@ -225,8 +226,9 @@
                 <include
                     android:id="@+id/layout_pagination"
                     layout="@layout/layout_pagination_bar"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
                     android:layout_marginTop="16dp"
                     android:visibility="gone" />
 
@@ -247,6 +249,9 @@
             app:itemPaddingBottom="6dp"
             app:itemActiveIndicatorStyle="@style/App.CustomActiveIndicator"
             app:menu="@menu/bottom_nav_menu" />
+
+        <!-- Capa superpuesta de vista previa flotante para administradores -->
+        <include layout="@layout/layout_preview_banner" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

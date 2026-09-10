@@ -1,6 +1,7 @@
 package com.example.coluainformativa.ui.content;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
@@ -16,10 +17,13 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.coluainformativa.AdminNewsEditActivity;
+import com.example.coluainformativa.DynamicSectionActivity;
 import com.example.coluainformativa.R;
 import com.example.coluainformativa.database.ContentBlockEntity;
 
 import java.util.List;
+import java.util.Locale;
 
 public class BlockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -40,13 +44,24 @@ public class BlockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     public int getItemViewType(int position) {
         String type = blocks.get(position).type;
         if (type == null) return TYPE_TEXT;
-        switch (type) {
-            case "IMAGE": return TYPE_IMAGE;
-            case "HERO": return TYPE_HERO;
-            case "BUTTON": return TYPE_BUTTON;
-            case "CONTACT": return TYPE_CONTACT;
-            case "SAVINGS_HERO": return TYPE_SAVINGS_HERO;
-            default: return TYPE_TEXT;
+        switch (type.toUpperCase(Locale.getDefault())) {
+            case "IMAGE":
+            case "BANNER":
+            case "ICON":
+                return TYPE_IMAGE;
+            case "HERO":
+                return TYPE_HERO;
+            case "BUTTON":
+                return TYPE_BUTTON;
+            case "CONTACT":
+                return TYPE_CONTACT;
+            case "SAVINGS_HERO":
+            case "CARD":
+            case "PRODUCT_CARD":
+            case "CONTAINER":
+                return TYPE_SAVINGS_HERO;
+            default:
+                return TYPE_TEXT;
         }
     }
 
@@ -101,25 +116,80 @@ public class BlockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             tvContent = v.findViewById(R.id.block_content);
         }
         void bind(ContentBlockEntity block) {
-            tvTitle.setText(block.title);
-            tvContent.setText(block.content);
-            if (block.textColor != null) {
-                try { tvContent.setTextColor(Color.parseColor(block.textColor)); } catch (Exception ignored) {}
+            if (tvTitle != null) {
+                if (block.title != null && !block.title.trim().isEmpty()) {
+                    tvTitle.setVisibility(View.VISIBLE);
+                    tvTitle.setText(block.title);
+                } else {
+                    tvTitle.setVisibility(View.GONE);
+                }
             }
-            if ("CENTER".equals(block.alignment)) {
-                tvTitle.setGravity(Gravity.CENTER);
-                tvContent.setGravity(Gravity.CENTER);
-            } else if ("RIGHT".equals(block.alignment)) {
-                tvTitle.setGravity(Gravity.END);
-                tvContent.setGravity(Gravity.END);
-            } else {
-                tvTitle.setGravity(Gravity.START);
-                tvContent.setGravity(Gravity.START);
-            }
-            if ("BOLD".equals(block.fontWeight)) {
-                tvContent.setTypeface(null, Typeface.BOLD);
-            } else {
-                tvContent.setTypeface(null, Typeface.NORMAL);
+
+            if (tvContent != null) {
+                StringBuilder fullText = new StringBuilder();
+
+                // 1. Párrafo / Contenido Principal
+                if (block.content != null && !block.content.trim().isEmpty()) {
+                    fullText.append(block.content.trim());
+                }
+
+                // 2. Lista de Viñetas / Beneficios (BENEFITS:...)
+                if (block.fontSize != null && block.fontSize.startsWith("BENEFITS:")) {
+                    String benefitsRaw = block.fontSize.replace("BENEFITS:", "").trim();
+                    if (!benefitsRaw.isEmpty()) {
+                        if (fullText.length() > 0) fullText.append("\n\n");
+                        String[] lines = benefitsRaw.split("\n");
+                        for (int i = 0; i < lines.length; i++) {
+                            String line = lines[i].trim();
+                            if (!line.isEmpty()) {
+                                if (line.startsWith("•") || line.startsWith("-")) {
+                                    fullText.append(line);
+                                } else {
+                                    fullText.append("• ").append(line);
+                                }
+                                if (i < lines.length - 1) fullText.append("\n");
+                            }
+                        }
+                    }
+                }
+
+                // 3. Monto / Tasa / Destacado (MOUNT:...)
+                if (block.textColor != null && block.textColor.startsWith("MOUNT:")) {
+                    String mountRaw = block.textColor.replace("MOUNT:", "").trim();
+                    if (!mountRaw.isEmpty()) {
+                        if (fullText.length() > 0) fullText.append("\n\n");
+                        if (!mountRaw.toLowerCase().contains("monto") && !mountRaw.toLowerCase().contains("tasa") && !mountRaw.toLowerCase().contains("destacado")) {
+                            fullText.append("Monto / Destacado: ").append(mountRaw);
+                        } else {
+                            fullText.append(mountRaw);
+                        }
+                    }
+                }
+
+                tvContent.setText(fullText.toString());
+
+                if ("CENTER".equalsIgnoreCase(block.alignment)) {
+                    if (tvTitle != null) tvTitle.setGravity(Gravity.CENTER);
+                    tvContent.setGravity(Gravity.CENTER);
+                } else if ("RIGHT".equalsIgnoreCase(block.alignment)) {
+                    if (tvTitle != null) tvTitle.setGravity(Gravity.END);
+                    tvContent.setGravity(Gravity.END);
+                } else {
+                    if (tvTitle != null) tvTitle.setGravity(Gravity.START);
+                    tvContent.setGravity(Gravity.START);
+                }
+
+                if ("BOLD".equalsIgnoreCase(block.fontWeight)) {
+                    tvContent.setTypeface(null, Typeface.BOLD);
+                } else {
+                    tvContent.setTypeface(null, Typeface.NORMAL);
+                }
+
+                if (block.textColor != null && !block.textColor.isEmpty() && !block.textColor.startsWith("MOUNT:")) {
+                    try { tvContent.setTextColor(Color.parseColor(block.textColor)); } catch (Exception ignored) {}
+                } else {
+                    tvContent.setTextColor(Color.parseColor("#334155"));
+                }
             }
         }
     }
@@ -131,18 +201,41 @@ public class BlockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             iv = v.findViewById(R.id.block_image);
         }
         void bind(ContentBlockEntity block) {
-            if (block.mediaPath != null && !block.mediaPath.isEmpty()) {
-                // 1. Intentar cargar como Recurso Local (Drawable)
-                int resId = itemView.getContext().getResources().getIdentifier(
-                        block.mediaPath, "drawable", itemView.getContext().getPackageName());
-                
-                if (resId != 0) {
-                    iv.setImageResource(resId);
+            String path = block.mediaPath != null && !block.mediaPath.trim().isEmpty() ? block.mediaPath.trim() : "distintivo_colua";
+            String type = block.type != null ? block.type.trim().toUpperCase(Locale.getDefault()) : "IMAGE";
+
+            if (iv != null) {
+                boolean isSmallIcon = path.startsWith("ic_")
+                        || "distintivo_colua".equalsIgnoreCase(path)
+                        || "public_service".equalsIgnoreCase(path)
+                        || "grupo".equalsIgnoreCase(path)
+                        || "ICON".equalsIgnoreCase(type);
+
+                if (isSmallIcon) {
+                    // Ícono o logotipo de cabecera: Mediano-pequeño centrado
+                    ViewGroup.LayoutParams lp = iv.getLayoutParams();
+                    if (lp != null) {
+                        lp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                        lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                        iv.setLayoutParams(lp);
+                    }
+                    iv.setMaxHeight(120);
+                    iv.setAdjustViewBounds(true);
+                    iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 } else {
-                    iv.setImageResource(android.R.drawable.ic_menu_gallery);
+                    // Imagen subida o banner promocional: Ancho completo casi tocando los márgenes
+                    ViewGroup.LayoutParams lp = iv.getLayoutParams();
+                    if (lp != null) {
+                        lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                        lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                        iv.setLayoutParams(lp);
+                    }
+                    iv.setMaxHeight(360);
+                    iv.setAdjustViewBounds(true);
+                    iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 }
-            } else {
-                iv.setImageResource(android.R.drawable.ic_menu_gallery);
+
+                AdminNewsEditActivity.loadNewsImageIntoView(itemView.getContext(), iv, path);
             }
         }
     }
@@ -156,8 +249,8 @@ public class BlockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             iv = v.findViewById(R.id.block_hero_image);
         }
         void bind(ContentBlockEntity block) {
-            tv.setText(block.title);
-            if (block.mediaPath != null) {
+            if (tv != null) tv.setText(block.title != null ? block.title : "");
+            if (iv != null && block.mediaPath != null) {
                 int resId = itemView.getContext().getResources().getIdentifier(
                         block.mediaPath, "drawable", itemView.getContext().getPackageName());
                 if (resId != 0) iv.setImageResource(resId);
@@ -172,10 +265,41 @@ public class BlockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             btn = v.findViewById(R.id.block_button);
         }
         void bind(ContentBlockEntity block) {
-            btn.setText(block.buttonText);
-            if (block.backgroundColor != null) {
+            String label = block.buttonText != null && !block.buttonText.trim().isEmpty() ? block.buttonText : block.title;
+            if (label == null || label.trim().isEmpty()) label = "Aceptar";
+            btn.setText(label);
+
+            if (block.backgroundColor != null && !block.backgroundColor.isEmpty()) {
                 try { btn.setBackgroundColor(Color.parseColor(block.backgroundColor)); } catch (Exception ignored) {}
             }
+
+            btn.setOnClickListener(v -> {
+                String action = block.buttonAction != null && !block.buttonAction.trim().isEmpty() ? block.buttonAction : block.content;
+                if (action != null && !action.trim().isEmpty()) {
+                    if (action.startsWith("tel:")) {
+                        try {
+                            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse(action));
+                            v.getContext().startActivity(intent);
+                        } catch (Exception e) {
+                            Toast.makeText(v.getContext(), "No se pudo abrir el marcador", Toast.LENGTH_SHORT).show();
+                        }
+                    } else if (action.startsWith("http://") || action.startsWith("https://") || action.contains("wa.me")) {
+                        try {
+                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(action));
+                            v.getContext().startActivity(intent);
+                        } catch (Exception e) {
+                            Toast.makeText(v.getContext(), "No se pudo abrir el enlace", Toast.LENGTH_SHORT).show();
+                        }
+                    } else if (action.startsWith("/") || action.startsWith("sec_")) {
+                        String targetSec = action.replace("/", "");
+                        Intent intent = new Intent(v.getContext(), DynamicSectionActivity.class);
+                        intent.putExtra(DynamicSectionActivity.EXTRA_SECTION_ID, targetSec);
+                        v.getContext().startActivity(intent);
+                    } else {
+                        Toast.makeText(v.getContext(), "Acción: " + action, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
         }
     }
 
@@ -186,11 +310,13 @@ public class BlockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             btn = v.findViewById(R.id.block_button);
         }
         void bind(ContentBlockEntity block) {
-            btn.setText(block.buttonText);
+            String label = block.buttonText != null && !block.buttonText.isEmpty() ? block.buttonText : "Llamar";
+            btn.setText(label);
             btn.setOnClickListener(v -> {
                 try {
-                    Intent intent = new Intent(Intent.ACTION_DIAL);
-                    intent.setData(Uri.parse("tel:" + block.content));
+                    String phone = block.buttonAction != null ? block.buttonAction : block.content;
+                    if (!phone.startsWith("tel:")) phone = "tel:" + phone;
+                    Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse(phone));
                     v.getContext().startActivity(intent);
                 } catch (Exception e) {
                     Toast.makeText(v.getContext(), "No se pudo realizar la llamada", Toast.LENGTH_SHORT).show();
@@ -211,27 +337,69 @@ public class BlockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             iv = v.findViewById(R.id.iv_savings_header);
         }
         void bind(ContentBlockEntity block) {
-            // Si el título empieza con 'logo_', ocultamos el texto y mostramos imagen arriba
-            if (block.title != null && block.title.startsWith("logo_")) {
-                tvTitle.setVisibility(View.GONE);
-                // Aquí podrías agregar un ImageView dinámico o usar uno existente si el layout lo permite
-            } else {
-                tvTitle.setVisibility(View.VISIBLE);
-                tvTitle.setText(block.title);
+            if (tvTitle != null) {
+                if (block.title != null && !block.title.isEmpty()) {
+                    tvTitle.setVisibility(View.VISIBLE);
+                    tvTitle.setText(block.title);
+                } else {
+                    tvTitle.setVisibility(View.GONE);
+                }
             }
-            
-            tvDesc.setText(block.content);
-            btn.setText(block.buttonText);
-            
-            btn.setOnClickListener(v -> {
-                // Acción para abrir cuenta o servicio
-                Toast.makeText(v.getContext(), "Procesando solicitud...", Toast.LENGTH_SHORT).show();
-            });
 
-            if (block.mediaPath != null) {
+            String descText = block.content != null ? block.content : "";
+            if (block.fontSize != null && block.fontSize.startsWith("BENEFITS:")) {
+                String benefits = block.fontSize.replace("BENEFITS:", "").trim();
+                if (!benefits.isEmpty()) {
+                    descText = descText.isEmpty() ? benefits : descText + "\n\n" + benefits;
+                }
+            }
+            if (block.textColor != null && block.textColor.startsWith("MOUNT:")) {
+                String mount = block.textColor.replace("MOUNT:", "").trim();
+                if (!mount.isEmpty()) {
+                    descText = descText.isEmpty() ? mount : descText + "\n" + mount;
+                }
+            }
+
+            if (tvDesc != null) tvDesc.setText(descText);
+
+            if (btn != null) {
+                String btnTxt = block.buttonText != null && !block.buttonText.trim().isEmpty() ? block.buttonText : "Solicitar información";
+                btn.setText(btnTxt);
+
+                btn.setOnClickListener(v -> {
+                    String action = block.buttonAction != null && !block.buttonAction.isEmpty() ? block.buttonAction : "/creditos";
+                    if (action.startsWith("tel:")) {
+                        try {
+                            v.getContext().startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse(action)));
+                        } catch (Exception ignored) {}
+                    } else if (action.startsWith("http")) {
+                        try {
+                            v.getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(action)));
+                        } catch (Exception ignored) {}
+                    } else {
+                        String targetSec = action.replace("/", "");
+                        Intent intent = new Intent(v.getContext(), DynamicSectionActivity.class);
+                        intent.putExtra(DynamicSectionActivity.EXTRA_SECTION_ID, targetSec);
+                        v.getContext().startActivity(intent);
+                    }
+                });
+            }
+
+            if (iv != null) {
+                String media = block.mediaPath != null && !block.mediaPath.trim().isEmpty() ? block.mediaPath.trim() : "distintivo_colua";
                 int resId = itemView.getContext().getResources().getIdentifier(
-                        block.mediaPath, "drawable", itemView.getContext().getPackageName());
-                if (resId != 0) iv.setImageResource(resId);
+                        media, "drawable", itemView.getContext().getPackageName());
+                if (resId != 0) {
+                    iv.setImageResource(resId);
+                    if (media.startsWith("ic_")) {
+                        iv.setImageTintList(ColorStateList.valueOf(Color.parseColor("#173789")));
+                    } else {
+                        iv.setImageTintList(null);
+                    }
+                } else {
+                    iv.setImageResource(R.drawable.distintivo_colua);
+                    iv.setImageTintList(null);
+                }
             }
         }
     }

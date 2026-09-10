@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase;
 
 @Database(entities = {ServiceEntity.class, UserEntity.class, AgenciaEntity.class, 
         SectionEntity.class, CategoryEntity.class, ContentItemEntity.class, ContentBlockEntity.class,
-        NavigationItemEntity.class, GlobalConfigEntity.class}, version = 16)
+        NavigationItemEntity.class, GlobalConfigEntity.class}, version = 18)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract ServiceDao serviceDao();
     public abstract UserDao userDao();

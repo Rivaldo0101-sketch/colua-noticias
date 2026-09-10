@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.Button;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,15 +29,19 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.coluainformativa.database.AppDatabase;
+import com.example.coluainformativa.database.ContentBlockEntity;
 import com.example.coluainformativa.database.ContentItemEntity;
 import com.example.coluainformativa.database.NavigationItemEntity;
 import com.example.coluainformativa.database.SectionEntity;
+import java.util.stream.Collectors;
 import com.example.coluainformativa.repository.ColuaRepository;
 import com.example.coluainformativa.security.AdminAuthManager;
+import com.example.coluainformativa.utils.DialogHelper;
 import com.example.coluainformativa.utils.NavInsetHelper;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.Timestamp;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -76,10 +82,27 @@ public class AdminActivity extends AppCompatActivity {
                 findViewById(R.id.container_tab_pantallas)
         );
 
-        findViewById(R.id.btn_back_admin).setOnClickListener(v -> finish());
-        findViewById(R.id.btn_logout_admin).setOnClickListener(v -> logout());
+        // Interceptar el botón físico de Android, gestos de regresar y botones de navegación
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                handleControlledAdminExit();
+            }
+        });
+
+        findViewById(R.id.btn_back_admin).setOnClickListener(v -> handleControlledAdminExit());
+        findViewById(R.id.btn_logout_admin).setOnClickListener(v -> handleControlledAdminExit());
         
-        // Botón Principal: + Nueva pantalla
+        // Botón Principal: + Nueva Publicación Rápida
+        View btnCreateNewsQuick = findViewById(R.id.btn_create_news_quick);
+        if (btnCreateNewsQuick != null) {
+            btnCreateNewsQuick.setOnClickListener(v -> {
+                Intent intent = new Intent(this, AdminNewsEditActivity.class);
+                startActivity(intent);
+            });
+        }
+
+        // Botón Secundario: + Nueva pantalla
         findViewById(R.id.btn_add_new_section).setOnClickListener(v -> {
             Intent intent = new Intent(this, AdminSectionEditActivity.class);
             startActivity(intent);
@@ -90,6 +113,11 @@ public class AdminActivity extends AppCompatActivity {
         findViewById(R.id.btn_global_preview).setOnClickListener(v -> openGlobalPreview());
         findViewById(R.id.btn_publish_master).setOnClickListener(v -> publishMasterConfiguration());
         findViewById(R.id.btn_sync_now).setOnClickListener(v -> showSyncReportDialog());
+
+        View btnReview = findViewById(R.id.btn_review_changes);
+        if (btnReview != null) {
+            btnReview.setOnClickListener(v -> showReviewChangesDialog());
+        }
 
         loadActiveUsersStats();
 
@@ -140,17 +168,112 @@ public class AdminActivity extends AppCompatActivity {
         new Thread(() -> {
             List<SectionEntity> rawSections = repository.getAllSections();
             Collections.sort(rawSections, (s1, s2) -> Integer.compare(s1.displayOrder, s2.displayOrder));
-            List<AdminSectionListItem> displayList = new ArrayList<>();
-            for (SectionEntity s : rawSections) {
-                displayList.add(new AdminSectionListItem(s));
-            }
-            runOnUiThread(() -> rvContentScreens.setAdapter(new SectionsAdapter(displayList)));
+            runOnUiThread(() -> rvContentScreens.setAdapter(new ContentScreenSelectionAdapter(rawSections)));
         }).start();
+    }
+
+    class ContentScreenSelectionAdapter extends RecyclerView.Adapter<ContentScreenSelectionAdapter.ViewHolder> {
+        private final List<SectionEntity> list;
+
+        ContentScreenSelectionAdapter(List<SectionEntity> list) {
+            this.list = list;
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_content_screen_selector, parent, false);
+            return new ViewHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            SectionEntity section = list.get(position);
+            holder.tvTitle.setText(section.title);
+            holder.tvRoute.setText("/" + (section.slug != null && !section.slug.isEmpty() ? section.slug : section.id));
+
+            if (section.accentColor != null && !section.accentColor.isEmpty()) {
+                try {
+                    holder.sideBorder.setBackgroundColor(Color.parseColor(section.accentColor));
+                } catch (Exception ignored) {}
+            }
+
+            int iconRes = getResources().getIdentifier(section.iconName, "drawable", getPackageName());
+            if (iconRes != 0) {
+                holder.ivIcon.setImageResource(iconRes);
+                if (section.iconName != null && section.iconName.startsWith("ic_")) {
+                    holder.ivIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#173789")));
+                } else {
+                    holder.ivIcon.setImageTintList(null);
+                }
+            } else {
+                holder.ivIcon.setImageResource(R.drawable.ic_star);
+                holder.ivIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#173789")));
+            }
+
+            // Recuento de elementos (Manejo especial para Agencias)
+            new Thread(() -> {
+                int count;
+                if ("sec_agencias".equalsIgnoreCase(section.id) || "agencias".equalsIgnoreCase(section.id)) {
+                    count = repository.getAllAgencias().size();
+                } else {
+                    count = repository.getItemsBySection(section.id).size() + repository.getBlocksBySection(section.id).size();
+                }
+                final int finalCount = count;
+                runOnUiThread(() -> {
+                    if (holder.tvCount != null) {
+                        holder.tvCount.setText(finalCount + (finalCount == 1 ? " elemento registrado" : " elementos registrados"));
+                    }
+                });
+            }).start();
+
+            // Abrir Canvas Editor al hacer clic
+            View.OnClickListener openCanvasListener = v -> {
+                Intent intent = new Intent(AdminActivity.this, AdminContentListActivity.class);
+                intent.putExtra(AdminContentListActivity.EXTRA_SECTION_ID, section.id);
+                if ("sec_agencias".equalsIgnoreCase(section.id) || "agencias".equalsIgnoreCase(section.id)) {
+                    intent.putExtra(AdminContentListActivity.EXTRA_MANAGE_AGENCIAS, true);
+                }
+                startActivity(intent);
+            };
+
+            holder.btnOpenCanvas.setOnClickListener(openCanvasListener);
+            holder.itemView.setOnClickListener(openCanvasListener);
+        }
+
+        @Override
+        public int getItemCount() {
+            return list.size();
+        }
+
+        class ViewHolder extends RecyclerView.ViewHolder {
+            TextView tvTitle, tvRoute, tvCount;
+            ImageView ivIcon;
+            View sideBorder, btnOpenCanvas;
+
+            ViewHolder(View v) {
+                super(v);
+                tvTitle = v.findViewById(R.id.tv_content_screen_title);
+                tvRoute = v.findViewById(R.id.tv_content_screen_route);
+                tvCount = v.findViewById(R.id.tv_content_items_count);
+                ivIcon = v.findViewById(R.id.iv_content_screen_icon);
+                sideBorder = v.findViewById(R.id.side_border_content);
+                btnOpenCanvas = v.findViewById(R.id.btn_open_canvas_editor);
+            }
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        if (authManager == null || !authManager.isSessionActive()) {
+            Toast.makeText(this, "Sesión vencida o no autorizada. Redirigiendo...", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+            return;
+        }
         loadSyncStatusInfo();
         setupSectionsList();
     }
@@ -158,33 +281,100 @@ public class AdminActivity extends AppCompatActivity {
     private void loadSyncStatusInfo() {
         new Thread(() -> {
             ColuaRepository.SyncStatusInfo info = repository.getSyncStatusInfo();
+            
+            // Métricas de borradores reales
+            List<SectionEntity> allSections = repository.getAllSections();
+            int pendingSections = (int) allSections.stream().filter(s -> !s.isPublished).count();
+            
+            List<ContentItemEntity> allItems = repository.getAllItems();
+            int pendingItems = (int) allItems.stream().filter(i -> i.isDraft).count();
+            
+            List<ContentBlockEntity> allBlocks = repository.getAllBlocks();
+            int pendingBlocks = (int) allBlocks.stream().filter(b -> b.isDraft).count();
+            
+            int totalPending = pendingSections + pendingItems + pendingBlocks;
+
+            List<ContentItemEntity> newsList = repository.getItemsBySection("sec_noticias");
+            int totalLikes = newsList.stream().mapToInt(n -> n.likesCount).sum();
+            int totalShares = newsList.stream().mapToInt(n -> n.sharesCount).sum();
+
             runOnUiThread(() -> {
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
                 String lastSyncStr = info.getLastSyncTimestamp() > 0 
                         ? sdf.format(new Date(info.getLastSyncTimestamp())) 
                         : "Sin publicaciones previas";
 
-                tvSyncInfoDetails.setText("Versión Local: v" + info.getLocalVersion() + 
-                        " | Versión Remota: v" + info.getRemoteVersion() + 
+                tvSyncInfoDetails.setText("Borrador local: v" + (info.getLocalVersion() + (totalPending > 0 ? 1 : 0)) + 
+                        " | Publicada: v" + info.getLocalVersion() + 
                         "\nÚltima sync: " + lastSyncStr + 
-                        "\nPantallas: " + info.getSectionsCount() + " | Elementos: " + info.getItemsCount());
+                        "\nPantallas: " + info.getSectionsCount() + " | Elementos: " + info.getItemsCount() +
+                        "\nReacciones: ❤️ " + totalLikes + " me gusta | 🔁 " + totalShares + " compartidos");
 
-                if (info.getHasUnpublishedChanges()) {
-                    tvStatusBadge.setText("Borrador sin publicar");
+                TextView tvTotalPending = findViewById(R.id.tv_metric_total_pending);
+                if (tvTotalPending != null) tvTotalPending.setText("Pendientes: " + totalPending);
+
+                TextView tvMetricNew = findViewById(R.id.tv_metric_new);
+                if (tvMetricNew != null) tvMetricNew.setText("Nuevos: " + (pendingSections + pendingItems));
+
+                TextView tvMetricEdited = findViewById(R.id.tv_metric_edited);
+                if (tvMetricEdited != null) tvMetricEdited.setText("Editados: " + pendingBlocks);
+
+                TextView tvMetricIssues = findViewById(R.id.tv_metric_issues);
+                if (tvMetricIssues != null) tvMetricIssues.setText("Incompletos: 0");
+
+                if (totalPending > 0 || info.getHasUnpublishedChanges()) {
+                    tvStatusBadge.setText("🟧 Cambios pendientes (" + totalPending + ")");
                     tvStatusBadge.setBackgroundTintList(ColorStateList.valueOf(0xFFFFF3E0));
                     tvStatusBadge.setTextColor(0xFFE65100);
                 } else {
-                    tvStatusBadge.setText("Publicado (v" + info.getLocalVersion() + ")");
+                    tvStatusBadge.setText("🟢 Todo publicado (v" + info.getLocalVersion() + ")");
                     tvStatusBadge.setBackgroundTintList(ColorStateList.valueOf(0xFFE8F5E9));
                     tvStatusBadge.setTextColor(0xFF2E7D32);
                 }
 
-                TextView tvPantallasSummary = findViewById(R.id.tv_pantallas_summary);
-                if (tvPantallasSummary != null) {
-                    tvPantallasSummary.setText("Pantallas Activas: " + info.getSectionsCount() + 
-                            " | Borradores: " + (info.getHasUnpublishedChanges() ? "Pendientes" : "Ninguno") + 
-                            "\nÚltima Publicación: " + lastSyncStr);
+                TextView tvRecentLog = findViewById(R.id.tv_recent_activity_log);
+                if (tvRecentLog != null) {
+                    if (totalPending > 0) {
+                        tvRecentLog.setText("Actividad reciente:\n• " + totalPending + " elementos o borradores pendientes por publicar.");
+                    } else {
+                        tvRecentLog.setText("Actividad reciente:\n• No hay cambios pendientes. La versión publicada v" + info.getLocalVersion() + " está actualizada.");
+                    }
                 }
+            });
+        }).start();
+    }
+
+    private void showReviewChangesDialog() {
+        new Thread(() -> {
+            List<SectionEntity> pendingSecs = repository.getAllSections().stream().filter(s -> !s.isPublished).collect(Collectors.toList());
+            List<ContentItemEntity> pendingItems = repository.getAllItems().stream().filter(i -> i.isDraft).collect(Collectors.toList());
+            List<ContentBlockEntity> pendingBlocks = repository.getAllBlocks().stream().filter(b -> b.isDraft).collect(Collectors.toList());
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("DESGLOSE DE CAMBIOS PENDIENTES:\n\n");
+
+            if (pendingSecs.isEmpty() && pendingItems.isEmpty() && pendingBlocks.isEmpty()) {
+                sb.append("No hay cambios pendientes. La versión publicada está actualizada en la nube.\n");
+            } else {
+                if (!pendingSecs.isEmpty()) {
+                    sb.append("PANTALLAS EN BORRADOR (").append(pendingSecs.size()).append("):\n");
+                    for (SectionEntity s : pendingSecs) sb.append(" • ").append(s.title).append(" (/").append(s.slug).append(")\n");
+                    sb.append("\n");
+                }
+                if (!pendingItems.isEmpty()) {
+                    sb.append("TARJETAS DE PRODUCTO (").append(pendingItems.size()).append("):\n");
+                    for (ContentItemEntity i : pendingItems) sb.append(" • ").append(i.title).append("\n");
+                    sb.append("\n");
+                }
+                if (!pendingBlocks.isEmpty()) {
+                    sb.append("BLOQUES / ELEMENTOS (").append(pendingBlocks.size()).append("):\n");
+                    for (ContentBlockEntity b : pendingBlocks) sb.append(" • ").append(b.title != null ? b.title : b.type).append("\n");
+                }
+            }
+
+            final String report = sb.toString();
+            runOnUiThread(() -> {
+                DialogHelper.showLightReportDialog(this, "Revisar Detalle de Cambios", report, "Publicar Ahora", () -> publishMasterConfiguration(), "Cerrar");
             });
         }).start();
     }
@@ -200,48 +390,45 @@ public class AdminActivity extends AppCompatActivity {
 
     private void openGlobalPreview() {
         Intent intent = new Intent(this, MainActivity.class);
-        intent.putExtra("extra_visual_edit_mode", true);
+        intent.putExtra("extra_visual_edit_mode", false);
+        intent.putExtra("extra_is_preview_mode", true);
         startActivity(intent);
     }
 
     private void publishMasterConfiguration() {
-        new AlertDialog.Builder(this)
-                .setTitle("Confirmar Publicación")
-                .setMessage("¿Desea publicar todos los cambios del borrador actual a la nube? Los asociados verán la nueva versión inmediatamente.")
-                .setPositiveButton("PUBLICAR CAMBIOS", (dialog, which) -> {
+        DialogHelper.showLightReportDialog(this, "Confirmar Publicación Masiva",
+                "¿Desea publicar todos los cambios del borrador actual a la nube? Los asociados verán la nueva versión inmediatamente.",
+                "Publicar Todo",
+                () -> {
                     Toast.makeText(this, "Validando y publicando...", Toast.LENGTH_SHORT).show();
                     repository.publishCurrentConfiguration(result -> {
                         if (result.getSuccess()) {
                             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
                             String dateStr = sdf.format(new Date(result.getTimestamp()));
-                            
-                            new AlertDialog.Builder(AdminActivity.this)
-                                    .setTitle("¡Publicación Exitosa!")
-                                    .setMessage("La configuración ha sido publicada correctamente en la nube.\n\n" +
-                                            "• Versión Publicada: v" + result.getVersion() + "\n" +
-                                            "• Fecha / Hora: " + dateStr + "\n" +
-                                            "• Pantallas Publicadas: " + result.getSectionsCount() + "\n" +
-                                            "• Elementos Publicados: " + result.getItemsCount())
-                                    .setPositiveButton("ACEPTAR", null)
-                                    .show();
-                            
+
+                            String successMsg = "La configuración ha sido publicada correctamente en la nube.\n\n" +
+                                    "• Versión Publicada: v" + result.getVersion() + "\n" +
+                                    "• Fecha / Hora: " + dateStr + "\n" +
+                                    "• Pantallas Publicadas: " + result.getSectionsCount() + "\n" +
+                                    "• Elementos Publicados: " + result.getItemsCount();
+
+                            DialogHelper.showLightReportDialog(AdminActivity.this, "¡Publicación Exitosa!", successMsg, null, null, "Aceptar");
                             loadSyncStatusInfo();
                         } else {
-                            new AlertDialog.Builder(AdminActivity.this)
-                                    .setTitle("Error de Publicación")
-                                    .setMessage("No se pudo publicar la configuración:\n\n" + result.getErrorMessage())
-                                    .setPositiveButton("ENTENDIDO", null)
-                                    .show();
+                            DialogHelper.showLightReportDialog(AdminActivity.this, "Error de Publicación", "No se pudo publicar la configuración:\n\n" + result.getErrorMessage(), null, null, "Entendido");
                         }
                     });
-                })
-                .setNegativeButton("CANCELAR", null)
-                .show();
+                },
+                "Cancelar"
+        );
     }
 
     private void showSyncReportDialog() {
         new Thread(() -> {
             ColuaRepository.SyncStatusInfo info = repository.getSyncStatusInfo();
+            int totalAgencias = repository.getAllAgencias().size();
+            int totalBlocks = repository.getAllBlocks().size();
+
             runOnUiThread(() -> {
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
                 String lastSyncStr = info.getLastSyncTimestamp() > 0 
@@ -250,39 +437,69 @@ public class AdminActivity extends AppCompatActivity {
 
                 String status = info.getErrorMessage() == null ? "Conexión Estable" : "Error: " + info.getErrorMessage();
 
-                new AlertDialog.Builder(this)
-                        .setTitle("Informe de Sincronización")
-                        .setMessage("• Estado de Red: " + status + "\n" +
-                                "• Versión Local: v" + info.getLocalVersion() + "\n" +
-                                "• Versión Servidor: v" + info.getRemoteVersion() + "\n" +
-                                "• Última Publicación: " + lastSyncStr + "\n" +
-                                "• Total Pantallas: " + info.getSectionsCount() + "\n" +
-                                "• Total Elementos: " + info.getItemsCount() + "\n" +
-                                "• Sincronización Cloud: " + (info.isCloudSyncActive() ? "ACTIVA" : "INACTIVA"))
-                        .setPositiveButton("REINTENTAR / REFRESCAR", (d, w) -> loadSyncStatusInfo())
-                        .setNegativeButton("CERRAR", null)
-                        .show();
+                String reportMsg = "• Estado de Red: " + status + "\n" +
+                        "• Versión Local Publicada: v" + info.getLocalVersion() + "\n" +
+                        "• Versión Servidor Remoto: v" + info.getRemoteVersion() + "\n" +
+                        "• Última Sincronización: " + lastSyncStr + "\n" +
+                        "• Total Pantallas: " + info.getSectionsCount() + "\n" +
+                        "• Tarjetas de Productos: " + info.getItemsCount() + "\n" +
+                        "• Bloques CMS Estructurales: " + totalBlocks + "\n" +
+                        "• Agencias y Puntos MICOOPE: " + totalAgencias + "\n" +
+                        "• Estado Sincronización Cloud: " + (info.isCloudSyncActive() ? "ACTIVA" : "INACTIVA");
+
+                DialogHelper.showLightReportDialog(this, "Informe de Sincronización", reportMsg, "Refrescar", () -> loadSyncStatusInfo(), "Cerrar");
+            });
+        }).start();
+    }
+
+    private void showDatabaseStatsDialog() {
+        new Thread(() -> {
+            ColuaRepository.SyncStatusInfo info = repository.getSyncStatusInfo();
+            int totalSecs = repository.getAllSections().size();
+            int totalItems = repository.getAllItems().size();
+            int totalBlocks = repository.getAllBlocks().size();
+            int totalAgencias = repository.getAllAgencias().size();
+            int pendingItems = (int) repository.getAllItems().stream().filter(i -> i.isDraft).count();
+            int pendingBlocks = (int) repository.getAllBlocks().stream().filter(b -> b.isDraft).count();
+
+            String statsMsg = "ESTADÍSTICAS GENERALES DE BASE DE DATOS:\n\n" +
+                    "• Versión de Esquema BD: v17 (SQLite / Room)\n" +
+                    "• Sincronización Remota: " + (info.isCloudSyncActive() ? "Firestore Cloud Activo" : "Inactivo") + "\n" +
+                    "• Versión Publicada Servidor: v" + info.getRemoteVersion() + "\n" +
+                    "• Versión Borrador Local: v" + info.getLocalVersion() + "\n\n" +
+                    "MÉTRICAS DE REGISTROS:\n" +
+                    "• Pantallas Activas: " + totalSecs + "\n" +
+                    "• Tarjetas de Producto: " + totalItems + "\n" +
+                    "• Bloques Estructurales CMS: " + totalBlocks + "\n" +
+                    "• Agencias y Puntos MICOOPE: " + totalAgencias + "\n" +
+                    "• Borradores Pendientes: " + (pendingItems + pendingBlocks) + "\n\n" +
+                    "ALMACENAMIENTO Y PERSISTENCIA:\n" +
+                    "• Motor Local: Room DB con transacciones atómicas.\n" +
+                    "• Caché Remoto: Offline Persistence Firestore habilitado.";
+
+            runOnUiThread(() -> {
+                DialogHelper.showLightReportDialog(this, "Estadísticas de Base de Datos", statsMsg, "Refrescar", () -> loadSyncStatusInfo(), "Cerrar");
             });
         }).start();
     }
 
     private void confirmRestore() {
-        new AlertDialog.Builder(this)
-                .setTitle("Restaurar Datos Iniciales")
-                .setMessage("ADVERTENCIA: Se restaurará el contenido inicial (secciones, agencias y navegación) en MODO BORRADOR.\n\n" +
+        DialogHelper.showLightReportDialog(this, "Restaurar Datos Iniciales",
+                "ADVERTENCIA: Se restaurará el contenido inicial (secciones, agencias y navegación) en MODO BORRADOR.\n\n" +
                         "• Se limpiarán automáticamente registros de prueba antiguos en la nube.\n" +
-                        "• NO se borrarán usuarios reales, teléfonos, DPIs, contraseñas ni registros de actividad activos.")
-                .setPositiveButton("RESTAURAR Y CREAR BORRADOR", (dialog, which) -> {
+                        "• NO se borrarán usuarios reales, teléfonos, DPIs, contraseñas ni registros de actividad activos.",
+                "Restaurar y Crear Borrador",
+                () -> {
                     Toast.makeText(this, "Limpiando registros antiguos y restaurando...", Toast.LENGTH_SHORT).show();
-                    repository.purgeOldCollections(); // Limpiar registros fantasma antigos
+                    repository.purgeOldCollections();
                     repository.restoreInitialDataWithBackup((success, msg) -> {
                         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
                         loadSyncStatusInfo();
                         setupSectionsList();
                     });
-                })
-                .setNegativeButton("CANCELAR", null)
-                .show();
+                },
+                "Cancelar"
+        );
     }
 
     private void showEditIdentityDialog() {
@@ -307,7 +524,7 @@ public class AdminActivity extends AppCompatActivity {
         layout.addView(etLogo);
         layout.addView(etDist);
 
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, androidx.appcompat.R.style.Theme_AppCompat_Light_Dialog_Alert)
                 .setTitle("Editar Identidad Visual")
                 .setView(layout)
                 .setPositiveButton("Guardar", (dialog, which) -> {
@@ -321,13 +538,61 @@ public class AdminActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void logout() {
-        new AlertDialog.Builder(this)
-                .setTitle("Cerrar Sesión")
-                .setMessage("¿Desea salir del panel de administración?")
-                .setPositiveButton("Salir", (dialog, which) -> finish())
-                .setNegativeButton("Cancelar", null)
-                .show();
+    @Override
+    @SuppressWarnings("deprecation")
+    public void onBackPressed() {
+        handleControlledAdminExit();
+    }
+
+    private void handleControlledAdminExit() {
+        boolean hasUnpublished = getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
+                .getBoolean("has_unpublished_changes", false);
+
+        if (hasUnpublished) {
+            DialogHelper.showUnsavedChangesDialog(this,
+                    () -> {
+                        Toast.makeText(this, "Borrador guardado localmente.", Toast.LENGTH_SHORT).show();
+                        showConfirmLogoutDialog();
+                    },
+                    () -> {
+                        getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
+                                .edit()
+                                .putBoolean("has_unpublished_changes", false)
+                                .apply();
+                        Toast.makeText(this, "Cambios sin publicar descartados.", Toast.LENGTH_SHORT).show();
+                        showConfirmLogoutDialog();
+                    }
+            );
+        } else {
+            showConfirmLogoutDialog();
+        }
+    }
+
+    private void showConfirmLogoutDialog() {
+        DialogHelper.showConfirmExitDialog(this, () -> performRealLogout());
+    }
+
+    private void performRealLogout() {
+        if (repository != null) {
+            repository.unsubscribeAll();
+        }
+
+        if (authManager != null) {
+            authManager.logout();
+        }
+
+        getSharedPreferences("AdminSecurityPrefs", MODE_PRIVATE).edit().clear().apply();
+
+        if (rvSections != null) {
+            rvSections.setAdapter(null);
+        }
+
+        Toast.makeText(this, "Sesión administrativa cerrada correctamente.", Toast.LENGTH_SHORT).show();
+
+        Intent intent = new Intent(AdminActivity.this, LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private void setupCloudSwitch() {
@@ -356,7 +621,7 @@ public class AdminActivity extends AppCompatActivity {
         layout.addView(etOld);
         layout.addView(etNew);
 
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, androidx.appcompat.R.style.Theme_AppCompat_Light_Dialog_Alert)
                 .setTitle("Cambiar Clave Admin")
                 .setView(layout)
                 .setPositiveButton("Actualizar", (dialog, which) -> {
@@ -379,6 +644,7 @@ public class AdminActivity extends AppCompatActivity {
         int type;
         String headerTitle;
         SectionEntity section;
+        boolean isArchived = false;
 
         AdminSectionListItem(String headerTitle) {
             this.type = TYPE_HEADER;
@@ -428,13 +694,23 @@ public class AdminActivity extends AppCompatActivity {
                 for (SectionEntity s : unpublishedChangesList) displayList.add(new AdminSectionListItem(s));
             }
 
+            List<SectionEntity> archivedList = repository.getArchivedSections();
+            if (!archivedList.isEmpty()) {
+                displayList.add(new AdminSectionListItem("Pantallas Archivadas (En Papelera)"));
+                for (SectionEntity s : archivedList) {
+                    AdminSectionListItem item = new AdminSectionListItem(s);
+                    item.isArchived = true;
+                    displayList.add(item);
+                }
+            }
+
             runOnUiThread(() -> rvSections.setAdapter(new SectionsAdapter(displayList)));
         }).start();
     }
 
     private void showChangeLocationDialog(SectionEntity section) {
         String[] options = {"Menú Lateral", "Barra Inferior", "Barra Superior", "Ninguna (NONE)"};
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, androidx.appcompat.R.style.Theme_AppCompat_Light_Dialog_Alert)
                 .setTitle("Cambiar Ubicación de: " + section.title)
                 .setItems(options, (dialog, which) -> {
                     String newType = "SIDEBAR";
@@ -511,7 +787,7 @@ public class AdminActivity extends AppCompatActivity {
                 ItemViewHolder itemHolder = (ItemViewHolder) holder;
                 SectionEntity section = listItem.section;
 
-                itemHolder.tvLabel.setText(section.title);
+                itemHolder.tvLabel.setText(section.title + (listItem.isArchived ? " (ARCHIVADA)" : ""));
                 itemHolder.tvPath.setText("/" + (section.slug != null && !section.slug.isEmpty() ? section.slug : section.id));
                 itemHolder.tvOrder.setText("Ord: " + section.displayOrder);
 
@@ -525,29 +801,78 @@ public class AdminActivity extends AppCompatActivity {
                 int iconRes = getResources().getIdentifier(section.iconName, "drawable", getPackageName());
                 if (iconRes != 0) itemHolder.ivIcon.setImageResource(iconRes);
 
-                // Botón 1: Cambiar Ubicación (+)
-                itemHolder.btnAddContent.setOnClickListener(v -> showChangeLocationDialog(section));
+                if (listItem.isArchived) {
+                    if (itemHolder.colEdit != null) itemHolder.colEdit.setVisibility(View.GONE);
+                    if (itemHolder.colPreview != null) itemHolder.colPreview.setVisibility(View.GONE);
+                    if (itemHolder.colDelete != null) itemHolder.colDelete.setVisibility(View.VISIBLE);
+                    if (itemHolder.colAddContent != null) itemHolder.colAddContent.setVisibility(View.VISIBLE);
 
-                // Botón 2: Editar Sección (Lápiz)
-                itemHolder.btnEdit.setOnClickListener(v -> {
-                    Intent intent = new Intent(AdminActivity.this, AdminSectionEditActivity.class);
-                    intent.putExtra(AdminSectionEditActivity.EXTRA_SECTION_ID, section.id);
-                    startActivity(intent);
-                });
+                    itemHolder.btnAddContent.setImageResource(android.R.drawable.ic_menu_revert);
+                    if (itemHolder.tvBtnAddContent != null) itemHolder.tvBtnAddContent.setText("Restaurar");
+                    if (itemHolder.tvBtnDelete != null) itemHolder.tvBtnDelete.setText("Eliminar");
 
-                // Botón 3: Vista de Usuario (Ojo) - Estrictamente solo vista de usuario, sin edición
-                itemHolder.btnPreview.setOnClickListener(v -> {
-                    Class<?> target = DynamicSectionActivity.class;
-                    if ("sec_home".equals(section.id)) target = MainActivity.class;
+                    View.OnClickListener restoreListener = v -> {
+                        new Thread(() -> {
+                            repository.restoreArchivedSection(section.id);
+                            runOnUiThread(() -> {
+                                Toast.makeText(AdminActivity.this, "Pantalla '" + section.title + "' restaurada.", Toast.LENGTH_SHORT).show();
+                                setupSectionsList();
+                                loadSyncStatusInfo();
+                            });
+                        }).start();
+                    };
+                    itemHolder.btnAddContent.setOnClickListener(restoreListener);
+                    if (itemHolder.colAddContent != null) itemHolder.colAddContent.setOnClickListener(restoreListener);
 
-                    Intent intent = new Intent(AdminActivity.this, target);
-                    intent.putExtra("extra_section_id", section.id);
-                    intent.putExtra("extra_visual_edit_mode", false);
-                    startActivity(intent);
-                });
+                    View.OnClickListener purgeListener = v -> confirmPurgeSection(section);
+                    itemHolder.btnDelete.setOnClickListener(purgeListener);
+                    if (itemHolder.colDelete != null) itemHolder.colDelete.setOnClickListener(purgeListener);
+                } else {
+                    if (itemHolder.colEdit != null) itemHolder.colEdit.setVisibility(View.VISIBLE);
+                    if (itemHolder.colPreview != null) itemHolder.colPreview.setVisibility(View.VISIBLE);
+                    if (itemHolder.colDelete != null) itemHolder.colDelete.setVisibility(View.VISIBLE);
+                    if (itemHolder.colAddContent != null) itemHolder.colAddContent.setVisibility(View.VISIBLE);
 
-                // Botón 4: Eliminar (Papelera)
-                itemHolder.btnDelete.setOnClickListener(v -> confirmDeleteSection(section));
+                    itemHolder.btnAddContent.setImageResource(R.drawable.direccion);
+                    if (itemHolder.tvBtnAddContent != null) itemHolder.tvBtnAddContent.setText("Cambiar sitio");
+                    if (itemHolder.tvBtnEdit != null) itemHolder.tvBtnEdit.setText("Detalles");
+                    if (itemHolder.tvBtnPreview != null) itemHolder.tvBtnPreview.setText("Vista previa");
+                    if (itemHolder.tvBtnDelete != null) itemHolder.tvBtnDelete.setText("Eliminar");
+
+                    // Botón 1: Cambiar sitio (+)
+                    View.OnClickListener addContentListener = v -> showChangeLocationDialog(section);
+                    itemHolder.btnAddContent.setOnClickListener(addContentListener);
+                    if (itemHolder.colAddContent != null) itemHolder.colAddContent.setOnClickListener(addContentListener);
+
+                    // Botón 2: Detalles (Editar Sección)
+                    View.OnClickListener editListener = v -> {
+                        Intent intent = new Intent(AdminActivity.this, AdminSectionEditActivity.class);
+                        intent.putExtra(AdminSectionEditActivity.EXTRA_SECTION_ID, section.id);
+                        startActivity(intent);
+                    };
+                    itemHolder.btnEdit.setOnClickListener(editListener);
+                    if (itemHolder.colEdit != null) itemHolder.colEdit.setOnClickListener(editListener);
+
+                    // Botón 3: Vista previa
+                    View.OnClickListener previewListener = v -> {
+                        Class<?> target = DynamicSectionActivity.class;
+                        if ("sec_home".equals(section.id)) target = MainActivity.class;
+                        else if ("sec_agencias".equals(section.id)) target = AgenciasActivity.class;
+
+                        Intent intent = new Intent(AdminActivity.this, target);
+                        intent.putExtra("extra_section_id", section.id);
+                        intent.putExtra("extra_visual_edit_mode", false);
+                        intent.putExtra("extra_is_preview_mode", true);
+                        startActivity(intent);
+                    };
+                    itemHolder.btnPreview.setOnClickListener(previewListener);
+                    if (itemHolder.colPreview != null) itemHolder.colPreview.setOnClickListener(previewListener);
+
+                    // Botón 4: Eliminar / Archivar
+                    View.OnClickListener deleteListener = v -> confirmDeleteSection(section);
+                    itemHolder.btnDelete.setOnClickListener(deleteListener);
+                    if (itemHolder.colDelete != null) itemHolder.colDelete.setOnClickListener(deleteListener);
+                }
             }
         }
     }
@@ -605,68 +930,94 @@ public class AdminActivity extends AppCompatActivity {
                 int iconRes = getResources().getIdentifier(section.iconName, "drawable", getPackageName());
                 if (iconRes != 0) itemHolder.ivIcon.setImageResource(iconRes);
 
-                // Ocultar botón de eliminar en pestaña contenido
-                itemHolder.btnDelete.setVisibility(View.GONE);
+                if (itemHolder.colDelete != null) itemHolder.colDelete.setVisibility(View.GONE);
+                if (itemHolder.colEdit != null) itemHolder.colEdit.setVisibility(View.VISIBLE);
+                if (itemHolder.colPreview != null) itemHolder.colPreview.setVisibility(View.VISIBLE);
+                if (itemHolder.colAddContent != null) itemHolder.colAddContent.setVisibility(View.VISIBLE);
+
+                itemHolder.btnAddContent.setImageResource(R.drawable.editar);
+                if (itemHolder.tvBtnAddContent != null) itemHolder.tvBtnAddContent.setText("Borrador");
+                if (itemHolder.tvBtnEdit != null) itemHolder.tvBtnEdit.setText("Diseñar");
+                if (itemHolder.tvBtnPreview != null) itemHolder.tvBtnPreview.setText("Vista previa");
 
                 // Botón 1: Guardar Borrador local
-                itemHolder.btnAddContent.setOnClickListener(v -> {
+                View.OnClickListener draftListener = v -> {
                     getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
                             .edit()
                             .putBoolean("has_unpublished_changes", true)
                             .apply();
                     Toast.makeText(AdminActivity.this, "Borrador de '" + section.title + "' guardado localmente.", Toast.LENGTH_SHORT).show();
                     loadSyncStatusInfo();
-                });
+                };
+                itemHolder.btnAddContent.setOnClickListener(draftListener);
+                if (itemHolder.colAddContent != null) itemHolder.colAddContent.setOnClickListener(draftListener);
 
-                // Botón 2: Editar (Modo Diseño) -> Abre AdminContentListActivity
-                itemHolder.btnEdit.setOnClickListener(v -> {
+                // Botón 2: Editar (Modo Diseño)
+                View.OnClickListener designListener = v -> {
                     Intent intent = new Intent(AdminActivity.this, AdminContentListActivity.class);
                     intent.putExtra(AdminContentListActivity.EXTRA_SECTION_ID, section.id);
                     startActivity(intent);
-                });
+                };
+                itemHolder.btnEdit.setOnClickListener(designListener);
+                if (itemHolder.colEdit != null) itemHolder.colEdit.setOnClickListener(designListener);
 
-        // Botón 3: Ver como Usuario (Vista Normal) -> Abre sin visual edit mode
-                itemHolder.btnPreview.setOnClickListener(v -> {
+                // Botón 3: Ver como Usuario (Vista Normal)
+                View.OnClickListener previewListener = v -> {
                     Class<?> target = DynamicSectionActivity.class;
                     if ("sec_home".equals(section.id)) target = MainActivity.class;
+                    else if ("sec_agencias".equals(section.id)) target = AgenciasActivity.class;
 
                     Intent intent = new Intent(AdminActivity.this, target);
                     intent.putExtra("extra_section_id", section.id);
                     intent.putExtra("extra_visual_edit_mode", false);
+                    intent.putExtra("extra_is_preview_mode", true);
                     startActivity(intent);
-                });
+                };
+                itemHolder.btnPreview.setOnClickListener(previewListener);
+                if (itemHolder.colPreview != null) itemHolder.colPreview.setOnClickListener(previewListener);
             }
         }
     }
 
     private void confirmDeleteSection(SectionEntity section) {
+        if ("sec_home".equalsIgnoreCase(section.id)) {
+            Toast.makeText(this, "La pantalla 'Inicio' es un componente esencial del sistema y no puede ser eliminada.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         new Thread(() -> {
             List<ContentItemEntity> childItems = repository.getItemsBySection(section.id);
             int count = childItems.size();
 
             runOnUiThread(() -> {
-                String warningMsg = count > 0 
-                        ? "ADVERTENCIA: Esta pantalla contiene " + count + " elementos internos. Al eliminarla, se eliminará junto con sus elementos." 
-                        : "¿Desea eliminar la pantalla '" + section.title + "'?";
+                String warningMsg = "PANTALLA A ARCHIVAR:\n" +
+                        "• Título: " + section.title + "\n" +
+                        "• Ruta: /" + (section.slug != null && !section.slug.isEmpty() ? section.slug : section.id) + "\n" +
+                        "• Elementos contenidos: " + count + " elementos\n\n" +
+                        (count > 0 ? "ADVERTENCIA: Esta pantalla contiene " + count + " elementos internos. Se archivará lógicamente y sus referencias del menú serán removidas." : "¿Confirma que desea archivar la pantalla?");
 
-                new AlertDialog.Builder(AdminActivity.this)
-                        .setTitle("Eliminar Pantalla: " + section.title)
-                        .setMessage(warningMsg)
-                        .setPositiveButton("ELIMINAR", (d, w) -> {
-                            showMasterPasswordVerificationDialog(section);
-                        })
-                        .setNegativeButton("CANCELAR", null)
-                        .show();
+                DialogHelper.showLightReportDialog(AdminActivity.this, "Archivar Pantalla: " + section.title, warningMsg, "ARCHIVAR", () -> {
+                    showMasterPasswordVerificationDialog(section, false);
+                }, "CANCELAR");
             });
         }).start();
     }
 
-    private void showMasterPasswordVerificationDialog(SectionEntity section) {
+    private void confirmPurgeSection(SectionEntity section) {
+        DialogHelper.showLightReportDialog(AdminActivity.this, "Eliminación Permanente: " + section.title,
+                "¿Desea eliminar definitivamente la pantalla '" + section.title + "' de la base de datos?\n\nEsta acción NO se puede deshacer.",
+                "ELIMINAR DEFINITIVAMENTE",
+                () -> showMasterPasswordVerificationDialog(section, true),
+                "CANCELAR"
+        );
+    }
+
+    private void showMasterPasswordVerificationDialog(SectionEntity section, boolean purgePermanently) {
         View dialogView = LayoutInflater.from(AdminActivity.this).inflate(R.layout.dialog_admin_login, null);
         EditText etPassword = dialogView.findViewById(R.id.et_admin_password);
         Button btnLogin = dialogView.findViewById(R.id.btn_login);
         Button btnCancel = dialogView.findViewById(R.id.btn_cancel);
-        if (btnLogin != null) btnLogin.setText("Confirmar Eliminación");
+        if (btnLogin != null) btnLogin.setText(purgePermanently ? "Confirmar Eliminación Permanente" : "Confirmar Archivado");
 
         AlertDialog dialog = new AlertDialog.Builder(AdminActivity.this)
                 .setView(dialogView)
@@ -681,9 +1032,18 @@ public class AdminActivity extends AppCompatActivity {
             if (authManager.checkPassword(pass)) {
                 dialog.dismiss();
                 new Thread(() -> {
-                    repository.deleteSection(section.id);
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
+                    String auditDate = sdf.format(new Date());
+                    if (purgePermanently) {
+                        Log.i("AUDIT_ADMIN", "[" + auditDate + "] ELIMINACIÓN PERMANENTE de pantalla " + section.id + " por admin.");
+                        repository.purgeSectionPermanently(section.id);
+                    } else {
+                        Log.i("AUDIT_ADMIN", "[" + auditDate + "] ARCHIVADO LÓGICO de pantalla " + section.id + " por admin.");
+                        repository.archiveSection(section.id);
+                    }
                     runOnUiThread(() -> {
-                        Toast.makeText(AdminActivity.this, "Pantalla '" + section.title + "' eliminada correctamente.", Toast.LENGTH_SHORT).show();
+                        String msg = purgePermanently ? "Pantalla '" + section.title + "' eliminada permanentemente." : "Pantalla '" + section.title + "' archivada correctamente.";
+                        Toast.makeText(AdminActivity.this, msg, Toast.LENGTH_SHORT).show();
                         setupSectionsList();
                         loadSyncStatusInfo();
                     });
@@ -713,7 +1073,9 @@ public class AdminActivity extends AppCompatActivity {
         TextView tvLabel, tvPath, tvOrder;
         ImageView ivIcon;
         View sideBorder;
+        View colAddContent, colEdit, colPreview, colDelete;
         ImageView btnAddContent, btnEdit, btnPreview, btnDelete;
+        TextView tvBtnAddContent, tvBtnEdit, tvBtnPreview, tvBtnDelete;
 
         ItemViewHolder(View v) {
             super(v);
@@ -722,10 +1084,21 @@ public class AdminActivity extends AppCompatActivity {
             tvLabel = v.findViewById(R.id.tv_menu_label);
             tvPath = v.findViewById(R.id.tv_menu_path);
             tvOrder = v.findViewById(R.id.tv_menu_order);
+
+            colAddContent = v.findViewById(R.id.col_add_content);
+            colEdit = v.findViewById(R.id.col_edit_section);
+            colPreview = v.findViewById(R.id.col_preview_section);
+            colDelete = v.findViewById(R.id.col_delete_section);
+
             btnAddContent = v.findViewById(R.id.btn_add_content);
             btnEdit = v.findViewById(R.id.btn_edit_section);
             btnPreview = v.findViewById(R.id.btn_preview_section);
             btnDelete = v.findViewById(R.id.btn_delete_section);
+
+            tvBtnAddContent = v.findViewById(R.id.tv_btn_add_content);
+            tvBtnEdit = v.findViewById(R.id.tv_btn_edit_section);
+            tvBtnPreview = v.findViewById(R.id.tv_btn_preview_section);
+            tvBtnDelete = v.findViewById(R.id.tv_btn_delete_section);
         }
     }
 
@@ -809,6 +1182,38 @@ public class AdminActivity extends AppCompatActivity {
     private String currentFilterType = "Todos";
     private String currentFilterSort = "Recientes";
 
+    private String formatUserTimestamp(Object obj) {
+        if (obj == null) return "No registrada";
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+            if (obj instanceof Timestamp) {
+                return sdf.format(((Timestamp) obj).toDate());
+            } else if (obj instanceof Long) {
+                long val = (Long) obj;
+                if (val <= 0) return "No registrada";
+                return sdf.format(new Date(val));
+            } else if (obj instanceof Double) {
+                long val = ((Double) obj).longValue();
+                if (val <= 0) return "No registrada";
+                return sdf.format(new Date(val));
+            } else if (obj instanceof Date) {
+                return sdf.format((Date) obj);
+            } else if (obj instanceof String) {
+                String str = (String) obj;
+                if (str.trim().isEmpty()) return "No registrada";
+                try {
+                    long l = Long.parseLong(str);
+                    return sdf.format(new Date(l));
+                } catch (Exception e) {
+                    return str;
+                }
+            }
+        } catch (Exception e) {
+            return String.valueOf(obj);
+        }
+        return String.valueOf(obj);
+    }
+
     private void setupUserFilterWidget(List userList) {
         EditText etFilterName = findViewById(R.id.et_filter_name);
         MaterialButton btnFilterType = findViewById(R.id.btn_filter_type);
@@ -834,11 +1239,14 @@ public class AdminActivity extends AppCompatActivity {
 
         btnFilterSort.setOnClickListener(v -> {
             if ("Recientes".equals(currentFilterSort)) {
-                currentFilterSort = "Frecuentes";
-                btnFilterSort.setText("Frecuencia: Alta");
+                currentFilterSort = "Antiguos";
+                btnFilterSort.setText("Orden: Antiguos");
+            } else if ("Antiguos".equals(currentFilterSort)) {
+                currentFilterSort = "Nombre A-Z";
+                btnFilterSort.setText("Orden: Nombre A-Z");
             } else {
                 currentFilterSort = "Recientes";
-                btnFilterSort.setText("Frecuencia: Recientes");
+                btnFilterSort.setText("Orden: Recientes");
             }
             filterAndDisplayUsers(userList, etFilterName.getText().toString(), currentFilterType, currentFilterSort, containerUsers, tvCounter);
         });
@@ -857,53 +1265,128 @@ public class AdminActivity extends AppCompatActivity {
         filterAndDisplayUsers(userList, "", currentFilterType, currentFilterSort, containerUsers, tvCounter);
     }
 
+    @SuppressWarnings("unchecked")
     private void filterAndDisplayUsers(List userList, String query, String typeFilter, String sortFilter, LinearLayout container, TextView tvCounter) {
         container.removeAllViews();
         int matched = 0;
 
+        List<Map<String, Object>> filteredList = new ArrayList<>();
+
         for (Object obj : userList) {
             if (!(obj instanceof Map)) continue;
-            Map u = (Map) obj;
+            Map<String, Object> u = (Map<String, Object>) obj;
+
             String name = String.valueOf(u.get("nombre") != null ? u.get("nombre") : "Usuario");
             String tipo = String.valueOf(u.get("tipoUsuario") != null ? u.get("tipoUsuario") : "ASOCIADO");
             String dpi = String.valueOf(u.get("dpi") != null ? u.get("dpi") : "");
+            String phone = String.valueOf(u.get("telefono") != null ? u.get("telefono") : (u.get("telefonoCompleto") != null ? u.get("telefonoCompleto") : ""));
+            String userId = String.valueOf(u.get("userId") != null ? u.get("userId") : (u.get("idNumerico") != null ? u.get("idNumerico") : ""));
 
-            boolean matchesType = "Todos".equals(typeFilter) || 
+            String fechaRegistroStr = formatUserTimestamp(u.get("fechaRegistro"));
+            String ultimaActividadStr = formatUserTimestamp(u.get("ultimaActividad"));
+
+            boolean matchesType = "Todos".equals(typeFilter) ||
                 ("Asociados".equals(typeFilter) && ("ASOCIADO".equalsIgnoreCase(tipo) || "MEMBER".equalsIgnoreCase(tipo) || "ADMIN".equalsIgnoreCase(tipo))) ||
                 ("Invitados".equals(typeFilter) && !("ASOCIADO".equalsIgnoreCase(tipo) || "MEMBER".equalsIgnoreCase(tipo) || "ADMIN".equalsIgnoreCase(tipo)));
 
-            boolean matchesQuery = query.isEmpty() || name.toLowerCase().contains(query.toLowerCase()) || dpi.contains(query);
+            String q = query.trim().toLowerCase(Locale.getDefault());
+
+            boolean matchesQuery = q.isEmpty()
+                || name.toLowerCase(Locale.getDefault()).contains(q)
+                || dpi.toLowerCase(Locale.getDefault()).contains(q)
+                || phone.toLowerCase(Locale.getDefault()).contains(q)
+                || userId.toLowerCase(Locale.getDefault()).contains(q)
+                || fechaRegistroStr.toLowerCase(Locale.getDefault()).contains(q)
+                || ultimaActividadStr.toLowerCase(Locale.getDefault()).contains(q);
 
             if (matchesType && matchesQuery) {
-                matched++;
-                LinearLayout itemRow = new LinearLayout(this);
-                itemRow.setOrientation(LinearLayout.VERTICAL);
-                itemRow.setPadding(12, 8, 12, 8);
-                itemRow.setBackgroundColor(Color.parseColor("#FFFFFF"));
-                
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                params.setMargins(0, 0, 0, 6);
-                itemRow.setLayoutParams(params);
-
-                TextView tvNameRole = new TextView(this);
-                tvNameRole.setText(name + " (" + tipo + ")");
-                tvNameRole.setTextColor(Color.parseColor("#173789"));
-                tvNameRole.setTextSize(13f);
-                tvNameRole.setTypeface(null, Typeface.BOLD);
-
-                TextView tvDetails = new TextView(this);
-                tvDetails.setText("DPI: " + (dpi.isEmpty() ? "N/A" : dpi) + " | Frecuencia: Activo");
-                tvDetails.setTextColor(Color.parseColor("#64748B"));
-                tvDetails.setTextSize(11f);
-
-                itemRow.addView(tvNameRole);
-                itemRow.addView(tvDetails);
-                container.addView(itemRow);
+                filteredList.add(u);
             }
+        }
+
+        // Ordenamiento
+        if ("Nombre A-Z".equals(sortFilter)) {
+            Collections.sort(filteredList, (u1, u2) -> {
+                String n1 = String.valueOf(u1.get("nombre") != null ? u1.get("nombre") : "");
+                String n2 = String.valueOf(u2.get("nombre") != null ? u2.get("nombre") : "");
+                return n1.compareToIgnoreCase(n2);
+            });
+        } else if ("Antiguos".equals(sortFilter)) {
+            Collections.sort(filteredList, (u1, u2) -> {
+                long t1 = parseTimestampToLong(u1.get("fechaRegistro"));
+                long t2 = parseTimestampToLong(u2.get("fechaRegistro"));
+                return Long.compare(t1, t2);
+            });
+        } else { // "Recientes" (predeterminado)
+            Collections.sort(filteredList, (u1, u2) -> {
+                long t1 = parseTimestampToLong(u1.get("ultimaActividad"));
+                if (t1 == 0) t1 = parseTimestampToLong(u1.get("fechaRegistro"));
+                long t2 = parseTimestampToLong(u2.get("ultimaActividad"));
+                if (t2 == 0) t2 = parseTimestampToLong(u2.get("fechaRegistro"));
+                return Long.compare(t2, t1); // Descendente
+            });
+        }
+
+        for (Map<String, Object> u : filteredList) {
+            matched++;
+            String name = String.valueOf(u.get("nombre") != null ? u.get("nombre") : "Usuario");
+            String tipo = String.valueOf(u.get("tipoUsuario") != null ? u.get("tipoUsuario") : "ASOCIADO");
+            String dpi = String.valueOf(u.get("dpi") != null ? u.get("dpi") : "N/A");
+            String phone = String.valueOf(u.get("telefono") != null ? u.get("telefono") : (u.get("telefonoCompleto") != null ? u.get("telefonoCompleto") : "N/A"));
+            String userId = String.valueOf(u.get("userId") != null ? u.get("userId") : (u.get("idNumerico") != null ? u.get("idNumerico") : "N/A"));
+
+            String fechaRegistroStr = formatUserTimestamp(u.get("fechaRegistro"));
+            String ultimaActividadStr = formatUserTimestamp(u.get("ultimaActividad"));
+
+            LinearLayout itemRow = new LinearLayout(this);
+            itemRow.setOrientation(LinearLayout.VERTICAL);
+            itemRow.setPadding(16, 12, 16, 12);
+            itemRow.setBackgroundColor(Color.parseColor("#FFFFFF"));
+
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            params.setMargins(0, 0, 0, 8);
+            itemRow.setLayoutParams(params);
+
+            TextView tvNameRole = new TextView(this);
+            tvNameRole.setText(name + " (" + tipo + ") - ID: " + userId);
+            tvNameRole.setTextColor(Color.parseColor("#173789"));
+            tvNameRole.setTextSize(13f);
+            tvNameRole.setTypeface(null, Typeface.BOLD);
+
+            TextView tvRow1 = new TextView(this);
+            tvRow1.setText("DPI: " + dpi + " | Teléfono: " + phone);
+            tvRow1.setTextColor(Color.parseColor("#334155"));
+            tvRow1.setTextSize(11f);
+
+            TextView tvRow2 = new TextView(this);
+            tvRow2.setText("Registro: " + fechaRegistroStr + " | Última Actividad: " + ultimaActividadStr);
+            tvRow2.setTextColor(Color.parseColor("#64748B"));
+            tvRow2.setTextSize(11f);
+
+            itemRow.addView(tvNameRole);
+            itemRow.addView(tvRow1);
+            itemRow.addView(tvRow2);
+            container.addView(itemRow);
         }
 
         if (tvCounter != null) {
             tvCounter.setText("Mostrando " + matched + " usuarios coincidentes");
         }
+    }
+
+    private long parseTimestampToLong(Object obj) {
+        if (obj == null) return 0L;
+        if (obj instanceof Timestamp) {
+            return ((Timestamp) obj).toDate().getTime();
+        } else if (obj instanceof Long) {
+            return (Long) obj;
+        } else if (obj instanceof Double) {
+            return ((Double) obj).longValue();
+        } else if (obj instanceof Date) {
+            return ((Date) obj).getTime();
+        } else if (obj instanceof String) {
+            try { return Long.parseLong((String) obj); } catch (Exception ignored) {}
+        }
+        return 0L;
     }
 }

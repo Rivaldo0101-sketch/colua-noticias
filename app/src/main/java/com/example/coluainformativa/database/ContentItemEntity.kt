@@ -42,5 +42,12 @@ data class ContentItemEntity @JvmOverloads constructor(
     @JvmField var publicationDate: Long = System.currentTimeMillis(),
     @JvmField var eventDate: Long = 0,
     @JvmField var createdAt: Long = System.currentTimeMillis(),
-    @JvmField var updatedAt: Long = System.currentTimeMillis()
+    @JvmField var updatedAt: Long = System.currentTimeMillis(),
+    @JvmField var likesCount: Int = 0,
+    @JvmField var sharesCount: Int = 0,
+    @JvmField var isFeatured: Boolean = false,
+    @JvmField var tags: String = "#COLUAVerde #MICOOPE #Asociados",
+    @JvmField var photosJson: String = "",
+    @JvmField var issuerName: String = "Cooperativa COLUA",
+    @JvmField var issuerRole: String = "Oficial"
 )

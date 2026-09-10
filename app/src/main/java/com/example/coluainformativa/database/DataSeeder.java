@@ -120,8 +120,81 @@ public class DataSeeder {
                 h4.iconName = "remesa"; h4.targetSectionId = "sec_remesas"; h4.isDraft = false;
                 db.contentDao().insertItem(h4);
 
-                ContentBlockEntity sloganBlock = new ContentBlockEntity("block_home_slogan", "sec_home", "TEXT", "SOMOS EL LADO HUMANO\nde los Ahorros y Créditos", 1);
+                // --- NOTICIAS INICIALES ---
+                ContentItemEntity news1 = new ContentItemEntity("news_reforestacion_2026", "sec_noticias", "Jornada de Reforestación 2026", "Ver detalles completos", "Junto a nuestros asociados y voluntarios logramos plantar más de 500 árboles.", "#E42A67", 1);
+                news1.description = "Junto a decenas de familias asociadas y voluntarios de nuestra cooperativa, llevamos a cabo con éxito la siembra de 500 árboles nativos en la cuenca comunitaria, protegiendo fuentes hídricas y sembrando vida para las futuras generaciones.";
+                news1.imagePath = "grupo";
+                news1.tags = "#COLUAVerde #ComunidadCOLUA #MICOOPE";
+                news1.isFeatured = true;
+                news1.isDraft = false;
+                news1.likesCount = 0;
+                news1.sharesCount = 0;
+                news1.targetSectionId = "https://colua.com.gt/noticias/reforestacion-2026";
+                db.contentDao().insertItem(news1);
+
+                ContentItemEntity news2 = new ContentItemEntity("news_taller_finanzas", "sec_noticias", "Taller Finanzas para Emprendedores", "Ver detalles completos", "Aprende a estructurar tus costos y maximizar tus excedentes en nuestra sede central.", "#173789", 2);
+                news2.description = "Aprende a estructurar tus costos y maximizar tus excedentes en nuestra sede central con capacitadores expertos de MICOOPE.";
+                news2.imagePath = "sostenibilidad_cooperativa";
+                news2.tags = "#Emprendedores #MICOOPE #EducacionFinanciera";
+                news2.isFeatured = false;
+                news2.isDraft = false;
+                news2.likesCount = 0;
+                news2.sharesCount = 0;
+                news2.targetSectionId = "https://colua.com.gt/noticias/taller-finanzas";
+                db.contentDao().insertItem(news2);
+
+                ContentItemEntity news3 = new ContentItemEntity("news_asamblea_general", "sec_noticias", "Asamblea General de Asociados COLUA", "Ver detalles completos", "Te invitamos a participar activamente en las decisiones y crecimiento de nuestra cooperativa.", "#59B8A4", 3);
+                news3.description = "Te invitamos a participar activamente en las decisiones y crecimiento de nuestra cooperativa. Revisa la agenda y los puntos a tratar en el portal.";
+                news3.imagePath = "noticias_colua";
+                news3.tags = "#Asamblea2026 #AsociadosCOLUA #MICOOPE";
+                news3.isFeatured = false;
+                news3.isDraft = false;
+                news3.likesCount = 0;
+                news3.sharesCount = 0;
+                news3.targetSectionId = "https://colua.com.gt/noticias/asamblea-2026";
+                db.contentDao().insertItem(news3);
+
+                ContentBlockEntity sloganBlock = new ContentBlockEntity(
+                        "block_home_slogan",
+                        null,
+                        "TEXT",
+                        "SOMOS EL LADO HUMANO\nde los Ahorros y Créditos",
+                        1,
+                        null,
+                        "SOMOS EL LADO HUMANO",
+                        null,
+                        null,
+                        "sec_home",
+                        null,
+                        null,
+                        "NORMAL",
+                        "BOLD",
+                        "CENTER"
+                );
+                sloganBlock.isDraft = false;
+                sloganBlock.isVisible = true;
                 db.contentDao().insertBlock(sloganBlock);
+
+                ContentBlockEntity instBlock = new ContentBlockEntity(
+                        "block_home_institutional_contact",
+                        null,
+                        "CONTAINER",
+                        "de los Ahorros y Créditos\n\n¿Necesitas ayuda adicional?\nComunícate a nuestro PBX central o búscanos en nuestras redes sociales oficiales.",
+                        5,
+                        "distintivo_colua",
+                        "SOMOS EL LADO HUMANO",
+                        "PBX: 7795-7795",
+                        "tel:77957795",
+                        "sec_home",
+                        "#173789",
+                        "#173789",
+                        "NORMAL",
+                        "BOLD",
+                        "CENTER"
+                );
+                instBlock.isDraft = false;
+                instBlock.isVisible = true;
+                db.contentDao().insertBlock(instBlock);
 
                 Log.d("SEEDER", "Siembra inicial completada exitosamente.");
             }

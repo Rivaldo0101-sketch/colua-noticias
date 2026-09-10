@@ -127,6 +127,21 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- Acción Principal Rápida: + Nueva Publicación -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_create_news_quick"
+                    style="@style/Widget.Material3.Button.UnelevatedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="+ Nueva Publicación"
+                    android:textColor="@color/white"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/colua_navy"
+                    app:cornerRadius="12dp" />
+
                 <!-- Encabezado y Botón + Nueva Pantalla -->
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -137,6 +152,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
                         android:layout_centerVertical="true"
                         android:fontFamily="@font/poppins_regular"
                         android:text="Gestión de Pantallas"
@@ -146,17 +162,17 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_add_new_section"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="wrap_content"
-                        android:layout_height="44dp"
+                        android:layout_height="40dp"
                         android:layout_alignParentEnd="true"
                         android:layout_centerVertical="true"
                         android:fontFamily="@font/poppins_regular"
                         android:text="+ Nueva pantalla"
-                        android:textColor="@color/white"
+                        android:textColor="@color/colua_navy"
                         android:textSize="12sp"
-                        android:textStyle="bold"
-                        app:backgroundTint="@color/colua_navy"
-                        app:cornerRadius="22dp" />
+                        app:cornerRadius="20dp"
+                        app:strokeColor="@color/colua_navy" />
                 </RelativeLayout>
 
                 <!-- Lista de Pantallas -->
@@ -392,19 +408,19 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="Filtra por nombre o tipo de usuario sin listas infinitas"
+                            android:text="Filtra por nombre, DPI, teléfono, ID o fechas de registro y actividad"
                             android:textColor="@color/text_grey"
                             android:textSize="12sp" />
 
-                        <!-- Campo de Búsqueda (Caja rectangular cuadrada con icono filtrar) -->
+                        <!-- Campo de Búsqueda (Buscador con icono ic_search perfectamente proporcionado) -->
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/til_filter_name"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
-                            android:hint="Buscar por nombre o DPI..."
-                            app:startIconDrawable="@drawable/filtrar"
+                            android:hint="Buscar por nombre, DPI, teléfono, fecha o ID..."
+                            app:startIconDrawable="@drawable/ic_search"
                             app:startIconTint="@color/colua_navy"
                             app:boxCornerRadiusBottomEnd="8dp"
                             app:boxCornerRadiusBottomStart="8dp"
@@ -421,7 +437,7 @@
                                 android:textSize="13sp" />
                         </com.google.android.material.textfield.TextInputLayout>
 
-                        <!-- Caja de Opciones de Filtrado (Tipo y Frecuencia) -->
+                        <!-- Caja de Opciones de Filtrado (Tipo y Orden) -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -449,7 +465,7 @@
                                 android:layout_marginStart="8dp"
                                 android:layout_weight="1"
                                 android:fontFamily="@font/poppins_regular"
-                                android:text="Frecuencia: Recientes"
+                                android:text="Orden: Recientes"
                                 android:textColor="@color/colua_navy"
                                 android:textSize="11sp"
                                 app:cornerRadius="8dp"
@@ -458,7 +474,7 @@
 
                         <androidx.cardview.widget.CardView
                             android:layout_width="match_parent"
-                            android:layout_height="180dp"
+                            android:layout_height="240dp"
                             android:layout_marginTop="12dp"
                             app:cardBackgroundColor="#F8FAFC"
                             app:cardCornerRadius="8dp"
@@ -663,6 +679,26 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Centro de Control de Publicación"
+                    android:textColor="@color/colua_navy"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="16dp"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Monitorea versiones, cambios pendientes, sincronización en vivo y publicaciones atómicas."
+                    android:textColor="@color/text_grey"
+                    android:textSize="12sp" />
+
+                <!-- CARD 1: RESUMEN DE ESTADO -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -670,13 +706,13 @@
                     app:cardCornerRadius="16dp"
                     app:cardElevation="2dp"
                     app:strokeWidth="1dp"
-                    app:strokeColor="#E0E0E0">
+                    app:strokeColor="#E2E8F0">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="20dp">
+                        android:padding="18dp">
 
                         <RelativeLayout
                             android:layout_width="match_parent"
@@ -688,7 +724,7 @@
                                 android:fontFamily="@font/poppins_regular"
                                 android:text="Estado de Publicación"
                                 android:textColor="@color/colua_navy"
-                                android:textSize="16sp"
+                                android:textSize="15sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -698,12 +734,12 @@
                                 android:layout_alignParentEnd="true"
                                 android:layout_centerVertical="true"
                                 android:background="@drawable/circle_background"
-                                android:backgroundTint="#FFF3E0"
+                                android:backgroundTint="#E8F5E9"
                                 android:fontFamily="@font/poppins_regular"
                                 android:paddingHorizontal="10dp"
                                 android:paddingVertical="4dp"
-                                android:text="Borrador sin publicar"
-                                android:textColor="#E65100"
+                                android:text="🟢 Todo publicado"
+                                android:textColor="#2E7D32"
                                 android:textSize="11sp"
                                 android:textStyle="bold" />
                         </RelativeLayout>
@@ -712,64 +748,335 @@
                             android:id="@+id/tv_sync_info_details"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="10dp"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="Versión Local: v1.0 | Versión Remota: v1.0"
-                            android:textColor="@color/text_grey"
+                            android:text="Borrador local: v33 | Publicada: v32\nÚltima sync: 09/09/2026 14:30\nPantallas: 11 | Elementos: 31"
+                            android:textColor="#334155"
                             android:textSize="12sp" />
 
                         <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/switch_cloud"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:checked="false"
+                            android:layout_marginTop="12dp"
+                            android:checked="true"
                             android:fontFamily="@font/poppins_regular"
                             android:text="Sincronización en Tiempo Real (Cloud)"
                             android:textSize="12sp"
                             android:textStyle="bold" />
 
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- CARD 2: PANEL DE CAMBIOS PENDIENTES & MÉTRICAS -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#E2E8F0">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Cambios Pendientes de Publicar"
+                            android:textColor="@color/colua_navy"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <GridLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:columnCount="2"
+                            android:rowCount="2">
+
+                            <TextView
+                                android:id="@+id/tv_metric_total_pending"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_columnWeight="1"
+                                android:layout_margin="4dp"
+                                android:background="#FFF3E0"
+                                android:fontFamily="@font/poppins_regular"
+                                android:padding="10dp"
+                                android:text="Pendientes: 3"
+                                android:textColor="#E65100"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_metric_new"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_columnWeight="1"
+                                android:layout_margin="4dp"
+                                android:background="#E8F5E9"
+                                android:fontFamily="@font/poppins_regular"
+                                android:padding="10dp"
+                                android:text="Nuevos: 1"
+                                android:textColor="#2E7D32"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_metric_edited"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_columnWeight="1"
+                                android:layout_margin="4dp"
+                                android:background="#E3F2FD"
+                                android:fontFamily="@font/poppins_regular"
+                                android:padding="10dp"
+                                android:text="Editados: 2"
+                                android:textColor="#1565C0"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_metric_issues"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_columnWeight="1"
+                                android:layout_margin="4dp"
+                                android:background="#F5F5F5"
+                                android:fontFamily="@font/poppins_regular"
+                                android:padding="10dp"
+                                android:text="Incompletos: 0"
+                                android:textColor="#757575"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+                        </GridLayout>
+
+                        <TextView
+                            android:id="@+id/tv_recent_activity_log"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Actividad reciente:\n• Bloque 'SOMOS EL LADO HUMANO' modificado\n• Tarjeta 'Crédito Consumo' guardada en borrador"
+                            android:textColor="#475569"
+                            android:textSize="11sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_review_changes"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="44dp"
+                            android:layout_marginTop="12dp"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Revisar Detalle de Cambios"
+                            android:textColor="@color/colua_navy"
+                            app:strokeColor="@color/colua_navy" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- CARD 3: BORRADOR LOCAL -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#E2E8F0">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Borrador Local del Administrador"
+                            android:textColor="@color/colua_navy"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Los borradores se guardan en este teléfono de administrador y no son visibles para los usuarios hasta que se publiquen."
+                            android:textColor="#475569"
+                            android:textSize="12sp" />
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_save_draft_master"
                             style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:layout_marginTop="16dp"
+                            android:layout_height="46dp"
+                            android:layout_marginTop="12dp"
                             android:fontFamily="@font/poppins_regular"
                             android:text="Guardar Borrador Local"
                             android:textColor="@color/colua_navy"
                             app:strokeColor="@color/colua_navy" />
 
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- CARD 4: VISTA PREVIA GENERAL -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#E2E8F0">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Vista Previa General Interactiva"
+                            android:textColor="@color/colua_navy"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Navega por toda la aplicación tal como la verá el usuario público, cargando todos tus cambios en borrador en vivo."
+                            android:textColor="#475569"
+                            android:textSize="12sp" />
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_global_preview"
-                            style="@style/Widget.Material3.Button.TonalButton"
+                            style="@style/Widget.Material3.Button.UnelevatedButton"
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="12dp"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="Vista Previa General"
+                            android:text="Abrir Vista Previa General"
                             android:textColor="@color/white"
-                            app:backgroundTint="@color/colua_orange" />
+                            android:textStyle="bold"
+                            app:backgroundTint="@color/colua_orange"
+                            app:cornerRadius="10dp" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- CARD 5: PUBLICACIÓN MASIVA -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1.5dp"
+                    app:strokeColor="@color/colua_navy">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Publicación Masiva"
+                            android:textColor="@color/colua_navy"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Envía de una sola vez todos los borradores pendientes a la nube para hacerlos visibles a todos los asociados."
+                            android:textColor="#475569"
+                            android:textSize="12sp" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_publish_master"
+                            style="@style/Widget.Material3.Button.UnelevatedButton"
                             android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:layout_marginTop="8dp"
+                            android:layout_height="50dp"
+                            android:layout_marginTop="14dp"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="Publicar Cambios a la Nube"
+                            android:text="Publicar Todos los Cambios"
                             android:textColor="@color/white"
+                            android:textSize="14sp"
                             android:textStyle="bold"
-                            app:backgroundTint="@color/colua_green" />
+                            app:backgroundTint="@color/colua_navy"
+                            app:cornerRadius="10dp" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- CARD 6: VERIFICACIÓN E INTEGRIDAD -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#E2E8F0">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Verificación e Integridad"
+                            android:textColor="@color/colua_navy"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Compara la versión local publicada con el servidor para confirmar integridad sin modificar contenido."
+                            android:textColor="#475569"
+                            android:textSize="12sp" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_sync_now"
                             style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:layout_marginTop="8dp"
+                            android:layout_height="46dp"
+                            android:layout_marginTop="12dp"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="Sincronizar Ahora (Validar)"
+                            android:text="Verificar Publicación"
                             android:textColor="@color/colua_navy"
                             app:strokeColor="@color/colua_navy" />
 
@@ -794,14 +1101,14 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
+                <!-- 1. Card de Bienvenida e Identificación del CMS -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:cardBackgroundColor="@color/white"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#E0E0E0">
+                    app:cardBackgroundColor="#0F172A"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="3dp"
+                    app:strokeWidth="0dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -809,33 +1116,264 @@
                         android:orientation="vertical"
                         android:padding="20dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppins_regular"
-                            android:text="Instrucciones del Portal Administrativo"
-                            android:textColor="@color/colua_navy"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentStart="true"
+                                android:fontFamily="@font/poppins_regular"
+                                android:text="📖 MANUAL COMPLETO DEL ADMINISTRADOR"
+                                android:textColor="@color/white"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:background="@drawable/circle_background"
+                                android:backgroundTint="#334155"
+                                android:fontFamily="@font/poppins_regular"
+                                android:paddingHorizontal="10dp"
+                                android:paddingVertical="3dp"
+                                android:text="v1.2 CMS Activo"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </RelativeLayout>
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
+                            android:layout_marginTop="8dp"
                             android:fontFamily="@font/poppins_regular"
-                            android:lineSpacingExtra="4dp"
-                            android:text="• Pestaña Pantallas: Permite crear nuevas pantallas de forma rápida indicando solo nombre, subtítulo, icono y color. Se guardan vacías como borrador y se asignan por defecto al menú lateral.\n\n• Pestaña Contenido (Modo Diseño): Edita textos, tarjetas, imágenes y botones de cualquier pantalla en tiempo real con datos reales.\n\n• Pestaña Publicar: Revisa los cambios pendientes y publica la configuración a Firestore para que los asociados la reciban.\n\n• Pestaña Instrucciones: Guía general y versión del sistema CMS."
-                            android:textColor="@color/black"
-                            android:textSize="13sp" />
+                            android:lineSpacingExtra="3dp"
+                            android:text="Guía oficial completa paso a paso para la gestión de publicaciones, noticias, pantallas, tarjetas interactivas y sincronización en la nube de la App COLUA MICOOPE."
+                            android:textColor="#E2E8F0"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 2. Card: Módulo de Noticias y Comunicados -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#E2E8F0">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="18dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="Versión de la App: v1.0 (CMS Activo)"
-                            android:textColor="@color/text_grey"
-                            android:textSize="11sp" />
+                            android:text="1. Crear, Editar y Gestionar Noticias"
+                            android:textColor="@color/colua_navy"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="10dp"
+                            android:background="#F1F5F9" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:lineSpacingExtra="4dp"
+                            android:text="• Paso 1: Ingreso al Muro de Noticias\nEn la pestaña 'Contenido', selecciona la pantalla 'Noticias (/noticias)' o abre el menú lateral y elige Noticias.\n\n• Paso 2: Crear Nueva Publicación\nPresiona el botón flotante '+ Crear Nueva Publicación'. Ingresa el Título Oficial, Descripción o Comunicado y Hashtags institucionales (ej. #COLUAVerde #MICOOPE).\n\n• Paso 3: Cargar Imágenes y Carrusel\nPresiona '📷 Añadir Imágenes (Múltiple)' para adjuntar 1 o varias fotos desde tu dispositivo. La app armará automáticamente un carrusel táctil con contador (1/3) e indicador de puntos (● ○ ○).\n\n• Paso 4: Perfil Emisor Oficial\nToca el Perfil Emisor en la parte superior para definir el Nombre (ej. Cooperativa COLUA), la leyenda y la Foto de Perfil Oficial. Ingresa tu clave de administrador para confirmar los cambios.\n\n• Paso 5: Botón de Acción e Integraciones\n- Enlace Vacío: El botón 'Leer artículo completo ›' expandirá el texto de la noticia directamente en la tarjeta (modo Ver más / Ver menos).\n- Enlace Web/PBX: Si colocas un link (http:// o tel:), redirigirá afuera.\n- Link de Compartido: Configura la URL de la Play Store para que se copie al portapapeles cuando los asociados compartan la noticia."
+                            android:textColor="#334155"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 3. Card: Módulo de Pantallas y Secciones -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#E2E8F0">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="2. Crear y Configurar Nuevas Pantallas"
+                            android:textColor="@color/colua_navy"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="10dp"
+                            android:background="#F1F5F9" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:lineSpacingExtra="4dp"
+                            android:text="• Paso 1: Pestaña Pantallas\nAccede a la pestaña 'Pantallas' en la barra inferior del portal y presiona '+ Crear Nueva Pantalla'.\n\n• Paso 2: Datos Básicos\nIndica el Nombre de la pantalla, Subtítulo descriptivo, Ícono gráfico y Color temático de acento.\n\n• Paso 3: Modo Borrador Automático\nLa pantalla se guardará inicialmente vacía en modo borrador y se asignará al menú lateral para que puedas agregarle tarjetas y contenidos."
+                            android:textColor="#334155"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 4. Card: Editor Maestro de Tarjetas y Servicios -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#E2E8F0">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="3. Editar Tarjetas y Servicios (Editor Maestro)"
+                            android:textColor="@color/colua_navy"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="10dp"
+                            android:background="#F1F5F9" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:lineSpacingExtra="4dp"
+                            android:text="• Previsualización en Vivo\nAl presionar 'Editar' en cualquier tarjeta (Ahorros, Créditos, Seguros, Agencias), el Editor Maestro te mostrará la tarjeta real en tiempo real mientras escribes.\n\n• Identidad y Color de Acento\nConfigura el título, ícono gráfico (usa el botón 'Elegir' o las sugerencias rápidas), etiqueta de píldora (ej. ¡CRÉDITO!) y selecciona el color temático.\n\n• Oferta y Redirección\nIngresa la oferta o tasa destacada (ej. 5% Interés) y selecciona mediante el botón 'Examinar' la pantalla interna que se abrirá al pulsar la tarjeta."
+                            android:textColor="#334155"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 5. Card: Publicación y Sincronización Nube -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#E2E8F0">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="4. Publicar y Sincronizar Cambios a la Nube"
+                            android:textColor="@color/colua_navy"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="10dp"
+                            android:background="#F1F5F9" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:lineSpacingExtra="4dp"
+                            android:text="• Guardado Seguro Local (Borrador)\nTodos los cambios en noticias, fotos y tarjetas se guardan primero localmente como borrador para que puedas previsualizar tu trabajo sin afectar la app pública.\n\n• Despliegue Global\nPara enviar los cambios a todos los asociados, dirígete a la pestaña 'Publicar' y presiona 'Sincronizar y Publicar Todo'. Los datos se actualizarán de inmediato en Firestore."
+                            android:textColor="#334155"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 6. Card: Sistema de Likes y Asociados -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#E2E8F0">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="5. Reacciones, Likes y Seguridad"
+                            android:textColor="@color/colua_navy"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="10dp"
+                            android:background="#F1F5F9" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:lineSpacingExtra="4dp"
+                            android:text="• Interacción de Asociados\nLos 'Me gusta' y compartidos son realizados directamente por asociados con sesión activa. Los invitados son guiados a registrar su perfil antes de poder interactuar.\n\n• Protección de Clave Administrador\nCualquier modificación en el Perfil Emisor oficial o cambios globales del sistema requerirán confirmación por contraseña de administrador."
+                            android:textColor="#334155"
+                            android:textSize="12sp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
