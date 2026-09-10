@@ -548,6 +548,147 @@ class ColuaRepository(private val context: Context) {
         }
     }
 
+    fun crearPerfilUsuarioFirestore(
+        uid: String,
+        nombre: String,
+        telefono: String,
+        rawDpi: String,
+        email: String,
+        esInvitado: Boolean,
+        callback: (Boolean, String, String?) -> Unit
+    ) {
+        if (!isCloudEnabled()) {
+            callback(false, "", "Conexión a la nube requerida para registro.")
+            return
+        }
+
+        getInstallationId { installId ->
+            if (esInvitado) {
+                // Invitado: usamos el UID de Firebase directamente como su ID local
+                val guestId = uid
+                val profileData = linkedMapOf<String, Any>(
+                    "firebaseUid" to uid,
+                    "userId" to guestId,
+                    "tipoUsuario" to "INVITADO",
+                    "installationId" to installId,
+                    "fechaRegistro" to FieldValue.serverTimestamp(),
+                    "ultimaActividad" to FieldValue.serverTimestamp(),
+                    "schemaVersion" to 3
+                )
+                firestore.collection("usuarios").document(guestId).set(profileData, SetOptions.merge())
+                    .addOnSuccessListener {
+                        saveLocalUser(guestId, "", "Invitado", "", "", "", "GUEST")
+                        upsertDeviceSubcollection(guestId, "INVITADO", installId)
+                        callback(true, guestId, null)
+                    }
+                    .addOnFailureListener { e ->
+                        callback(false, "", e.message)
+                    }
+                return@getInstallationId
+            }
+
+            // Flujo de Asociado: ID consecutivo 7 dígitos
+            val counterRef = firestore.collection("systemCounters").document("users")
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(counterRef)
+                val lastNum = if (snapshot.exists()) {
+                    snapshot.getLong("lastAssignedNumber") ?: 0L
+                } else 0L
+                
+                val newNum = lastNum + 1L
+                transaction.set(counterRef, hashMapOf("lastAssignedNumber" to newNum), SetOptions.merge())
+                
+                val formattedId = String.format(Locale.getDefault(), "%07d", newNum)
+                Pair(newNum, formattedId)
+            }.addOnSuccessListener { pair ->
+                val idNumerico = pair.first
+                val formattedId = pair.second
+                
+                val normalizedDpi = normalizeDpi(rawDpi)
+                val formattedDpi = formatDpi(rawDpi)
+                val cleanPhone = formatPhone(telefono)
+                val telefonoCompleto = "+502$cleanPhone"
+
+                val profileData = linkedMapOf<String, Any>(
+                    "firebaseUid" to uid,
+                    "userId" to formattedId,
+                    "idNumerico" to idNumerico,
+                    "tipoUsuario" to "ASOCIADO",
+                    "nombre" to nombre,
+                    "dpi" to formattedDpi,
+                    "dpiNormalizado" to normalizedDpi,
+                    "telefono" to cleanPhone,
+                    "telefonoCompleto" to telefonoCompleto,
+                    "email" to email,
+                    "estadoCuenta" to "ACTIVA",
+                    "installationId" to installId,
+                    "fechaRegistro" to FieldValue.serverTimestamp(),
+                    "ultimaActividad" to FieldValue.serverTimestamp(),
+                    "schemaVersion" to 3
+                )
+                
+                // Guardamos usando formattedId ("0000001", "0000002"...) como ID de documento
+                firestore.collection("usuarios").document(formattedId).set(profileData)
+                    .addOnSuccessListener {
+                        saveLocalUser(formattedId, formattedDpi, nombre, cleanPhone, email, "", "MEMBER")
+                        upsertDeviceSubcollection(formattedId, "ASOCIADO", installId)
+                        callback(true, formattedId, null)
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("FIREBASE_AUTH", "Error guardando perfil: ${e.message}")
+                        callback(false, "", "Error guardando perfil: ${e.message}")
+                    }
+            }.addOnFailureListener { e ->
+                Log.e("FIREBASE_AUTH", "Error asignando ID consecutivo: ${e.message}")
+                callback(false, "", "Error asignando ID consecutivo: ${e.message}")
+            }
+        }
+    }
+
+    fun obtenerPerfilUsuarioFirestore(
+        uid: String,
+        email: String,
+        callback: (Boolean, Map<String, String>?, String?) -> Unit
+    ) {
+        if (!isCloudEnabled()) {
+            callback(false, null, "Conexión a la nube requerida para iniciar sesión.")
+            return
+        }
+
+        // Buscamos el perfil por firebaseUid
+        firestore.collection("usuarios").whereEqualTo("firebaseUid", uid).get()
+            .addOnSuccessListener { query ->
+                if (!query.isEmpty) {
+                    val doc = query.documents[0]
+                    val userId = doc.id // Esto será "0000001", "0000002", etc.
+                    val nombre = doc.getString("nombre") ?: "Asociado COLUA"
+                    val telefono = doc.getString("telefono") ?: ""
+                    val tipoUsuario = doc.getString("tipoUsuario") ?: "ASOCIADO"
+                    val role = if (tipoUsuario == "INVITADO") "GUEST" else "MEMBER"
+                    
+                    saveLocalUser(userId, doc.getString("dpi") ?: "", nombre, telefono, email, "", role)
+                    
+                    getInstallationId { installId ->
+                        upsertDeviceSubcollection(userId, tipoUsuario, installId)
+                    }
+                    
+                    val result = mapOf(
+                        "userId" to userId,
+                        "nombre" to nombre,
+                        "telefono" to telefono,
+                        "role" to role
+                    )
+                    callback(true, result, null)
+                } else {
+                    callback(false, null, "No se encontró el perfil de usuario asociado a esta cuenta.")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("FIREBASE_AUTH", "Error obteniendo perfil: ${e.message}")
+                callback(false, null, "Error obteniendo perfil: ${e.message}")
+            }
+    }
+
     @JvmOverloads
     fun registrarUsuarioReal(nombre: String, telefono: String, rawDpi: String, esInvitado: Boolean, callback: (Boolean, String, String?) -> Unit = { _, _, _ -> }) {
         ensureFirebaseAuth {
@@ -600,7 +741,8 @@ class ColuaRepository(private val context: Context) {
         val cleanPhone = formatPhone(telefono)
         val telefonoCompleto = "+502$cleanPhone"
 
-        saveLocalUser(targetUserId, formattedDpi, nombre, cleanPhone, pref.getString("user_role", "MEMBER") ?: "MEMBER")
+        val userEmail = pref.getString("user_email", "") ?: ""
+        saveLocalUser(targetUserId, formattedDpi, nombre, cleanPhone, userEmail, "", pref.getString("user_role", "MEMBER") ?: "MEMBER")
 
         if (!isCloudEnabled()) {
             callback(true, null)
@@ -643,7 +785,7 @@ class ColuaRepository(private val context: Context) {
             try {
                 if (esInvitado) {
                     getNextGuestId({ guestId ->
-                        saveLocalUser(guestId, "", "Invitado", "", "GUEST")
+                        saveLocalUser(guestId, "", "Invitado", "", "", "", "GUEST")
                         callback(true, guestId, null)
 
                         if (isCloudEnabled()) {
@@ -664,7 +806,7 @@ class ColuaRepository(private val context: Context) {
                         }
                     }, { e ->
                         val fallbackGuest = "9999999"
-                        saveLocalUser(fallbackGuest, "", "Invitado", "", "GUEST")
+                        saveLocalUser(fallbackGuest, "", "Invitado", "", "", "", "GUEST")
                         callback(true, fallbackGuest, null)
                     })
                 } else {
@@ -680,7 +822,7 @@ class ColuaRepository(private val context: Context) {
 
                     if (!isCloudEnabled()) {
                         val fallbackId = "user0000000"
-                        saveLocalUser(fallbackId, formattedDpi, nombre, cleanPhone, "MEMBER")
+                        saveLocalUser(fallbackId, formattedDpi, nombre, cleanPhone, "", "", "MEMBER")
                         callback(true, fallbackId, null)
                         return@getInstallationId
                     }
@@ -701,14 +843,14 @@ class ColuaRepository(private val context: Context) {
                         .addOnFailureListener { e ->
                             Log.w("FIRESTORE_REG", "Fallo consulta DPI en nube (creando local): ${e.message}")
                             val fallbackId = "user0000000"
-                            saveLocalUser(fallbackId, formattedDpi, nombre, cleanPhone, "MEMBER")
+                            saveLocalUser(fallbackId, formattedDpi, nombre, cleanPhone, "", "", "MEMBER")
                             callback(true, fallbackId, null)
                         }
                 }
             } catch (e: Exception) {
                 Log.w("FIRESTORE_REG", "Excepción en registro: ${e.message}")
                 val fallbackId = if (esInvitado) "guest_local" else "user0000000"
-                saveLocalUser(fallbackId, rawDpi, nombre, telefono, if (esInvitado) "GUEST" else "MEMBER")
+                saveLocalUser(fallbackId, rawDpi, nombre, telefono, "", "", if (esInvitado) "GUEST" else "MEMBER")
                 callback(true, fallbackId, null)
             }
         }
@@ -838,7 +980,8 @@ class ColuaRepository(private val context: Context) {
         Log.i("REPO", "purgarUsuariosDuplicados omitido para proteger usuarios reales de Firestore.")
     }
 
-    private fun saveLocalUser(userId: String, dpi: String, name: String, phone: String, role: String) {
+    @JvmOverloads
+    fun saveLocalUser(userId: String, dpi: String, name: String, phone: String, email: String = "", password: String = "", role: String) {
         val pref = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
         val cleanUserId = userId.removePrefix("user")
         pref.edit()
@@ -846,11 +989,12 @@ class ColuaRepository(private val context: Context) {
             .putString("user_dpi", dpi)
             .putString("user_name", name)
             .putString("user_phone", phone)
+            .putString("user_email", email)
             .putString("user_role", role)
             .apply()
 
         Thread {
-            val localUser = UserEntity(cleanUserId, dpi, name, phone, role)
+            val localUser = UserEntity(cleanUserId, dpi, name, phone, email, password, role)
             localDb.userDao().insert(localUser)
         }.start()
     }
@@ -1425,6 +1569,64 @@ class ColuaRepository(private val context: Context) {
                     doc.reference.delete()
                 }
             }
+        }
+    }
+
+    /**
+     * Script Administrativo Seguro: Limpieza Profunda de Datos de Usuario.
+     * Elimina perfiles, subcolecciones, sesiones y contadores, asegurando
+     * que la base de datos de usuarios quede completamente en cero (0).
+     */
+    fun deepWipeAllUserData(callback: (String) -> Unit) {
+        val targetCollections = listOf(
+            "usuarios", "users", "profiles", "perfiles", 
+            "admins", "sessions", "tokens", "devices", "roles", 
+            "solicitudes", "favoritos", "historial", "associates"
+        )
+        
+        val report = StringBuilder("Iniciando Deep Wipe Exclusivo de Usuarios...\n")
+        var pendingCollections = targetCollections.size
+        var totalDeleted = 0
+
+        targetCollections.forEach { collName ->
+            firestore.collection(collName).get().addOnSuccessListener { query ->
+                if (!query.isEmpty) {
+                    report.append("- Colección '$collName': ${query.size()} documentos encontrados.\n")
+                    query.documents.forEach { doc ->
+                        // Si es 'usuarios', primero intentar limpiar subcolecciones conocidas
+                        if (collName == "usuarios" || collName == "users") {
+                            val subcollections = listOf("dispositivos", "sessions", "tokens")
+                            subcollections.forEach { subColl ->
+                                doc.reference.collection(subColl).get().addOnSuccessListener { subQuery ->
+                                    subQuery.documents.forEach { it.reference.delete() }
+                                }
+                            }
+                        }
+                        doc.reference.delete()
+                        totalDeleted++
+                    }
+                }
+                pendingCollections--
+                checkWipeCompletion(pendingCollections, totalDeleted, report, callback)
+            }.addOnFailureListener {
+                pendingCollections--
+                checkWipeCompletion(pendingCollections, totalDeleted, report, callback)
+            }
+        }
+    }
+
+    private fun checkWipeCompletion(pending: Int, totalDeleted: Int, report: StringBuilder, callback: (String) -> Unit) {
+        if (pending == 0) {
+            // Limpiar contadores
+            firestore.collection("systemCounters").document("usuarios").delete()
+            firestore.collection("systemCounters").document("invitados").delete()
+            
+            report.append("\nContadores de secuencia de usuarios reseteados.\n")
+            report.append("Total de documentos de usuario eliminados: $totalDeleted\n")
+            report.append("El CMS (Noticias, Secciones) NO fue alterado.\n")
+            
+            Log.i("DEEP_WIPE", report.toString())
+            callback(report.toString())
         }
     }
 }

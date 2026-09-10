@@ -247,6 +247,53 @@
                             </LinearLayout>
                         </LinearLayout>
 
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginVertical="16dp"
+                            android:background="#F0F0F0" />
+
+                        <!-- Fila 4: Correo -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:contentDescription="Correo"
+                                android:src="@android:drawable/ic_dialog_email"
+                                app:tint="@color/colua_navy" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="@font/poppins_regular"
+                                    android:text="Correo Electrónico"
+                                    android:textColor="@color/text_grey"
+                                    android:textSize="11sp" />
+
+                                <TextView
+                                    android:id="@+id/tv_read_email"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="@font/poppins_regular"
+                                    android:text="No registrado"
+                                    android:textColor="@color/black"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </LinearLayout>
+
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -368,9 +415,111 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/poppins_regular"
-                                android:imeOptions="actionDone"
+                                android:imeOptions="actionNext"
                                 android:inputType="phone"
                                 android:maxLength="8"
+                                android:singleLine="true" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <!-- Campo Correo -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/til_profile_email"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:hint="Correo Electrónico *"
+                            app:errorEnabled="true"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/et_profile_email"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppins_regular"
+                                android:imeOptions="actionNext"
+                                android:inputType="textEmailAddress"
+                                android:singleLine="true" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:layout_marginBottom="8dp"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Seguridad (Cambio de contraseña)"
+                            android:textColor="@color/colua_navy"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="12dp"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Si ingresaste como invitado y no tienes contraseña, deja la contraseña antigua en blanco."
+                            android:textColor="@color/text_grey"
+                            android:textSize="11sp" />
+
+                        <!-- Contraseña Antigua -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/til_profile_old_password"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Contraseña antigua (Opcional)"
+                            app:endIconMode="password_toggle"
+                            app:errorEnabled="true"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/et_profile_old_password"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppins_regular"
+                                android:imeOptions="actionNext"
+                                android:inputType="textPassword"
+                                android:singleLine="true" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <!-- Contraseña Nueva -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/til_profile_new_password"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:hint="Nueva contraseña"
+                            app:endIconMode="password_toggle"
+                            app:errorEnabled="true"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/et_profile_new_password"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppins_regular"
+                                android:imeOptions="actionNext"
+                                android:inputType="textPassword"
+                                android:singleLine="true" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <!-- Confirmar Contraseña Nueva -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/til_profile_confirm_password"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:hint="Confirmar nueva contraseña"
+                            app:endIconMode="password_toggle"
+                            app:errorEnabled="true"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/et_profile_confirm_password"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppins_regular"
+                                android:imeOptions="actionDone"
+                                android:inputType="textPassword"
                                 android:singleLine="true" />
                         </com.google.android.material.textfield.TextInputLayout>
 

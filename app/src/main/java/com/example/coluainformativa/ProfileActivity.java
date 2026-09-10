@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -19,6 +20,10 @@ import com.example.coluainformativa.repository.ColuaRepository;
 import com.example.coluainformativa.utils.DpiFormatter;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -33,19 +38,20 @@ public class ProfileActivity extends AppCompatActivity {
     private ColuaRepository repository;
 
     // Elementos de la Vista
-    private TextView tvPageTitle, tvPageSubtitle, tvReadName, tvReadDpi, tvReadPhone, tvLastUpdated, tvSyncBadge;
+    private TextView tvPageTitle, tvPageSubtitle, tvReadName, tvReadDpi, tvReadPhone, tvReadEmail, tvLastUpdated, tvSyncBadge;
     private ImageButton btnToggleDpiMask;
     private LinearLayout layoutReadMode, layoutEditMode, layoutSavingProgress;
     private MaterialButton btnEditProfileMode, btnCancelProfileEdit, btnSaveProfile;
 
     // Formulario de Edición
-    private TextInputLayout tilName, tilDpi, tilPhone;
-    private EditText etName, etDpi, etPhone;
+    private TextInputLayout tilName, tilDpi, tilPhone, tilEmail, tilOldPassword, tilNewPassword, tilConfirmPassword;
+    private EditText etName, etDpi, etPhone, etEmail, etOldPassword, etNewPassword, etConfirmPassword;
 
     // Estado del Perfil
     private String currentName = "";
     private String currentDpi = "";
     private String currentPhone = "";
+    private String currentEmail = "";
     private String currentRole = "GUEST";
     private boolean isDpiMasked = true;
 
@@ -62,6 +68,7 @@ public class ProfileActivity extends AppCompatActivity {
         tvReadName = findViewById(R.id.tv_read_name);
         tvReadDpi = findViewById(R.id.tv_read_dpi);
         tvReadPhone = findViewById(R.id.tv_read_phone);
+        tvReadEmail = findViewById(R.id.tv_read_email);
         tvLastUpdated = findViewById(R.id.tv_profile_last_updated);
         tvSyncBadge = findViewById(R.id.tv_profile_sync_badge);
 
@@ -77,10 +84,18 @@ public class ProfileActivity extends AppCompatActivity {
         tilName = findViewById(R.id.til_profile_name);
         tilDpi = findViewById(R.id.til_profile_dpi);
         tilPhone = findViewById(R.id.til_profile_phone);
+        tilEmail = findViewById(R.id.til_profile_email);
+        tilOldPassword = findViewById(R.id.til_profile_old_password);
+        tilNewPassword = findViewById(R.id.til_profile_new_password);
+        tilConfirmPassword = findViewById(R.id.til_profile_confirm_password);
 
         etName = findViewById(R.id.et_profile_name);
         etDpi = findViewById(R.id.et_profile_dpi);
         etPhone = findViewById(R.id.et_profile_phone);
+        etEmail = findViewById(R.id.et_profile_email);
+        etOldPassword = findViewById(R.id.et_profile_old_password);
+        etNewPassword = findViewById(R.id.et_profile_new_password);
+        etConfirmPassword = findViewById(R.id.et_profile_confirm_password);
 
         DpiFormatter.applyDpiFormatting(etDpi);
 
@@ -106,12 +121,14 @@ public class ProfileActivity extends AppCompatActivity {
             currentDpi = storedDpi;
         }
         currentPhone = pref.getString("user_phone", "");
+        currentEmail = pref.getString("user_email", "");
         currentRole = pref.getString("user_role", "GUEST");
         long lastUpdate = pref.getLong("last_profile_update", 0L);
 
         // Actualizar UI de Lectura
         tvReadName.setText(currentName.isEmpty() ? "Invitado" : currentName);
         tvReadPhone.setText(currentPhone.isEmpty() ? "No registrado" : currentPhone);
+        tvReadEmail.setText(currentEmail.isEmpty() ? "No registrado" : currentEmail);
         updateDpiDisplay();
 
         if (lastUpdate > 0) {
@@ -125,6 +142,11 @@ public class ProfileActivity extends AppCompatActivity {
         etName.setText(currentName);
         etDpi.setText(currentDpi);
         etPhone.setText(currentPhone);
+        etEmail.setText(currentEmail);
+        
+        etOldPassword.setText("");
+        etNewPassword.setText("");
+        etConfirmPassword.setText("");
     }
 
     private void updateDpiDisplay() {
@@ -162,10 +184,18 @@ public class ProfileActivity extends AppCompatActivity {
         tilName.setError(null);
         tilDpi.setError(null);
         tilPhone.setError(null);
+        tilEmail.setError(null);
+        tilOldPassword.setError(null);
+        tilNewPassword.setError(null);
+        tilConfirmPassword.setError(null);
 
         etName.setText(currentName);
         etDpi.setText(currentDpi);
         etPhone.setText(currentPhone);
+        etEmail.setText(currentEmail);
+        etOldPassword.setText("");
+        etNewPassword.setText("");
+        etConfirmPassword.setText("");
 
         checkIfDataChanged();
     }
@@ -178,6 +208,10 @@ public class ProfileActivity extends AppCompatActivity {
         tilName.setError(null);
         tilDpi.setError(null);
         tilPhone.setError(null);
+        tilEmail.setError(null);
+        tilOldPassword.setError(null);
+        tilNewPassword.setError(null);
+        tilConfirmPassword.setError(null);
     }
 
     private void setupChangeDetection() {
@@ -190,6 +224,10 @@ public class ProfileActivity extends AppCompatActivity {
                 tilName.setError(null);
                 tilDpi.setError(null);
                 tilPhone.setError(null);
+                tilEmail.setError(null);
+                tilOldPassword.setError(null);
+                tilNewPassword.setError(null);
+                tilConfirmPassword.setError(null);
                 checkIfDataChanged();
             }
 
@@ -200,14 +238,21 @@ public class ProfileActivity extends AppCompatActivity {
         etName.addTextChangedListener(watcher);
         etDpi.addTextChangedListener(watcher);
         etPhone.addTextChangedListener(watcher);
+        etEmail.addTextChangedListener(watcher);
+        etOldPassword.addTextChangedListener(watcher);
+        etNewPassword.addTextChangedListener(watcher);
+        etConfirmPassword.addTextChangedListener(watcher);
     }
 
     private void checkIfDataChanged() {
         String nameInput = etName.getText().toString().trim();
         String dpiInput = etDpi.getText().toString().trim();
         String phoneInput = etPhone.getText().toString().trim();
+        String emailInput = etEmail.getText().toString().trim();
+        String oldPwdInput = etOldPassword.getText().toString().trim();
+        String newPwdInput = etNewPassword.getText().toString().trim();
 
-        boolean isChanged = !nameInput.equals(currentName) || !dpiInput.equals(currentDpi) || !phoneInput.equals(currentPhone);
+        boolean isChanged = !nameInput.equals(currentName) || !dpiInput.equals(currentDpi) || !phoneInput.equals(currentPhone) || !emailInput.equals(currentEmail) || !oldPwdInput.isEmpty() || !newPwdInput.isEmpty();
         btnSaveProfile.setEnabled(isChanged);
         btnSaveProfile.setAlpha(isChanged ? 1.0f : 0.5f);
     }
@@ -216,6 +261,9 @@ public class ProfileActivity extends AppCompatActivity {
         String name = etName.getText().toString().trim();
         String dpi = etDpi.getText().toString().trim();
         String phone = etPhone.getText().toString().trim();
+        String email = etEmail.getText().toString().trim();
+        String newPwd = etNewPassword.getText().toString().trim();
+        String confirmPwd = etConfirmPassword.getText().toString().trim();
         boolean isValid = true;
 
         if (name.isEmpty()) {
@@ -230,7 +278,7 @@ public class ProfileActivity extends AppCompatActivity {
             tilDpi.setError("Ingresa tu DPI");
             isValid = false;
         } else if (!DpiFormatter.isValidDpi(dpi)) {
-            tilDpi.setError("El DPI debe tener exactamente 13 dígitos (XXXX XXXXX XXXX)");
+            tilDpi.setError("El DPI debe tener exactamente 13 dígitos");
             isValid = false;
         }
 
@@ -238,8 +286,23 @@ public class ProfileActivity extends AppCompatActivity {
             tilPhone.setError("Ingresa tu número de teléfono");
             isValid = false;
         } else if (!phone.matches("\\d{8}")) {
-            tilPhone.setError("El teléfono de Guatemala debe tener exactamente 8 dígitos");
+            tilPhone.setError("El teléfono debe tener exactamente 8 dígitos");
             isValid = false;
+        }
+
+        if (email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            tilEmail.setError("Ingresa un correo electrónico válido");
+            isValid = false;
+        }
+
+        if (!newPwd.isEmpty()) {
+            if (!newPwd.equals(confirmPwd)) {
+                tilConfirmPassword.setError("Las contraseñas no coinciden");
+                isValid = false;
+            } else if (newPwd.length() < 8) {
+                tilNewPassword.setError("Mínimo 8 caracteres");
+                isValid = false;
+            }
         }
 
         return isValid;
@@ -251,48 +314,114 @@ public class ProfileActivity extends AppCompatActivity {
         String newName = etName.getText().toString().trim();
         String newDpi = etDpi.getText().toString().trim();
         String newPhone = etPhone.getText().toString().trim();
+        String newEmail = etEmail.getText().toString().trim();
+        String oldPwd = etOldPassword.getText().toString().trim();
+        String newPwd = etNewPassword.getText().toString().trim();
         long now = System.currentTimeMillis();
 
-        // Deshabilitar botones y mostrar la pantalla de carga
         btnSaveProfile.setEnabled(false);
         btnCancelProfileEdit.setEnabled(false);
         layoutSavingProgress.setVisibility(View.VISIBLE);
 
-        // Actualizar SharedPreferences
-        SharedPreferences pref = getSharedPreferences("UserPrefs", MODE_PRIVATE);
-        pref.edit()
-                .putString("user_name", newName)
-                .putString("user_dpi", newDpi)
-                .putString("user_phone", newPhone)
-                .putLong("last_profile_update", now)
-                .apply();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            Runnable updateFirestoreAndPrefs = () -> {
+                SharedPreferences pref = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+                pref.edit()
+                        .putString("user_name", newName)
+                        .putString("user_dpi", newDpi)
+                        .putString("user_phone", newPhone)
+                        .putString("user_email", newEmail)
+                        .putLong("last_profile_update", now)
+                        .apply();
 
-        // Directamente actualizar el perfil del usuario activo en Firestore
-        repository.actualizarPerfil(newName, newPhone, newDpi, (success, errorMsg) -> {
-            runOnUiThread(() -> {
-                // Ocultar carga y habilitar botones en ambos casos (éxito o error)
-                layoutSavingProgress.setVisibility(View.GONE);
-                btnSaveProfile.setEnabled(true);
-                btnCancelProfileEdit.setEnabled(true);
+                repository.actualizarPerfil(newName, newPhone, newDpi, (success, errorMsg) -> {
+                    runOnUiThread(() -> {
+                        layoutSavingProgress.setVisibility(View.GONE);
+                        btnSaveProfile.setEnabled(true);
+                        btnCancelProfileEdit.setEnabled(true);
 
-                if (success) {
-                    currentName = newName;
-                    currentDpi = newDpi;
-                    currentPhone = newPhone;
-                    loadProfileData();
-                    cancelEditMode();
-                    Toast.makeText(ProfileActivity.this, "Datos actualizados", Toast.LENGTH_SHORT).show();
+                        if (success) {
+                            currentName = newName;
+                            currentDpi = newDpi;
+                            currentPhone = newPhone;
+                            currentEmail = newEmail;
+                            loadProfileData();
+                            cancelEditMode();
+                            Toast.makeText(ProfileActivity.this, "Datos y seguridad actualizados", Toast.LENGTH_SHORT).show();
+                        } else {
+                            String msg = errorMsg != null ? errorMsg : "Error desconocido";
+                            new AlertDialog.Builder(ProfileActivity.this)
+                                    .setTitle("Error al Guardar Perfil")
+                                    .setMessage("No se pudieron guardar los cambios en la nube:\n\n" + msg)
+                                    .setPositiveButton("Reintentar", (dialog, which) -> saveProfileChanges())
+                                    .setNegativeButton("Cancelar", null)
+                                    .show();
+                        }
+                    });
+                    return Unit.INSTANCE;
+                });
+            };
+
+            Runnable handleEmailAndUpdate = () -> {
+                if (!newEmail.equals(user.getEmail()) && !newEmail.isEmpty()) {
+                    user.updateEmail(newEmail).addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            updateFirestoreAndPrefs.run();
+                        } else {
+                            layoutSavingProgress.setVisibility(View.GONE);
+                            btnSaveProfile.setEnabled(true);
+                            btnCancelProfileEdit.setEnabled(true);
+                            Toast.makeText(ProfileActivity.this, "Error actualizando correo: " + (task.getException() != null ? task.getException().getMessage() : "Desconocido"), Toast.LENGTH_LONG).show();
+                        }
+                    });
                 } else {
-                    String msg = errorMsg != null ? errorMsg : "Error desconocido";
-                    new AlertDialog.Builder(ProfileActivity.this)
-                            .setTitle("Error al Guardar Perfil")
-                            .setMessage("No se pudieron guardar los cambios en la nube:\n\n" + msg + "\n\nPor favor verifique su conexión e intente de nuevo.")
-                            .setPositiveButton("Reintentar", (dialog, which) -> saveProfileChanges())
-                            .setNegativeButton("Cancelar", null)
-                            .show();
+                    updateFirestoreAndPrefs.run();
                 }
-            });
-            return Unit.INSTANCE;
-        });
+            };
+
+            if (!newPwd.isEmpty()) {
+                if (!oldPwd.isEmpty() && user.getEmail() != null) {
+                    AuthCredential credential = EmailAuthProvider.getCredential(user.getEmail(), oldPwd);
+                    user.reauthenticate(credential).addOnCompleteListener(reauthTask -> {
+                        if (reauthTask.isSuccessful()) {
+                            user.updatePassword(newPwd).addOnCompleteListener(pwdTask -> {
+                                if (pwdTask.isSuccessful()) {
+                                    handleEmailAndUpdate.run();
+                                } else {
+                                    layoutSavingProgress.setVisibility(View.GONE);
+                                    btnSaveProfile.setEnabled(true);
+                                    btnCancelProfileEdit.setEnabled(true);
+                                    Toast.makeText(ProfileActivity.this, "Error actualizando contraseña: " + (pwdTask.getException() != null ? pwdTask.getException().getMessage() : "Desconocido"), Toast.LENGTH_LONG).show();
+                                }
+                            });
+                        } else {
+                            layoutSavingProgress.setVisibility(View.GONE);
+                            btnSaveProfile.setEnabled(true);
+                            btnCancelProfileEdit.setEnabled(true);
+                            Toast.makeText(ProfileActivity.this, "La contraseña antigua es incorrecta", Toast.LENGTH_LONG).show();
+                        }
+                    });
+                } else {
+                    user.updatePassword(newPwd).addOnCompleteListener(pwdTask -> {
+                        if (pwdTask.isSuccessful()) {
+                            handleEmailAndUpdate.run();
+                        } else {
+                            layoutSavingProgress.setVisibility(View.GONE);
+                            btnSaveProfile.setEnabled(true);
+                            btnCancelProfileEdit.setEnabled(true);
+                            Toast.makeText(ProfileActivity.this, "Error configurando contraseña: " + (pwdTask.getException() != null ? pwdTask.getException().getMessage() : "Desconocido"), Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+            } else {
+                handleEmailAndUpdate.run();
+            }
+        } else {
+            layoutSavingProgress.setVisibility(View.GONE);
+            btnSaveProfile.setEnabled(true);
+            btnCancelProfileEdit.setEnabled(true);
+            Toast.makeText(ProfileActivity.this, "Usuario no autenticado", Toast.LENGTH_SHORT).show();
+        }
     }
 }

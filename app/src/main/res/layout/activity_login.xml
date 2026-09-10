@@ -3,125 +3,527 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:background="@color/background_light">
+    android:background="#F8FAFC"
+    android:fillViewport="true">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="24dp">
+        android:layout_height="wrap_content"
+        android:padding="20dp">
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:gravity="center_horizontal"
-            app:layout_constraintTop_toTopOf="parent"
+            android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintWidth_max="460dp">
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintWidth_max="480dp">
 
             <!-- Logo e Identidad -->
             <ImageView
-                android:layout_width="88dp"
-                android:layout_height="88dp"
-                android:src="@drawable/distintivo_colua"
-                android:scaleType="fitCenter"
+                android:layout_width="76dp"
+                android:layout_height="76dp"
+                android:layout_marginBottom="8dp"
                 android:adjustViewBounds="true"
-                android:layout_marginBottom="12dp"
-                android:contentDescription="Distintivo COLUA" />
+                android:contentDescription="Distintivo COLUA"
+                android:scaleType="fitCenter"
+                android:src="@drawable/distintivo_colua" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="COLUA"
-                android:textSize="28sp"
-                android:textStyle="bold"
+                android:fontFamily="@font/poppins_regular"
+                android:letterSpacing="0.04"
+                android:text="COLUA MICOOPE"
                 android:textColor="@color/colua_navy"
-                android:letterSpacing="0.1"
-                android:gravity="center"
-                android:layout_marginBottom="4dp" />
+                android:textSize="22sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cooperativa de Ahorro y Crédito"
-                android:textSize="14sp"
-                android:textColor="@color/colua_navy"
-                android:gravity="center"
-                android:layout_marginBottom="28dp" />
+                android:layout_marginBottom="16dp"
+                android:fontFamily="@font/poppins_regular"
+                android:text="Tu cooperativa digital"
+                android:textColor="#64748B"
+                android:textSize="14sp" />
 
-            <!-- Campo Nombre -->
-            <com.google.android.material.textfield.TextInputLayout
+            <!-- Selector de Modo: Iniciar Sesión / Registrarse -->
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggle_login_mode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Nombre Completo"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:layout_marginBottom="16dp">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_name"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:inputType="textPersonName"
-                    android:singleLine="true"
-                    android:imeOptions="actionNext" />
-            </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginBottom="24dp"
+                android:background="@drawable/bg_pill_switcher"
+                app:checkedButton="@id/btn_mode_login"
+                app:selectionRequired="true"
+                app:singleSelection="true">
 
-            <!-- Campo DPI -->
-            <com.google.android.material.textfield.TextInputLayout
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_mode_login"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/white"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Iniciar Sesión"
+                    android:textColor="@color/colua_navy"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="24dp"
+                    app:strokeColor="#CBD5E1"
+                    app:strokeWidth="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_mode_register"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Registrarse"
+                    android:textColor="#64748B"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <!-- ===================== -->
+            <!--   LOGIN LAYOUT        -->
+            <!-- ===================== -->
+            <LinearLayout
+                android:id="@+id/layout_login"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="DPI (13 dígitos)"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:layout_marginBottom="16dp">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_dpi"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:text="Correo Electrónico *"
+                    android:textColor="@color/colua_navy"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:startIconDrawable="@android:drawable/ic_dialog_email">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_email_login"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_regular"
+                        android:hint="ejemplo@correo.com"
+                        android:inputType="textEmailAddress"
+                        android:singleLine="true" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:text="Contraseña *"
+                    android:textColor="@color/colua_navy"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:endIconMode="password_toggle"
+                    app:startIconDrawable="@android:drawable/ic_lock_idle_lock">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_password_login"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_regular"
+                        android:hint="********"
+                        android:inputType="textPassword"
+                        android:singleLine="true" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="24dp">
+
+                    <CheckBox
+                        android:id="@+id/cb_remember_login"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="Recordar usuario"
+                        android:textColor="#334155"
+                        android:textSize="12sp"
+                        android:buttonTint="@color/colua_navy" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_forgot_password"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:fontFamily="@font/poppins_regular"
+                        android:padding="0dp"
+                        android:text="¿Olvidaste tu contraseña?"
+                        android:textColor="#0284C7"
+                        android:textSize="12sp" />
+                </RelativeLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_login_submit"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:inputType="number"
-                    android:maxLength="15"
-                    android:singleLine="true"
-                    android:imeOptions="actionNext" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:backgroundTint="@color/colua_navy"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Ingresar a mi Cuenta"
+                    android:textColor="@color/white"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="28dp" />
 
-            <!-- Campo Teléfono -->
-            <com.google.android.material.textfield.TextInputLayout
+                <!-- Separador de Invitado -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="16dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1"
+                        android:background="#E2E8F0" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="12dp"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="¿SIN CUENTA?"
+                        android:textColor="#94A3B8"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1"
+                        android:background="#E2E8F0" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_guest_login"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Explorar como Invitado"
+                    android:textColor="#475569"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="28dp"
+                    app:strokeColor="#CBD5E1"
+                    app:strokeWidth="1dp" />
+
+            </LinearLayout>
+
+            <!-- ===================== -->
+            <!--   REGISTER LAYOUT     -->
+            <!-- ===================== -->
+            <LinearLayout
+                android:id="@+id/layout_register"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Teléfono (8 dígitos)"
-                app:prefixText="+502 "
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:layout_marginBottom="24dp">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_phone"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- Header Step -->
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:inputType="phone"
-                    android:maxLength="8"
-                    android:singleLine="true"
-                    android:imeOptions="actionDone" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-            <!-- Botón Ingresar / Empezar -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_login"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:text="Empezar"
-                android:textColor="@color/white"
-                app:cornerRadius="28dp"
-                android:backgroundTint="@color/colua_navy" />
+                    <ProgressBar
+                        android:id="@+id/progress_register"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:max="2"
+                        android:progress="1"
+                        android:progressTint="@color/colua_navy" />
 
-            <!-- Enlace Invitado -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_guest"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:text="Entrar como Invitado"
-                android:textColor="@color/colua_navy"
-                android:layout_marginTop="16dp" />
+                    <TextView
+                        android:id="@+id/tv_step_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="1/2: Datos del usuario"
+                        android:textColor="@color/colua_navy"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- STEP 1: Datos -->
+                <LinearLayout
+                    android:id="@+id/layout_step_1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/til_name"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:hint="Nombre Completo *">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:imeOptions="actionNext"
+                            android:inputType="textPersonName"
+                            android:singleLine="true" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/til_dpi"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:hint="DPI (13 dígitos) *">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_dpi"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:imeOptions="actionNext"
+                            android:inputType="number"
+                            android:maxLength="15"
+                            android:singleLine="true" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/til_phone"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="24dp"
+                        android:hint="Teléfono (8 dígitos) *"
+                        app:prefixText="+502 ">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_phone"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:imeOptions="actionDone"
+                            android:inputType="phone"
+                            android:maxLength="8"
+                            android:singleLine="true" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_next_step"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:backgroundTint="@color/colua_navy"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="Continuar"
+                        android:textColor="@color/white"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="28dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_guest_reg1"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="Ingresar como Invitado"
+                        android:textColor="#475569"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <!-- STEP 2: Seguridad -->
+                <LinearLayout
+                    android:id="@+id/layout_step_2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/til_email"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:hint="Correo Electrónico *">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_email"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:imeOptions="actionNext"
+                            android:inputType="textEmailAddress"
+                            android:singleLine="true" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/til_password"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:hint="Contraseña de Seguridad *"
+                        app:endIconMode="password_toggle">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_password"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:imeOptions="actionNext"
+                            android:inputType="textPassword"
+                            android:singleLine="true" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/til_confirm_password"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Confirmar Contraseña *"
+                        app:endIconMode="password_toggle">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_confirm_password"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:imeOptions="actionDone"
+                            android:inputType="textPassword"
+                            android:singleLine="true" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Sugerencias -->
+                    <LinearLayout
+                        android:id="@+id/layout_password_suggestions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:layout_marginBottom="16dp"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_suggest_password"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:fontFamily="@font/poppins_regular"
+                            android:padding="0dp"
+                            android:text="💡 Sugerir Contraseña Segura"
+                            android:textColor="@color/colua_navy"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="#F1F5F9"
+                            android:orientation="vertical"
+                            android:padding="8dp">
+
+                            <TextView
+                                android:id="@+id/tv_rule_length"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="✖ Mínimo 8 caracteres"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+
+                            <TextView
+                                android:id="@+id/tv_rule_cases"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="✖ Mayúsculas y minúsculas"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+
+                            <TextView
+                                android:id="@+id/tv_rule_number_special"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="✖ Números y símbolos"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <CheckBox
+                        android:id="@+id/cb_terms"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="Acepto los términos y condiciones y autorizo a COLUA a enviarme correos."
+                        android:textColor="#334155"
+                        android:textSize="12sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="2">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_prev_step"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="0.8"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Atrás"
+                            android:textColor="@color/colua_navy"
+                            app:cornerRadius="28dp"
+                            app:strokeColor="@color/colua_navy" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_register_submit"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1.2"
+                            android:backgroundTint="@color/colua_navy"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Confirmar Datos"
+                            android:textColor="@color/white"
+                            android:textStyle="bold"
+                            app:cornerRadius="28dp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
 
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>

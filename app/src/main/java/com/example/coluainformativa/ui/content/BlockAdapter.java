@@ -211,26 +211,32 @@ public class BlockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                         || "grupo".equalsIgnoreCase(path)
                         || "ICON".equalsIgnoreCase(type);
 
+                float density = itemView.getContext().getResources().getDisplayMetrics().density;
+
                 if (isSmallIcon) {
                     // Ícono o logotipo de cabecera: Mediano-pequeño centrado
-                    ViewGroup.LayoutParams lp = iv.getLayoutParams();
-                    if (lp != null) {
+                    if (iv.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+                        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) iv.getLayoutParams();
                         lp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
                         lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                        lp.leftMargin = (int) (16 * density);
+                        lp.rightMargin = (int) (16 * density);
                         iv.setLayoutParams(lp);
                     }
-                    iv.setMaxHeight(120);
+                    iv.setMaxHeight((int) (120 * density));
                     iv.setAdjustViewBounds(true);
                     iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 } else {
-                    // Imagen subida o banner promocional: Ancho completo casi tocando los márgenes
-                    ViewGroup.LayoutParams lp = iv.getLayoutParams();
-                    if (lp != null) {
+                    // Imagen subida o banner promocional: Ancho completo con márgenes pequeños (12dp) y altura expansiva nítida
+                    if (iv.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+                        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) iv.getLayoutParams();
                         lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
                         lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                        lp.leftMargin = (int) (12 * density);
+                        lp.rightMargin = (int) (12 * density);
                         iv.setLayoutParams(lp);
                     }
-                    iv.setMaxHeight(360);
+                    iv.setMaxHeight((int) (650 * density)); // 650dp para soportar cualquier imagen en alta definición
                     iv.setAdjustViewBounds(true);
                     iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 }

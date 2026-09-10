@@ -124,6 +124,7 @@ public class AdminActivity extends AppCompatActivity {
         // Mantenimiento
         findViewById(R.id.btn_change_password).setOnClickListener(v -> showChangePasswordDialog());
         findViewById(R.id.btn_restore_data).setOnClickListener(v -> confirmRestore());
+        findViewById(R.id.btn_wipe_users).setOnClickListener(v -> confirmWipeUsers());
         findViewById(R.id.btn_edit_identity).setOnClickListener(v -> {
             startActivity(new Intent(this, InstitutionalIdentityActivity.class));
         });
@@ -496,6 +497,26 @@ public class AdminActivity extends AppCompatActivity {
                         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
                         loadSyncStatusInfo();
                         setupSectionsList();
+                    });
+                },
+                "Cancelar"
+        );
+    }
+
+    private void confirmWipeUsers() {
+        DialogHelper.showLightReportDialog(this, "Limpieza Profunda de Usuarios",
+                "ADVERTENCIA CRÍTICA: Se buscarán y eliminarán todos los perfiles de usuario, registros, sesiones, y dispositivos en Firestore de manera permanente.\n\n" +
+                        "• No se modificará el CMS, Noticias o Secciones.\n" +
+                        "• Recuerda vaciar también 'Authentication' en la consola de Firebase.\n" +
+                        "• Esta acción NO SE PUEDE DESHACER.",
+                "CONFIRMAR LIMPIEZA",
+                () -> {
+                    Toast.makeText(this, "Iniciando eliminación profunda...", Toast.LENGTH_SHORT).show();
+                    repository.deepWipeAllUserData(reportMsg -> {
+                        runOnUiThread(() -> {
+                            DialogHelper.showLightReportDialog(this, "Reporte de Limpieza", reportMsg, "Entendido", () -> loadSyncStatusInfo(), null);
+                        });
+                        return Unit.INSTANCE;
                     });
                 },
                 "Cancelar"
@@ -1214,7 +1235,7 @@ public class AdminActivity extends AppCompatActivity {
         return String.valueOf(obj);
     }
 
-    private void setupUserFilterWidget(List userList) {
+    private void setupUserFilterWidget(List rawUserList) {
         EditText etFilterName = findViewById(R.id.et_filter_name);
         MaterialButton btnFilterType = findViewById(R.id.btn_filter_type);
         MaterialButton btnFilterSort = findViewById(R.id.btn_filter_sort);
@@ -1222,6 +1243,7 @@ public class AdminActivity extends AppCompatActivity {
         TextView tvCounter = findViewById(R.id.tv_filter_counter);
 
         if (etFilterName == null || containerUsers == null) return;
+        final List userList = rawUserList != null ? rawUserList : new ArrayList<>();
 
         btnFilterType.setOnClickListener(v -> {
             if ("Todos".equals(currentFilterType)) {
@@ -1327,7 +1349,9 @@ public class AdminActivity extends AppCompatActivity {
             });
         }
 
+        int itemIndex = 0;
         for (Map<String, Object> u : filteredList) {
+            itemIndex++;
             matched++;
             String name = String.valueOf(u.get("nombre") != null ? u.get("nombre") : "Usuario");
             String tipo = String.valueOf(u.get("tipoUsuario") != null ? u.get("tipoUsuario") : "ASOCIADO");
@@ -1348,7 +1372,7 @@ public class AdminActivity extends AppCompatActivity {
             itemRow.setLayoutParams(params);
 
             TextView tvNameRole = new TextView(this);
-            tvNameRole.setText(name + " (" + tipo + ") - ID: " + userId);
+            tvNameRole.setText("#" + itemIndex + ". " + name + " (" + tipo + ") - ID: " + userId);
             tvNameRole.setTextColor(Color.parseColor("#173789"));
             tvNameRole.setTextSize(13f);
             tvNameRole.setTypeface(null, Typeface.BOLD);

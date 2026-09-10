@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -23,12 +24,16 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.coluainformativa.database.ContentBlockEntity;
 import com.example.coluainformativa.database.SectionEntity;
 import com.example.coluainformativa.repository.ColuaRepository;
 import com.example.coluainformativa.security.AdminAuthManager;
+import com.example.coluainformativa.ui.content.ElementTypeAdapter;
 import com.example.coluainformativa.utils.DialogHelper;
+import com.google.android.material.chip.ChipGroup;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -53,7 +58,8 @@ public class AdminBlockEditActivity extends AppCompatActivity {
     private String sectionId;
     private ContentBlockEntity block;
 
-    private Spinner spinnerBlockType, spinnerActionType, spinnerTargetScreen, spinnerCardStyle;
+    private Spinner spinnerActionType, spinnerTargetScreen, spinnerCardStyle;
+    private String selectedBlockTypeKey = "TEXT";
     private TextView tvElementTypeTitle, tvElementTypeSubtitle, tvActionSummary;
     private ImageView ivElementTypeIcon;
     private EditText etTitle, etContent, etBenefitsList, etHighlightAmount, etMedia, etButtonText, etButtonAction;
@@ -63,20 +69,6 @@ public class AdminBlockEditActivity extends AppCompatActivity {
     private View layoutFieldCardStyle, layoutFieldText, layoutFieldMedia, layoutFieldButton, layoutFieldAlignment, layoutActionTargetScreen, tilButtonActionValue;
 
     private List<SectionEntity> availableSections = new ArrayList<>();
-
-    private static final String[] BLOCK_TYPES = {
-            "TEXT (Texto libre / Encabezado / Párrafo)",
-            "IMAGE (Imagen / Logotipo / Banner)",
-            "ICON (Ícono de la Galería)",
-            "BUTTON (Botón / Acción CTA)",
-            "CARD (Tarjeta Contenedor)",
-            "CONTAINER (Sección / Contenedor Libre)",
-            "LIST (Lista de Beneficios / Requisitos)",
-            "SEPARATOR (Separador / Línea)",
-            "SPACER (Espaciador Vertical)",
-            "BANNER (Banner Destacado Ancho Completo)",
-            "PRODUCT_CARD (Tarjeta de Producto / Servicio)"
-    };
 
     private static final String[] ACTION_TYPES = {
             "1. Abrir una pantalla de la app",
@@ -103,7 +95,6 @@ public class AdminBlockEditActivity extends AppCompatActivity {
         blockId = getIntent().getStringExtra(EXTRA_BLOCK_ID);
         sectionId = getIntent().getStringExtra(EXTRA_SECTION_ID);
 
-        spinnerBlockType = findViewById(R.id.spinner_block_type);
         spinnerCardStyle = findViewById(R.id.spinner_card_style);
         spinnerActionType = findViewById(R.id.spinner_button_action_type);
         spinnerTargetScreen = findViewById(R.id.spinner_target_screen);
@@ -138,6 +129,12 @@ public class AdminBlockEditActivity extends AppCompatActivity {
         setupLiveTextWatchers();
 
         findViewById(R.id.btn_back_block_edit).setOnClickListener(v -> finish());
+
+        // Selector Modal de Tipo de Elemento
+        View cardSelectType = findViewById(R.id.card_select_element_type);
+        if (cardSelectType != null) {
+            cardSelectType.setOnClickListener(v -> showSelectElementTypeDialog());
+        }
 
         // Botón Galería
         View btnSelectMedia = findViewById(R.id.btn_select_block_icon);
@@ -174,59 +171,15 @@ public class AdminBlockEditActivity extends AppCompatActivity {
             if (preselectedType == null || preselectedType.trim().isEmpty()) {
                 preselectedType = "TEXT";
             }
-            block.type = preselectedType;
+            selectedBlockTypeKey = preselectedType;
+            block.type = selectedBlockTypeKey;
             block.alignment = "LEFT";
 
-            for (int i = 0; i < BLOCK_TYPES.length; i++) {
-                if (BLOCK_TYPES[i].startsWith(preselectedType)) {
-                    spinnerBlockType.setSelection(i);
-                    break;
-                }
-            }
-            updateElementTypeHeaderAndForm(preselectedType);
+            updateElementTypeHeaderAndForm(selectedBlockTypeKey);
         }
     }
 
     private void setupSpinners() {
-        ArrayAdapter<String> typeAdapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_spinner_item, BLOCK_TYPES) {
-            @NonNull
-            @Override
-            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-                View v = super.getView(position, convertView, parent);
-                if (v instanceof TextView) {
-                    ((TextView) v).setTextColor(Color.parseColor("#173789"));
-                    ((TextView) v).setTypeface(null, Typeface.BOLD);
-                    ((TextView) v).setTextSize(14f);
-                }
-                return v;
-            }
-
-            @Override
-            public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
-                View v = super.getDropDownView(position, convertView, parent);
-                if (v instanceof TextView) {
-                    ((TextView) v).setTextColor(Color.parseColor("#173789"));
-                    ((TextView) v).setTextSize(14f);
-                    ((TextView) v).setPadding(24, 20, 24, 20);
-                }
-                return v;
-            }
-        };
-        typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerBlockType.setAdapter(typeAdapter);
-
-        spinnerBlockType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String rawType = BLOCK_TYPES[position].split(" ")[0];
-                updateElementTypeHeaderAndForm(rawType);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
-        });
-
         if (spinnerCardStyle != null) {
             ArrayAdapter<String> styleAdapter = new ArrayAdapter<>(this,
                     android.R.layout.simple_spinner_item, CARD_STYLES);
@@ -251,6 +204,85 @@ public class AdminBlockEditActivity extends AppCompatActivity {
                 public void onNothingSelected(AdapterView<?> parent) {}
             });
         }
+    }
+
+    private void showSelectElementTypeDialog() {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_element, null);
+        RecyclerView rvTypes = dialogView.findViewById(R.id.rv_element_types);
+        EditText etSearch = dialogView.findViewById(R.id.et_search_element_type);
+        ChipGroup chipGroup = dialogView.findViewById(R.id.chip_group_categories);
+        View btnCancel = dialogView.findViewById(R.id.btn_cancel_dialog);
+
+        List<ElementTypeAdapter.ElementTypeItem> items = new ArrayList<>();
+        items.add(new ElementTypeAdapter.ElementTypeItem("TEXT", "Texto", "Título, Subtítulo, Párrafo, Informativo", R.drawable.ic_newspaper, "#EFF6FF", "#1D4ED8", "Básicos", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("IMAGE", "Imagen", "Logo, Banner, Fotografía, Ilustración", R.drawable.contenido_depantallas, "#DCFCE7", "#15803D", "Multimedia", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("ICON", "Ícono", "Ícono de Galería o Vectorial con estilo", R.drawable.ic_star, "#F3E8FF", "#7E22CE", "Multimedia", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("BUTTON", "Botón", "Navegación, PBX / Llamada, Enlace web", R.drawable.ic_campaign, "#FEF3C7", "#B45309", "Básicos", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("CARD", "Tarjeta", "Contenedor visual con borde, elevación y sombra", R.drawable.ic_credit_card, "#E0F2FE", "#0369A1", "Estructura", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("PRODUCT_CARD", "Tarjeta de Producto", "Crédito, Ahorro, Seguro, Remesa COLUA", R.drawable.ic_account_balance, "#0F172A", "#10B981", "Financiero", true));
+        items.add(new ElementTypeAdapter.ElementTypeItem("CONTAINER", "Sección / Contenedor", "Agrupa elementos en pantalla sin tarjeta", R.drawable.ic_business, "#F1F5F9", "#475569", "Estructura", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("LIST", "Lista", "Viñetas, Beneficios, Requisitos por puntos", R.drawable.ic_receipt, "#E0F2FE", "#0284C7", "Básicos", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("SEPARATOR", "Separador", "Línea divisora horizontal de sección", R.drawable.ic_calculate, "#F1F5F9", "#64748B", "Estructura", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("SPACER", "Espaciador", "Espaciado vertical entre bloques", R.drawable.ic_calculate, "#F3E8FF", "#9333EA", "Estructura", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("BANNER", "Banner Destacado", "Imagen o bloque promocional ancho completo", R.drawable.ic_trending_up, "#DCFCE7", "#16A34A", "Multimedia", false));
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        ElementTypeAdapter adapter = new ElementTypeAdapter(items, selectedItem -> {
+            dialog.dismiss();
+            selectedBlockTypeKey = selectedItem.key;
+            updateElementTypeHeaderAndForm(selectedBlockTypeKey);
+
+            TextView tvLabel = findViewById(R.id.tv_selected_element_type_label);
+            if (tvLabel != null) {
+                tvLabel.setText("Tipo actual: " + selectedItem.title);
+            }
+        });
+
+        if (rvTypes != null) {
+            rvTypes.setLayoutManager(new LinearLayoutManager(this));
+            rvTypes.setAdapter(adapter);
+        }
+
+        final String[] selectedCat = {"Todos"};
+        if (etSearch != null) {
+            etSearch.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    adapter.filter(s.toString(), selectedCat[0]);
+                }
+                @Override public void afterTextChanged(Editable s) {}
+            });
+        }
+
+        if (chipGroup != null) {
+            chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
+                if (checkedIds.isEmpty()) {
+                    selectedCat[0] = "Todos";
+                } else {
+                    int id = checkedIds.get(0);
+                    if (id == R.id.chip_cat_basics) selectedCat[0] = "Básicos";
+                    else if (id == R.id.chip_cat_media) selectedCat[0] = "Multimedia";
+                    else if (id == R.id.chip_cat_structure) selectedCat[0] = "Estructura";
+                    else if (id == R.id.chip_cat_financial) selectedCat[0] = "Financiero";
+                    else selectedCat[0] = "Todos";
+                }
+                String q = etSearch != null ? etSearch.getText().toString() : "";
+                adapter.filter(q, selectedCat[0]);
+            });
+        }
+
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
     }
 
     private void updateButtonActionFieldsVisibility(int actionIndex) {
@@ -344,7 +376,7 @@ public class AdminBlockEditActivity extends AppCompatActivity {
         if ("BUTTON".equalsIgnoreCase(upperType)) {
             tvElementTypeTitle.setText("Botón / Acción CTA");
             tvElementTypeSubtitle.setText("Elemento de llamada a la acción para navegar, contactar o abrir un enlace");
-            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.editar);
+            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.ic_campaign);
 
             if (layoutFieldCardStyle != null) layoutFieldCardStyle.setVisibility(View.GONE);
             if (layoutFieldText != null) layoutFieldText.setVisibility(View.GONE);
@@ -353,9 +385,9 @@ public class AdminBlockEditActivity extends AppCompatActivity {
             if (layoutFieldAlignment != null) layoutFieldAlignment.setVisibility(View.VISIBLE);
 
         } else if ("IMAGE".equalsIgnoreCase(upperType) || "BANNER".equalsIgnoreCase(upperType)) {
-            tvElementTypeTitle.setText("Imagen / Banner");
-            tvElementTypeSubtitle.setText("Logotipo, banner, fotografía o ilustración promocional");
-            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.ic_star);
+            tvElementTypeTitle.setText("Imagen / Banner Destacado");
+            tvElementTypeSubtitle.setText("Logotipo, banner, fotografía o ilustración promocional en alta definición");
+            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.contenido_depantallas);
 
             if (layoutFieldCardStyle != null) layoutFieldCardStyle.setVisibility(View.GONE);
             if (layoutFieldText != null) layoutFieldText.setVisibility(View.VISIBLE);
@@ -376,8 +408,8 @@ public class AdminBlockEditActivity extends AppCompatActivity {
 
         } else if ("PRODUCT_CARD".equalsIgnoreCase(upperType) || "CARD".equalsIgnoreCase(upperType)) {
             tvElementTypeTitle.setText("Tarjeta de Producto / Servicio");
-            tvElementTypeSubtitle.setText("Producto, crédito, seguro, remesa u oferta estructurada");
-            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.ic_star);
+            tvElementTypeSubtitle.setText("Producto, crédito, seguro, remesa u oferta estructurada con borde y sombra");
+            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.ic_credit_card);
 
             if (layoutFieldCardStyle != null) layoutFieldCardStyle.setVisibility(View.VISIBLE);
             if (layoutFieldText != null) layoutFieldText.setVisibility(View.VISIBLE);
@@ -387,19 +419,30 @@ public class AdminBlockEditActivity extends AppCompatActivity {
 
         } else if ("CONTAINER".equalsIgnoreCase(upperType)) {
             tvElementTypeTitle.setText("Sección / Contenedor Libre");
-            tvElementTypeSubtitle.setText("Agrupa elementos en pantalla sin fondo, borde ni sombra");
-            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.editar);
+            tvElementTypeSubtitle.setText("Agrupa elementos en pantalla de forma ordenada y estructurada");
+            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.ic_business);
 
             if (layoutFieldCardStyle != null) layoutFieldCardStyle.setVisibility(View.GONE);
             if (layoutFieldText != null) layoutFieldText.setVisibility(View.VISIBLE);
             if (layoutFieldMedia != null) layoutFieldMedia.setVisibility(View.VISIBLE);
-            if (layoutFieldButton != null) layoutFieldButton.setVisibility(View.VISIBLE);
+            if (layoutFieldButton != null) layoutFieldButton.setVisibility(View.GONE);
+            if (layoutFieldAlignment != null) layoutFieldAlignment.setVisibility(View.VISIBLE);
+
+        } else if ("LIST".equalsIgnoreCase(upperType)) {
+            tvElementTypeTitle.setText("Lista (Viñetas / Beneficios / Requisitos)");
+            tvElementTypeSubtitle.setText("Organiza puntos, ventajas o requerimientos de forma clara");
+            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.ic_receipt);
+
+            if (layoutFieldCardStyle != null) layoutFieldCardStyle.setVisibility(View.GONE);
+            if (layoutFieldText != null) layoutFieldText.setVisibility(View.VISIBLE);
+            if (layoutFieldMedia != null) layoutFieldMedia.setVisibility(View.GONE);
+            if (layoutFieldButton != null) layoutFieldButton.setVisibility(View.GONE);
             if (layoutFieldAlignment != null) layoutFieldAlignment.setVisibility(View.VISIBLE);
 
         } else if ("SEPARATOR".equalsIgnoreCase(upperType) || "SPACER".equalsIgnoreCase(upperType)) {
             tvElementTypeTitle.setText("Separador / Espaciador");
             tvElementTypeSubtitle.setText("Línea divisora o espacio vertical entre elementos");
-            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.editar);
+            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.ic_calculate);
 
             if (layoutFieldCardStyle != null) layoutFieldCardStyle.setVisibility(View.GONE);
             if (layoutFieldText != null) layoutFieldText.setVisibility(View.GONE);
@@ -407,10 +450,10 @@ public class AdminBlockEditActivity extends AppCompatActivity {
             if (layoutFieldButton != null) layoutFieldButton.setVisibility(View.GONE);
             if (layoutFieldAlignment != null) layoutFieldAlignment.setVisibility(View.GONE);
 
-        } else { // TEXT, LIST, etc.
+        } else { // TEXT, etc.
             tvElementTypeTitle.setText("Texto / Bloque Informativo");
-            tvElementTypeSubtitle.setText("Títulos, subtítulos, párrafos, viñetas y textos informativos");
-            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.editar);
+            tvElementTypeSubtitle.setText("Títulos, subtítulos, párrafos y textos informativos");
+            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.ic_newspaper);
 
             if (layoutFieldCardStyle != null) layoutFieldCardStyle.setVisibility(View.GONE);
             if (layoutFieldText != null) layoutFieldText.setVisibility(View.VISIBLE);
@@ -420,12 +463,35 @@ public class AdminBlockEditActivity extends AppCompatActivity {
         }
     }
 
+    private void updateLiveImagePreview(String path) {
+        View cardPreview = findViewById(R.id.card_media_preview_container);
+        ImageView ivThumb = findViewById(R.id.iv_media_preview_thumb);
+        TextView tvStatus = findViewById(R.id.tv_media_selected_status);
+        TextView tvName = findViewById(R.id.tv_media_selected_name);
+
+        if (cardPreview == null || path == null || path.trim().isEmpty()) {
+            if (cardPreview != null) cardPreview.setVisibility(View.GONE);
+            return;
+        }
+
+        String cleanPath = path.trim();
+        cardPreview.setVisibility(View.VISIBLE);
+
+        if (tvStatus != null) tvStatus.setText("✓ Imagen / Ícono seleccionado con éxito");
+        if (tvName != null) tvName.setText(cleanPath);
+
+        if (ivThumb != null) {
+            AdminNewsEditActivity.loadNewsImageIntoView(this, ivThumb, cleanPath);
+        }
+    }
+
     private void showResourcePickerDialog() {
         DialogHelper.showResourcePickerDialog(this, (resName, displayLabel) -> {
             if (etMedia != null) {
                 etMedia.setText(resName);
-                Toast.makeText(this, "Recurso seleccionado: " + resName, Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "✓ Imagen/Ícono seleccionado con éxito: " + resName, Toast.LENGTH_SHORT).show();
             }
+            updateLiveImagePreview(resName);
         }, () -> {
             try {
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -446,12 +512,14 @@ public class AdminBlockEditActivity extends AppCompatActivity {
             if (localPath != null && !localPath.isEmpty()) {
                 if (etMedia != null) {
                     etMedia.setText(localPath);
-                    Toast.makeText(this, "Imagen guardada e integrada con éxito", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "✓ Foto integrada con éxito", Toast.LENGTH_SHORT).show();
                 }
+                updateLiveImagePreview(localPath);
             } else {
                 if (etMedia != null) {
                     etMedia.setText(imageUri.toString());
                 }
+                updateLiveImagePreview(imageUri.toString());
             }
         }
     }
@@ -491,6 +559,9 @@ public class AdminBlockEditActivity extends AppCompatActivity {
                     if (etBenefitsList != null) etBenefitsList.setText(block.fontSize != null && block.fontSize.startsWith("BENEFITS:") ? block.fontSize.replace("BENEFITS:", "") : "");
                     if (etHighlightAmount != null) etHighlightAmount.setText(block.textColor != null && block.textColor.startsWith("MOUNT:") ? block.textColor.replace("MOUNT:", "") : "");
                     etMedia.setText(block.mediaPath != null ? block.mediaPath : "");
+                    if (block.mediaPath != null && !block.mediaPath.trim().isEmpty()) {
+                        updateLiveImagePreview(block.mediaPath);
+                    }
                     etButtonText.setText(block.buttonText != null ? block.buttonText : "");
                     etButtonAction.setText(block.buttonAction != null ? block.buttonAction : "");
 
@@ -503,13 +574,13 @@ public class AdminBlockEditActivity extends AppCompatActivity {
                     }
 
                     String type = block.type != null ? block.type : "TEXT";
-                    for (int i = 0; i < BLOCK_TYPES.length; i++) {
-                        if (BLOCK_TYPES[i].startsWith(type)) {
-                            spinnerBlockType.setSelection(i);
-                            break;
-                        }
-                    }
+                    selectedBlockTypeKey = type;
                     updateElementTypeHeaderAndForm(type);
+                    
+                    TextView tvLabel = findViewById(R.id.tv_selected_element_type_label);
+                    if (tvLabel != null) {
+                        tvLabel.setText("Tipo actual: " + type);
+                    }
                     updateLiveActionSummary();
                 }
             });
@@ -523,11 +594,7 @@ public class AdminBlockEditActivity extends AppCompatActivity {
             block.sectionId = sectionId != null ? sectionId : "sec_home";
         }
 
-        int typeIndex = spinnerBlockType.getSelectedItemPosition();
-        String selectedType = "TEXT";
-        if (typeIndex >= 0 && typeIndex < BLOCK_TYPES.length) {
-            selectedType = BLOCK_TYPES[typeIndex].split(" ")[0];
-        }
+        String selectedType = selectedBlockTypeKey != null ? selectedBlockTypeKey : "TEXT";
 
         block.type = selectedType;
         String titleInput = etTitle.getText().toString().trim();

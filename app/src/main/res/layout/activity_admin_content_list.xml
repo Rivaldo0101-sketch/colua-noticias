@@ -181,20 +181,45 @@
                         android:textStyle="bold" />
 
                     <!-- Spinner Selector de Pantalla con caja de selección bordeadas de 10dp -->
-                    <FrameLayout
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/card_select_screen"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
+                        android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_outlined_spinner"
-                        android:paddingHorizontal="4dp">
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="#F8FAFC"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="#CBD5E1"
+                        app:strokeWidth="1dp">
 
-                        <Spinner
-                            android:id="@+id/spinner_canvas_screen"
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:paddingHorizontal="12dp"
-                            android:spinnerMode="dropdown" />
-                    </FrameLayout>
+                            android:layout_height="48dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="14dp">
+
+                            <TextView
+                                android:id="@+id/tv_selected_screen_label"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:fontFamily="@font/poppins_regular"
+                                android:text="Inicio (/home)"
+                                android:textColor="@color/colua_navy"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:contentDescription="Seleccionar pantalla"
+                                android:src="@drawable/ic_chevron_right"
+                                app:tint="@color/colua_navy" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
 
                     <TextView
                         android:id="@+id/tv_admin_section_title"

@@ -40,12 +40,15 @@ import com.example.coluainformativa.database.SectionEntity;
 import com.example.coluainformativa.repository.ColuaRepository;
 import com.example.coluainformativa.security.AdminAuthManager;
 import com.example.coluainformativa.ui.content.ContentItemAdapter;
+import com.example.coluainformativa.ui.content.ScreenSelectorAdapter;
 
 import android.util.Log;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import com.example.coluainformativa.ui.content.ElementTypeAdapter;
 import com.example.coluainformativa.utils.DialogHelper;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -156,7 +159,10 @@ public class AdminContentListActivity extends AppCompatActivity {
             btnPublish.setOnClickListener(v -> publishCanvasConfiguration());
         }
 
-        spinnerScreenSelector = findViewById(R.id.spinner_canvas_screen);
+        View cardSelectScreen = findViewById(R.id.card_select_screen);
+        if (cardSelectScreen != null) {
+            cardSelectScreen.setOnClickListener(v -> showSelectScreenDialog());
+        }
 
         setupSearch();
         setupFilters();
@@ -166,7 +172,7 @@ public class AdminContentListActivity extends AppCompatActivity {
         adapter = new ContentAdapter();
         rv.setAdapter(adapter);
 
-        setupScreenSpinner();
+        setupScreenSelector();
     }
 
     @Override
@@ -175,88 +181,119 @@ public class AdminContentListActivity extends AppCompatActivity {
         loadData();
     }
 
-    private void setupScreenSpinner() {
-        if (spinnerScreenSelector == null) return;
-
+    private void setupScreenSelector() {
         new Thread(() -> {
             allSections = repository.getAllSections();
             Collections.sort(allSections, (s1, s2) -> Integer.compare(s1.displayOrder, s2.displayOrder));
 
-            List<String> labels = new ArrayList<>();
-            int selectedIndex = 0;
-
-            for (int i = 0; i < allSections.size(); i++) {
-                SectionEntity s = allSections.get(i);
-                labels.add(s.title + " (/" + (s.slug != null && !s.slug.isEmpty() ? s.slug : s.id) + ")");
-                if (s.id.equals(sectionId)) {
-                    selectedIndex = i;
+            SectionEntity selected = null;
+            for (SectionEntity s : allSections) {
+                if (s.id.equalsIgnoreCase(sectionId)) {
+                    selected = s;
+                    break;
                 }
             }
+            if (selected == null && !allSections.isEmpty()) {
+                selected = allSections.get(0);
+                sectionId = selected.id;
+            }
 
-            final int initialIndex = selectedIndex;
-
+            final SectionEntity finalSelected = selected;
             runOnUiThread(() -> {
-                ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<String>(AdminContentListActivity.this,
-                        android.R.layout.simple_spinner_item, labels) {
-                    @NonNull
-                    @Override
-                    public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-                        View v = super.getView(position, convertView, parent);
-                        if (v instanceof TextView) {
-                            ((TextView) v).setTextColor(Color.parseColor("#173789"));
-                            ((TextView) v).setTypeface(null, Typeface.BOLD);
-                            ((TextView) v).setTextSize(14f);
-                        }
-                        return v;
-                    }
-
-                    @Override
-                    public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
-                        View v = super.getDropDownView(position, convertView, parent);
-                        if (v instanceof TextView) {
-                            ((TextView) v).setTextColor(Color.parseColor("#173789"));
-                            ((TextView) v).setTextSize(14f);
-                            ((TextView) v).setPadding(24, 20, 24, 20);
-                        }
-                        return v;
-                    }
-                };
-                spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                spinnerScreenSelector.setAdapter(spinnerAdapter);
-                if (initialIndex < labels.size()) {
-                    spinnerScreenSelector.setSelection(initialIndex);
+                if (finalSelected != null) {
+                    updateSelectedScreenHeader(finalSelected);
                 }
-
-                spinnerScreenSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                    @Override
-                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                        if (position >= 0 && position < allSections.size()) {
-                            SectionEntity chosen = allSections.get(position);
-                            sectionId = chosen.id;
-                            manageAgencias = "sec_agencias".equalsIgnoreCase(sectionId) || "agencias".equalsIgnoreCase(sectionId);
-
-                            ExtendedFloatingActionButton fab = findViewById(R.id.btn_add_item);
-                            if (fab != null) {
-                                if (manageAgencias) {
-                                    fab.setText("Agregar Agencia / Punto");
-                                } else if ("sec_noticias".equalsIgnoreCase(sectionId) || "noticias".equalsIgnoreCase(sectionId)) {
-                                    fab.setText("Crear Nueva Publicación");
-                                } else {
-                                    fab.setText("Agregar Elemento al Canvas");
-                                }
-                            }
-
-                            loadData();
-                        }
-                    }
-
-                    @Override
-                    public void onNothingSelected(AdapterView<?> parent) {}
-                });
-
                 loadData();
             });
         }).start();
+    }
+
+    private void updateSelectedScreenHeader(SectionEntity s) {
+        if (s == null) return;
+        sectionId = s.id;
+        manageAgencias = "sec_agencias".equalsIgnoreCase(sectionId) || "agencias".equalsIgnoreCase(sectionId);
+
+        TextView tvLabel = findViewById(R.id.tv_selected_screen_label);
+        if (tvLabel != null) {
+            tvLabel.setText(s.title + " (/" + (s.slug != null && !s.slug.isEmpty() ? s.slug : s.id) + ")");
+        }
+
+        TextView tvTitle = findViewById(R.id.tv_admin_section_title);
+        if (tvTitle != null) {
+            tvTitle.setText("Canvas de " + s.title);
+        }
+
+        ExtendedFloatingActionButton fab = findViewById(R.id.btn_add_item);
+        if (fab != null) {
+            if (manageAgencias) {
+                fab.setText("Agregar Agencia / Punto");
+            } else if ("sec_noticias".equalsIgnoreCase(sectionId) || "noticias".equalsIgnoreCase(sectionId)) {
+                fab.setText("Crear Nueva Publicación");
+            } else {
+                fab.setText("Agregar Elemento al Canvas");
+            }
+        }
+    }
+
+    private void showSelectScreenDialog() {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_select_screen, null);
+        RecyclerView rvScreens = dialogView.findViewById(R.id.rv_screens);
+        EditText etSearch = dialogView.findViewById(R.id.et_search_screen);
+        View btnCancel = dialogView.findViewById(R.id.btn_cancel_screen_dialog);
+
+        List<ScreenSelectorAdapter.ScreenItem> items = new ArrayList<>();
+        if (allSections != null) {
+            for (SectionEntity s : allSections) {
+                int iconRes = getResources().getIdentifier(s.iconName, "drawable", getPackageName());
+                if (iconRes == 0) iconRes = R.drawable.ic_home;
+                items.add(new ScreenSelectorAdapter.ScreenItem(s.id, s.title, s.slug != null && !s.slug.isEmpty() ? s.slug : s.id, iconRes));
+            }
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        ScreenSelectorAdapter adapterAdapter = new ScreenSelectorAdapter(items, selectedItem -> {
+            dialog.dismiss();
+            sectionId = selectedItem.sectionId;
+            SectionEntity matched = null;
+            if (allSections != null) {
+                for (SectionEntity s : allSections) {
+                    if (s.id.equalsIgnoreCase(sectionId)) {
+                        matched = s;
+                        break;
+                    }
+                }
+            }
+            updateSelectedScreenHeader(matched);
+            loadData();
+        });
+
+        if (rvScreens != null) {
+            rvScreens.setLayoutManager(new LinearLayoutManager(this));
+            rvScreens.setAdapter(adapterAdapter);
+        }
+
+        if (etSearch != null) {
+            etSearch.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    adapterAdapter.filter(s.toString());
+                }
+                @Override public void afterTextChanged(Editable s) {}
+            });
+        }
+
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
     }
 
     private void saveCanvasDraft() {
@@ -304,36 +341,23 @@ public class AdminContentListActivity extends AppCompatActivity {
 
     private void showAddElementOptionsDialog() {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_element, null);
-        ListView lvTypes = dialogView.findViewById(R.id.lv_element_types);
+        RecyclerView rvTypes = dialogView.findViewById(R.id.rv_element_types);
+        EditText etSearch = dialogView.findViewById(R.id.et_search_element_type);
+        ChipGroup chipGroup = dialogView.findViewById(R.id.chip_group_categories);
         View btnCancel = dialogView.findViewById(R.id.btn_cancel_dialog);
 
-        final String[] typeKeys = {
-                "TEXT",
-                "IMAGE",
-                "ICON",
-                "BUTTON",
-                "CARD",
-                "CONTAINER",
-                "LIST",
-                "SEPARATOR",
-                "SPACER",
-                "BANNER",
-                "PRODUCT_CARD"
-        };
-
-        final String[] options = {
-                "Texto (Título, Subtítulo, Párrafo, Informativo)",
-                "Imagen (Logo, Banner, Fotografía, Ilustración)",
-                "Ícono (Ícono de Galería)",
-                "Botón (Navegación, PBX, Enlace)",
-                "Tarjeta (Contenedor visual con borde y sombra)",
-                "Sección / Contenedor (Agrupa elementos sin tarjeta)",
-                "Lista (Viñetas, Beneficios, Requisitos)",
-                "Separador (Línea divisora horizontal)",
-                "Espaciador (Separación vertical)",
-                "Banner (Imagen / Bloque Ancho Completo)",
-                "Tarjeta de Producto (Crédito, Ahorro, Seguro, Remesa)"
-        };
+        List<ElementTypeAdapter.ElementTypeItem> items = new ArrayList<>();
+        items.add(new ElementTypeAdapter.ElementTypeItem("TEXT", "Texto", "Título, Subtítulo, Párrafo, Informativo", R.drawable.ic_newspaper, "#EFF6FF", "#1D4ED8", "Básicos", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("IMAGE", "Imagen", "Logo, Banner, Fotografía, Ilustración", R.drawable.contenido_depantallas, "#DCFCE7", "#15803D", "Multimedia", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("ICON", "Ícono", "Ícono de Galería o Vectorial con estilo", R.drawable.ic_star, "#F3E8FF", "#7E22CE", "Multimedia", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("BUTTON", "Botón", "Navegación, PBX / Llamada, Enlace web", R.drawable.ic_campaign, "#FEF3C7", "#B45309", "Básicos", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("CARD", "Tarjeta", "Contenedor visual con borde, elevación y sombra", R.drawable.ic_credit_card, "#E0F2FE", "#0369A1", "Estructura", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("PRODUCT_CARD", "Tarjeta de Producto", "Crédito, Ahorro, Seguro, Remesa COLUA", R.drawable.ic_account_balance, "#0F172A", "#10B981", "Financiero", true));
+        items.add(new ElementTypeAdapter.ElementTypeItem("CONTAINER", "Sección / Contenedor", "Agrupa elementos en pantalla sin tarjeta", R.drawable.ic_business, "#F1F5F9", "#475569", "Estructura", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("LIST", "Lista", "Viñetas, Beneficios, Requisitos por puntos", R.drawable.ic_receipt, "#E0F2FE", "#0284C7", "Básicos", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("SEPARATOR", "Separador", "Línea divisora horizontal de sección", R.drawable.ic_calculate, "#F1F5F9", "#64748B", "Estructura", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("SPACER", "Espaciador", "Espaciado vertical entre bloques", R.drawable.ic_calculate, "#F3E8FF", "#9333EA", "Estructura", false));
+        items.add(new ElementTypeAdapter.ElementTypeItem("BANNER", "Banner Destacado", "Imagen o bloque promocional ancho completo", R.drawable.ic_trending_up, "#DCFCE7", "#16A34A", "Multimedia", false));
 
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(dialogView)
@@ -343,12 +367,9 @@ public class AdminContentListActivity extends AppCompatActivity {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
 
-        ArrayAdapter<String> typeAdapter = new ArrayAdapter<String>(this, R.layout.item_dialog_element_type, R.id.tv_element_type_label, options);
-        lvTypes.setAdapter(typeAdapter);
-
-        lvTypes.setOnItemClickListener((parent, view, position, id) -> {
+        ElementTypeAdapter adapter = new ElementTypeAdapter(items, item -> {
             dialog.dismiss();
-            String selectedType = typeKeys[position];
+            String selectedType = item.key;
 
             if ("PRODUCT_CARD".equals(selectedType)) {
                 Intent intent = new Intent(this, AdminContentEditActivity.class);
@@ -362,6 +383,39 @@ public class AdminContentListActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        if (rvTypes != null) {
+            rvTypes.setLayoutManager(new LinearLayoutManager(this));
+            rvTypes.setAdapter(adapter);
+        }
+
+        final String[] selectedCat = {"Todos"};
+        if (etSearch != null) {
+            etSearch.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    adapter.filter(s.toString(), selectedCat[0]);
+                }
+                @Override public void afterTextChanged(Editable s) {}
+            });
+        }
+
+        if (chipGroup != null) {
+            chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
+                if (checkedIds.isEmpty()) {
+                    selectedCat[0] = "Todos";
+                } else {
+                    int id = checkedIds.get(0);
+                    if (id == R.id.chip_cat_basics) selectedCat[0] = "Básicos";
+                    else if (id == R.id.chip_cat_media) selectedCat[0] = "Multimedia";
+                    else if (id == R.id.chip_cat_structure) selectedCat[0] = "Estructura";
+                    else if (id == R.id.chip_cat_financial) selectedCat[0] = "Financiero";
+                    else selectedCat[0] = "Todos";
+                }
+                String q = etSearch != null ? etSearch.getText().toString() : "";
+                adapter.filter(q, selectedCat[0]);
+            });
+        }
 
         if (btnCancel != null) {
             btnCancel.setOnClickListener(v -> dialog.dismiss());

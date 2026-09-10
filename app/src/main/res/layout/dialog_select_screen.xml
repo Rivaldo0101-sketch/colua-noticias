@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- Título Principal del Modal -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppins_regular"
+        android:text="Seleccionar Pantalla"
+        android:textColor="@color/colua_navy"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:fontFamily="@font/poppins_regular"
+        android:text="Elige la pantalla que deseas editar en el canvas:"
+        android:textColor="@color/text_grey"
+        android:textSize="12sp" />
+
+    <!-- Campo de Búsqueda de Pantallas -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/circle_background"
+        android:backgroundTint="#F8FAFC"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="14dp">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:contentDescription="Buscar"
+            android:src="@drawable/ic_search"
+            app:tint="#94A3B8" />
+
+        <EditText
+            android:id="@+id/et_search_screen"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="10dp"
+            android:background="@null"
+            android:fontFamily="@font/poppins_regular"
+            android:hint="Buscar pantalla por nombre o ruta..."
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:textColor="#1E293B"
+            android:textColorHint="#94A3B8"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <!-- Lista de Pantallas (RecyclerView) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_screens"
+        android:layout_width="match_parent"
+        android:layout_height="320dp"
+        android:layout_marginTop="14dp"
+        android:clipToPadding="false"
+        android:scrollbars="vertical" />
+
+    <!-- Botón Cancelar -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_cancel_screen_dialog"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:fontFamily="@font/poppins_regular"
+        android:text="Cancelar"
+        android:textColor="@color/colua_navy"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:backgroundTint="#F1F5F9"
+        app:cornerRadius="12dp" />
+
+</LinearLayout>

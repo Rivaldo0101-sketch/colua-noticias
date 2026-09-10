@@ -242,22 +242,83 @@ public class AdminSectionEditActivity extends AppCompatActivity {
         });
     }
 
+    private boolean isRevertingNavSelection = false;
+
     private void setupNavLocationSelector() {
         rgNavLocation.setOnCheckedChangeListener((group, checkedId) -> {
-            if (checkedId == R.id.rb_nav_side) {
-                tvNavLocationExplanation.setText("Explicación: Toda pantalla nueva aparece por defecto al final del menú lateral.");
-                layoutButtonLinkOptions.setVisibility(View.GONE);
-            } else if (checkedId == R.id.rb_nav_bottom) {
-                tvNavLocationExplanation.setText("Explicación: Aparecerá en la barra fija de navegación inferior de 5 botones.");
-                layoutButtonLinkOptions.setVisibility(View.GONE);
+            if (isRevertingNavSelection) return;
+
+            if (checkedId == R.id.rb_nav_bottom) {
+                new Thread(() -> {
+                    List<NavigationItemEntity> currentBottom = repository.getVisibleNavigation("BOTTOM_NAV");
+                    long count = currentBottom.stream().filter(item ->
+                            section == null || section.id == null || !item.targetSectionId.equalsIgnoreCase(section.id)
+                    ).count();
+
+                    if (count >= 5) {
+                        runOnUiThread(() -> {
+                            isRevertingNavSelection = true;
+                            rgNavLocation.check(R.id.rb_nav_side);
+                            isRevertingNavSelection = false;
+
+                            tvNavLocationExplanation.setText("Explicación: Toda pantalla nueva aparece por defecto al final del menú lateral.");
+                            layoutButtonLinkOptions.setVisibility(View.GONE);
+
+                            new AlertDialog.Builder(AdminSectionEditActivity.this)
+                                    .setTitle("⚠️ Barra Inferior Llena (5/5)")
+                                    .setMessage("No es posible agregar esta pantalla a la barra inferior porque ya contiene el máximo permitido de 5 elementos.\n\nRetira o cambia de ubicación una pantalla de la barra inferior primero para liberar espacio.")
+                                    .setPositiveButton("Entendido", null)
+                                    .show();
+                        });
+                    } else {
+                        runOnUiThread(() -> {
+                            tvNavLocationExplanation.setText("Explicación: Aparecerá en la barra fija de navegación inferior de 5 botones (Espacio disponible: " + (5 - count) + "/5).");
+                            layoutButtonLinkOptions.setVisibility(View.GONE);
+                        });
+                    }
+                }).start();
+
             } else if (checkedId == R.id.rb_nav_top) {
-                tvNavLocationExplanation.setText("Explicación: Aparecerá en el acceso superior del encabezado.");
-                layoutButtonLinkOptions.setVisibility(View.GONE);
+                new Thread(() -> {
+                    List<NavigationItemEntity> currentTop = repository.getVisibleNavigation("NAVBAR");
+                    if (currentTop.isEmpty()) {
+                        currentTop = repository.getVisibleNavigation("TOP_ACTION");
+                    }
+                    long count = currentTop.stream().filter(item ->
+                            section == null || section.id == null || !item.targetSectionId.equalsIgnoreCase(section.id)
+                    ).count();
+
+                    if (count >= 1) {
+                        runOnUiThread(() -> {
+                            isRevertingNavSelection = true;
+                            rgNavLocation.check(R.id.rb_nav_side);
+                            isRevertingNavSelection = false;
+
+                            tvNavLocationExplanation.setText("Explicación: Toda pantalla nueva aparece por defecto al final del menú lateral.");
+                            layoutButtonLinkOptions.setVisibility(View.GONE);
+
+                            new AlertDialog.Builder(AdminSectionEditActivity.this)
+                                    .setTitle("⚠️ Acceso Superior Ocupado (1/1)")
+                                    .setMessage("El acceso superior del encabezado ya está ocupado por otra pantalla.\n\nPara asignar esta pantalla aquí, primero debes retirar la otra pantalla del acceso superior.")
+                                    .setPositiveButton("Entendido", null)
+                                    .show();
+                        });
+                    } else {
+                        runOnUiThread(() -> {
+                            tvNavLocationExplanation.setText("Explicación: Aparecerá en el acceso superior del encabezado (Disponible: 1/1).");
+                            layoutButtonLinkOptions.setVisibility(View.GONE);
+                        });
+                    }
+                }).start();
+
             } else if (checkedId == R.id.rb_nav_button_link) {
                 tvNavLocationExplanation.setText("Explicación: Creará automáticamente un botón en la pantalla elegida que abrirá esta nueva página.");
                 layoutButtonLinkOptions.setVisibility(View.VISIBLE);
             } else if (checkedId == R.id.rb_nav_none) {
                 tvNavLocationExplanation.setText("Explicación: Página interna sin acceso automático. Podrás enlazarla manualmente desde un botón.");
+                layoutButtonLinkOptions.setVisibility(View.GONE);
+            } else {
+                tvNavLocationExplanation.setText("Explicación: Toda pantalla nueva aparece por defecto al final del menú lateral.");
                 layoutButtonLinkOptions.setVisibility(View.GONE);
             }
         });
@@ -458,9 +519,6 @@ public class AdminSectionEditActivity extends AppCompatActivity {
             section.isPublished = false; // BORRADOR
             section.updatedAt = System.currentTimeMillis();
 
-            // Guardar Pantalla Borrador
-            repository.insertSection(section);
-
             // Determinar ubicación de navegación
             int checkedNavId = rgNavLocation.getCheckedRadioButtonId();
             String navType = "SIDEBAR";
@@ -469,31 +527,43 @@ public class AdminSectionEditActivity extends AppCompatActivity {
             else if (checkedNavId == R.id.rb_nav_none) navType = "NONE";
             else if (checkedNavId == R.id.rb_nav_button_link) navType = "BUTTON_LINK";
 
-            if (!"NONE".equals(navType) && !"BUTTON_LINK".equals(navType)) {
-                if ("NAVBAR".equals(navType)) {
-                    List<NavigationItemEntity> sideItems = repository.getVisibleNavigation("SIDEBAR");
-                    boolean nosotrosInSide = sideItems.stream().anyMatch(n -> "sec_nosotros".equalsIgnoreCase(n.targetSectionId) || "side_nosotros".equalsIgnoreCase(n.id));
-                    if (!nosotrosInSide) {
-                        NavigationItemEntity nosotrosNav = new NavigationItemEntity("side_nosotros", "Nosotros", "public_service", "sec_nosotros", "SIDEBAR", 99, true);
-                        repository.insertNavigationItem(nosotrosNav);
-                    }
-                } else if ("BOTTOM_NAV".equals(navType)) {
-                    List<NavigationItemEntity> currentBottom = repository.getVisibleNavigation("BOTTOM_NAV");
-                    if (currentBottom.size() >= 5) {
-                        NavigationItemEntity itemToDisplace = null;
-                        for (NavigationItemEntity item : currentBottom) {
-                            if (!"sec_home".equalsIgnoreCase(item.targetSectionId) && !"nav_home".equalsIgnoreCase(item.id)) {
-                                itemToDisplace = item;
-                                break;
-                            }
-                        }
-                        if (itemToDisplace != null) {
-                            itemToDisplace.type = "SIDEBAR";
-                            repository.insertNavigationItem(itemToDisplace);
-                        }
-                    }
+            if ("BOTTOM_NAV".equalsIgnoreCase(navType)) {
+                List<NavigationItemEntity> currentBottom = repository.getVisibleNavigation("BOTTOM_NAV");
+                long count = currentBottom.stream().filter(item ->
+                        section == null || section.id == null || !item.targetSectionId.equalsIgnoreCase(section.id)
+                ).count();
+                if (count >= 5) {
+                    runOnUiThread(() -> {
+                        new AlertDialog.Builder(AdminSectionEditActivity.this)
+                                .setTitle("⚠️ Barra Inferior Llena (5/5)")
+                                .setMessage("No es posible agregar esta pantalla a la barra inferior porque ya contiene el máximo permitido de 5 elementos.\n\nRetira una pantalla de la barra inferior primero.")
+                                .setPositiveButton("Entendido", null)
+                                .show();
+                    });
+                    return;
                 }
+            } else if ("NAVBAR".equalsIgnoreCase(navType)) {
+                List<NavigationItemEntity> currentTop = repository.getVisibleNavigation("NAVBAR");
+                if (currentTop.isEmpty()) currentTop = repository.getVisibleNavigation("TOP_ACTION");
+                long count = currentTop.stream().filter(item ->
+                        section == null || section.id == null || !item.targetSectionId.equalsIgnoreCase(section.id)
+                ).count();
+                if (count >= 1) {
+                    runOnUiThread(() -> {
+                        new AlertDialog.Builder(AdminSectionEditActivity.this)
+                                .setTitle("⚠️ Acceso Superior Ocupado (1/1)")
+                                .setMessage("El acceso superior del encabezado ya está ocupado por otra pantalla.\n\nRetira la pantalla del acceso superior primero.")
+                                .setPositiveButton("Entendido", null)
+                                .show();
+                    });
+                    return;
+                }
+            }
 
+            // Guardar Pantalla Borrador
+            repository.insertSection(section);
+
+            if (!"NONE".equals(navType) && !"BUTTON_LINK".equals(navType)) {
                 NavigationItemEntity navItem = new NavigationItemEntity(
                         "nav_" + section.id,
                         section.title,

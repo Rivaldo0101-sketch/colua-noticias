@@ -433,7 +433,8 @@ public class DynamicSectionActivity extends AppCompatActivity {
                 
                 runOnUiThread(() -> {
                     FrameLayout containerNosotros = findViewById(R.id.container_nosotros_custom);
-                    if ("sec_nosotros".equalsIgnoreCase(canonicalId)) {
+                    if ("sec_nosotros".equalsIgnoreCase(canonicalId) && blocks.isEmpty() && items.isEmpty()) {
+                        // Si NO hay bloques ni elementos dinámicos creados desde el panel de administración, mostramos la plantilla estática
                         findViewById(R.id.tv_dynamic_title).setVisibility(View.GONE);
                         findViewById(R.id.tv_dynamic_description).setVisibility(View.GONE);
                         findViewById(R.id.rv_dynamic_blocks).setVisibility(View.GONE);
@@ -449,6 +450,7 @@ public class DynamicSectionActivity extends AppCompatActivity {
                             }
                         }
                     } else {
+                        // Si existen contenidos o bloques dinámicos agregados desde el CMS por el administrador, se muestran dinámicamente
                         if (containerNosotros != null) {
                             containerNosotros.setVisibility(View.GONE);
                         }

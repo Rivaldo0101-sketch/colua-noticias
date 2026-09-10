@@ -4,6 +4,22 @@ import android.content.Context;
 import android.util.Log;
 
 public class DataSeeder {
+    public static void resetUsersAndForceLogin(Context context) {
+        try {
+            AppDatabase db = AppDatabase.getDatabase(context);
+            db.userDao().deleteAll();
+
+            context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+                    .edit()
+                    .clear()
+                    .apply();
+
+            Log.i("SEEDER_RESET", "✓ Base de datos de usuarios y sesiones limpiada. Se solicitará inicio de sesión.");
+        } catch (Exception e) {
+            Log.e("SEEDER_RESET", "Error al reiniciar sesiones de usuarios: " + e.getMessage(), e);
+        }
+    }
+
     public static void seedIfEmpty(Context context) {
         seedIfEmpty(context, false);
     }

@@ -11,6 +11,9 @@ public interface UserDao {
     @Query("SELECT * FROM users WHERE identifier = :identifier LIMIT 1")
     UserEntity getUserByIdentifier(String identifier);
 
+    @Query("SELECT * FROM users WHERE email = :email LIMIT 1")
+    UserEntity getUserByEmail(String email);
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(UserEntity user);
 

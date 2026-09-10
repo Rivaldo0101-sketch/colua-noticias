@@ -283,7 +283,7 @@
                         android:layout_marginTop="20dp"
                         android:fontFamily="@font/poppins_regular"
                         android:text="Ubicación de Navegación *"
-                        android:textColor="@color/black"
+                        android:textColor="#0F172A"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -299,48 +299,59 @@
                             android:layout_height="wrap_content"
                             android:checked="true"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="Menú lateral (Predeterminado)" />
+                            android:text="Menú lateral (Predeterminado)"
+                            android:textColor="#0F172A"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
 
                         <RadioButton
                             android:id="@+id/rb_nav_bottom"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="Barra inferior" />
+                            android:text="Barra inferior"
+                            android:textColor="#0F172A"
+                            android:textSize="13sp" />
 
                         <RadioButton
                             android:id="@+id/rb_nav_top"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="Acceso superior" />
+                            android:text="Acceso superior"
+                            android:textColor="#0F172A"
+                            android:textSize="13sp" />
 
                         <RadioButton
                             android:id="@+id/rb_nav_button_link"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="Botón dentro de otra pantalla" />
+                            android:text="Botón dentro de otra pantalla"
+                            android:textColor="#0F172A"
+                            android:textSize="13sp" />
 
                         <RadioButton
                             android:id="@+id/rb_nav_none"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="Sin acceso visible (NONE)" />
+                            android:text="Sin acceso visible (NONE)"
+                            android:textColor="#0F172A"
+                            android:textSize="13sp" />
                     </RadioGroup>
 
                     <TextView
                         android:id="@+id/tv_nav_location_explanation"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="6dp"
                         android:background="#F1F5F9"
                         android:fontFamily="@font/poppins_regular"
-                        android:padding="10dp"
+                        android:padding="12dp"
                         android:text="Explicación: Toda pantalla nueva aparece por defecto al final del menú lateral."
-                        android:textColor="@color/text_grey"
-                        android:textSize="11sp" />
+                        android:textColor="#334155"
+                        android:textSize="12sp" />
 
                     <!-- Subformulario para opción: Botón dentro de otra pantalla -->
                     <LinearLayout
@@ -393,6 +404,7 @@
                         android:checked="true"
                         android:fontFamily="@font/poppins_regular"
                         android:text="Pantalla visible"
+                        android:textColor="#0F172A"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 

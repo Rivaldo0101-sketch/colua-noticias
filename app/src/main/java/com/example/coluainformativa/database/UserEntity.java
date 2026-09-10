@@ -11,13 +11,23 @@ public class UserEntity {
     public String dpi; // Documento Personal de Identificación
     public String name;
     public String phone;
+    public String email;
+    public String password;
     public String role; // "GUEST", "MEMBER", "ADMIN"
 
+    public UserEntity() {}
+
     public UserEntity(String identifier, String dpi, String name, String phone, String role) {
+        this(identifier, dpi, name, phone, "", "", role);
+    }
+
+    public UserEntity(String identifier, String dpi, String name, String phone, String email, String password, String role) {
         this.identifier = identifier;
         this.dpi = dpi;
         this.name = name;
         this.phone = phone;
-        this.role = role;
+        this.email = email != null ? email : "";
+        this.password = password != null ? password : "";
+        this.role = role != null ? role : "MEMBER";
     }
 }

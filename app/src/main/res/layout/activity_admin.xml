@@ -201,25 +201,27 @@
                         android:orientation="vertical"
                         android:padding="20dp">
 
-                        <RelativeLayout
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content">
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
                             <TextView
-                                android:layout_width="wrap_content"
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
+                                android:layout_marginEnd="8dp"
+                                android:layout_weight="1"
                                 android:fontFamily="@font/poppins_regular"
-                                android:text="Estadísticas de Usuarios y Frecuencia"
+                                android:text="Estadísticas de Uso y Frecuencia"
                                 android:textColor="@color/colua_navy"
-                                android:textSize="16sp"
+                                android:textSize="15sp"
                                 android:textStyle="bold" />
 
                             <TextView
                                 android:id="@+id/tv_active_users_badge"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_alignParentEnd="true"
-                                android:layout_centerVertical="true"
                                 android:background="@drawable/circle_background"
                                 android:backgroundTint="#E8F5E9"
                                 android:fontFamily="@font/poppins_regular"
@@ -229,7 +231,7 @@
                                 android:textColor="@color/colua_green"
                                 android:textSize="11sp"
                                 android:textStyle="bold" />
-                        </RelativeLayout>
+                        </LinearLayout>
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -474,15 +476,18 @@
 
                         <androidx.cardview.widget.CardView
                             android:layout_width="match_parent"
-                            android:layout_height="240dp"
+                            android:layout_height="280dp"
                             android:layout_marginTop="12dp"
                             app:cardBackgroundColor="#F8FAFC"
-                            app:cardCornerRadius="8dp"
+                            app:cardCornerRadius="10dp"
                             app:cardElevation="0dp">
 
                             <ScrollView
+                                android:id="@+id/scroll_filtered_users"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
+                                android:fillViewport="true"
+                                android:nestedScrollingEnabled="true"
                                 android:padding="8dp">
 
                                 <LinearLayout
@@ -613,6 +618,17 @@
                             android:text="RESTAURAR DATOS INICIALES"
                             android:textColor="#D32F2F"
                             app:strokeColor="#D32F2F" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_wipe_users"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="12dp"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="LIMPIEZA PROFUNDA DE USUARIOS"
+                            android:textColor="#B71C1C"
+                            app:strokeColor="#B71C1C" />
 
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>

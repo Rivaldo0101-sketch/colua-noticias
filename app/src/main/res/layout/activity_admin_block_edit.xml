@@ -123,19 +123,45 @@
                         </LinearLayout>
                     </RelativeLayout>
 
-                    <FrameLayout
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/card_select_element_type"
                         android:layout_width="match_parent"
-                        android:layout_height="44dp"
-                        android:layout_marginTop="10dp"
-                        android:background="@drawable/bg_outlined_spinner">
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="#F8FAFC"
+                        app:cardCornerRadius="10dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="#CBD5E1"
+                        app:strokeWidth="1dp">
 
-                        <Spinner
-                            android:id="@+id/spinner_block_type"
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:paddingHorizontal="10dp"
-                            android:spinnerMode="dropdown" />
-                    </FrameLayout>
+                            android:layout_height="44dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="14dp">
+
+                            <TextView
+                                android:id="@+id/tv_selected_element_type_label"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:fontFamily="@font/poppins_regular"
+                                android:text="Cambiar tipo de elemento..."
+                                android:textColor="@color/colua_navy"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:contentDescription="Cambiar tipo"
+                                android:src="@drawable/ic_chevron_right"
+                                app:tint="@color/colua_navy" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -314,6 +340,65 @@
                                 android:textColor="@color/colua_navy"
                                 app:strokeColor="@color/colua_navy" />
                         </LinearLayout>
+
+                        <!-- Confirmación Visual y Vista Previa de Imagen/Ícono Seleccionado -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/card_media_preview_container"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:visibility="gone"
+                            app:cardBackgroundColor="#F0FDF4"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="0dp"
+                            app:strokeColor="#86EFAC"
+                            app:strokeWidth="1dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:padding="12dp">
+
+                                <ImageView
+                                    android:id="@+id/iv_media_preview_thumb"
+                                    android:layout_width="48dp"
+                                    android:layout_height="48dp"
+                                    android:adjustViewBounds="true"
+                                    android:contentDescription="Vista previa"
+                                    android:scaleType="fitCenter"
+                                    android:src="@drawable/distintivo_colua" />
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="12dp"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:id="@+id/tv_media_selected_status"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:fontFamily="@font/poppins_regular"
+                                        android:text="✓ Recurso seleccionado con éxito"
+                                        android:textColor="#166534"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:id="@+id/tv_media_selected_name"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="2dp"
+                                        android:fontFamily="@font/poppins_regular"
+                                        android:text="distintivo_colua"
+                                        android:textColor="#15803D"
+                                        android:textSize="11sp" />
+                                </LinearLayout>
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
                     </LinearLayout>
 
                     <!-- Grupo 3: Botón / Acción CTA Guiada -->
