@@ -1,23 +1,97 @@
 package com.example.coluainformativa;
 
+import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.coluainformativa.database.ContentBlockEntity;
+import com.example.coluainformativa.database.SectionEntity;
 import com.example.coluainformativa.repository.ColuaRepository;
+import com.example.coluainformativa.security.AdminAuthManager;
+import com.example.coluainformativa.utils.DialogHelper;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 public class AdminBlockEditActivity extends AppCompatActivity {
 
     public static final String EXTRA_BLOCK_ID = "extra_block_id";
+    public static final String EXTRA_SECTION_ID = "extra_section_id";
+    public static final String EXTRA_BLOCK_TYPE = "extra_block_type";
+    private static final int REQUEST_PICK_IMAGE = 101;
 
     private ColuaRepository repository;
+    private AdminAuthManager authManager;
     private String blockId;
+    private String sectionId;
     private ContentBlockEntity block;
 
-    private EditText etTitle, etContent, etMedia;
+    private Spinner spinnerBlockType, spinnerActionType, spinnerTargetScreen, spinnerCardStyle;
+    private TextView tvElementTypeTitle, tvElementTypeSubtitle, tvActionSummary;
+    private ImageView ivElementTypeIcon;
+    private EditText etTitle, etContent, etBenefitsList, etHighlightAmount, etMedia, etButtonText, etButtonAction;
+    private RadioGroup rgAlignment;
+    private RadioButton rbLeft, rbCenter, rbRight;
+
+    private View layoutFieldCardStyle, layoutFieldText, layoutFieldMedia, layoutFieldButton, layoutFieldAlignment, layoutActionTargetScreen, tilButtonActionValue;
+
+    private List<SectionEntity> availableSections = new ArrayList<>();
+
+    private static final String[] BLOCK_TYPES = {
+            "TEXT (Texto libre / Encabezado / Párrafo)",
+            "IMAGE (Imagen / Logotipo / Banner)",
+            "ICON (Ícono de la Galería)",
+            "BUTTON (Botón / Acción CTA)",
+            "CARD (Tarjeta Contenedor)",
+            "CONTAINER (Sección / Contenedor Libre)",
+            "LIST (Lista de Beneficios / Requisitos)",
+            "SEPARATOR (Separador / Línea)",
+            "SPACER (Espaciador Vertical)",
+            "BANNER (Banner Destacado Ancho Completo)",
+            "PRODUCT_CARD (Tarjeta de Producto / Servicio)"
+    };
+
+    private static final String[] ACTION_TYPES = {
+            "1. Abrir una pantalla de la app",
+            "2. Llamar por teléfono (tel:)",
+            "3. Abrir sitio web o red social (URL)",
+            "4. Enviar WhatsApp (wa.me)",
+            "5. Sin acción / informativo"
+    };
+
+    private static final String[] CARD_STYLES = {
+            "1. Estilo Créditos (Ícono + Título + Viñetas + Monto + Botón)",
+            "2. Estilo Seguros (Imagen Destacada + Título + Botón CTA)",
+            "3. Estilo Agencias / Puntos (Título + Ubicación + Teléfono)",
+            "4. Estilo Estándar (Borde de Color + Título + Párrafo + Botón)"
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,50 +99,508 @@ public class AdminBlockEditActivity extends AppCompatActivity {
         setContentView(R.layout.activity_admin_block_edit);
 
         repository = new ColuaRepository(this);
+        authManager = new AdminAuthManager(this);
         blockId = getIntent().getStringExtra(EXTRA_BLOCK_ID);
+        sectionId = getIntent().getStringExtra(EXTRA_SECTION_ID);
+
+        spinnerBlockType = findViewById(R.id.spinner_block_type);
+        spinnerCardStyle = findViewById(R.id.spinner_card_style);
+        spinnerActionType = findViewById(R.id.spinner_button_action_type);
+        spinnerTargetScreen = findViewById(R.id.spinner_target_screen);
+
+        tvElementTypeTitle = findViewById(R.id.tv_element_type_title);
+        tvElementTypeSubtitle = findViewById(R.id.tv_element_type_subtitle);
+        tvActionSummary = findViewById(R.id.tv_button_action_summary);
+        ivElementTypeIcon = findViewById(R.id.iv_element_type_icon);
 
         etTitle = findViewById(R.id.et_block_title);
         etContent = findViewById(R.id.et_block_content);
+        etBenefitsList = findViewById(R.id.et_block_benefits_list);
+        etHighlightAmount = findViewById(R.id.et_block_highlight_amount);
         etMedia = findViewById(R.id.et_block_media);
+        etButtonText = findViewById(R.id.et_block_button_text);
+        etButtonAction = findViewById(R.id.et_block_button_action);
+
+        rgAlignment = findViewById(R.id.rg_block_alignment);
+        rbLeft = findViewById(R.id.rb_align_left);
+        rbCenter = findViewById(R.id.rb_align_center);
+        rbRight = findViewById(R.id.rb_align_right);
+
+        layoutFieldCardStyle = findViewById(R.id.layout_field_card_style);
+        layoutFieldText = findViewById(R.id.layout_field_text);
+        layoutFieldMedia = findViewById(R.id.layout_field_media);
+        layoutFieldButton = findViewById(R.id.layout_field_button);
+        layoutFieldAlignment = findViewById(R.id.layout_field_alignment);
+        layoutActionTargetScreen = findViewById(R.id.layout_action_target_screen);
+        tilButtonActionValue = findViewById(R.id.til_button_action_value);
+
+        setupSpinners();
+        setupLiveTextWatchers();
 
         findViewById(R.id.btn_back_block_edit).setOnClickListener(v -> finish());
-        findViewById(R.id.btn_save_block).setOnClickListener(v -> saveBlock());
+
+        // Botón Galería
+        View btnSelectMedia = findViewById(R.id.btn_select_block_icon);
+        if (btnSelectMedia != null) {
+            btnSelectMedia.setOnClickListener(v -> showResourcePickerDialog());
+        }
+
+        // 3 Botones de salida y guardado
+        View btnCancel = findViewById(R.id.btn_cancel_block);
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> finish());
+        }
+
+        View btnSaveDraft = findViewById(R.id.btn_save_draft_block);
+        if (btnSaveDraft != null) {
+            btnSaveDraft.setOnClickListener(v -> saveBlock(false));
+        }
+
+        View btnSaveAndPreview = findViewById(R.id.btn_save_and_preview_block);
+        if (btnSaveAndPreview != null) {
+            btnSaveAndPreview.setOnClickListener(v -> saveBlock(true));
+        }
+
+        loadAvailableScreens();
 
         if (blockId != null) {
             loadBlock();
+        } else {
+            block = new ContentBlockEntity();
+            block.id = UUID.randomUUID().toString();
+            block.sectionId = sectionId != null ? sectionId : "sec_home";
+
+            String preselectedType = getIntent().getStringExtra(EXTRA_BLOCK_TYPE);
+            if (preselectedType == null || preselectedType.trim().isEmpty()) {
+                preselectedType = "TEXT";
+            }
+            block.type = preselectedType;
+            block.alignment = "LEFT";
+
+            for (int i = 0; i < BLOCK_TYPES.length; i++) {
+                if (BLOCK_TYPES[i].startsWith(preselectedType)) {
+                    spinnerBlockType.setSelection(i);
+                    break;
+                }
+            }
+            updateElementTypeHeaderAndForm(preselectedType);
         }
     }
 
-    private void loadBlock() {
+    private void setupSpinners() {
+        ArrayAdapter<String> typeAdapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_spinner_item, BLOCK_TYPES) {
+            @NonNull
+            @Override
+            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+                View v = super.getView(position, convertView, parent);
+                if (v instanceof TextView) {
+                    ((TextView) v).setTextColor(Color.parseColor("#173789"));
+                    ((TextView) v).setTypeface(null, Typeface.BOLD);
+                    ((TextView) v).setTextSize(14f);
+                }
+                return v;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
+                View v = super.getDropDownView(position, convertView, parent);
+                if (v instanceof TextView) {
+                    ((TextView) v).setTextColor(Color.parseColor("#173789"));
+                    ((TextView) v).setTextSize(14f);
+                    ((TextView) v).setPadding(24, 20, 24, 20);
+                }
+                return v;
+            }
+        };
+        typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerBlockType.setAdapter(typeAdapter);
+
+        spinnerBlockType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String rawType = BLOCK_TYPES[position].split(" ")[0];
+                updateElementTypeHeaderAndForm(rawType);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        if (spinnerCardStyle != null) {
+            ArrayAdapter<String> styleAdapter = new ArrayAdapter<>(this,
+                    android.R.layout.simple_spinner_item, CARD_STYLES);
+            styleAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinnerCardStyle.setAdapter(styleAdapter);
+        }
+
+        if (spinnerActionType != null) {
+            ArrayAdapter<String> actionAdapter = new ArrayAdapter<>(this,
+                    android.R.layout.simple_spinner_item, ACTION_TYPES);
+            actionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinnerActionType.setAdapter(actionAdapter);
+
+            spinnerActionType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    updateButtonActionFieldsVisibility(position);
+                    updateLiveActionSummary();
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {}
+            });
+        }
+    }
+
+    private void updateButtonActionFieldsVisibility(int actionIndex) {
+        if (layoutActionTargetScreen != null) {
+            layoutActionTargetScreen.setVisibility(actionIndex == 0 ? View.VISIBLE : View.GONE);
+        }
+        if (tilButtonActionValue != null) {
+            tilButtonActionValue.setVisibility((actionIndex >= 1 && actionIndex <= 3) ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void loadAvailableScreens() {
         new Thread(() -> {
-            block = repository.getBlocksBySection("sec_home").stream() // Simplificado para búsqueda global
-                    .filter(b -> b.id.equals(blockId))
-                    .findFirst()
-                    .orElse(null);
-            
-            // Si no está en Home, buscar por item (o podríamos agregar getBlockById al repo)
-            
+            availableSections = repository.getAllSections();
+            List<String> screenLabels = new ArrayList<>();
+            for (SectionEntity s : availableSections) {
+                screenLabels.add(s.title + " (/" + (s.slug != null && !s.slug.isEmpty() ? s.slug : s.id) + ")");
+            }
+
             runOnUiThread(() -> {
-                if (block != null) {
-                    etTitle.setText(block.title);
-                    etContent.setText(block.content);
-                    etMedia.setText(block.mediaPath);
+                if (spinnerTargetScreen != null) {
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(AdminBlockEditActivity.this,
+                            android.R.layout.simple_spinner_item, screenLabels);
+                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    spinnerTargetScreen.setAdapter(adapter);
+
+                    spinnerTargetScreen.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                        @Override
+                        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                            if (position >= 0 && position < availableSections.size()) {
+                                SectionEntity s = availableSections.get(position);
+                                etButtonAction.setText("/" + (s.slug != null && !s.slug.isEmpty() ? s.slug : s.id));
+                            }
+                            updateLiveActionSummary();
+                        }
+
+                        @Override
+                        public void onNothingSelected(AdapterView<?> parent) {}
+                    });
                 }
             });
         }).start();
     }
 
-    private void saveBlock() {
-        if (block == null) return;
+    private void setupLiveTextWatchers() {
+        TextWatcher tw = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                updateLiveActionSummary();
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        };
 
-        block.title = etTitle.getText().toString();
-        block.content = etContent.getText().toString();
-        block.mediaPath = etMedia.getText().toString();
+        if (etButtonText != null) etButtonText.addTextChangedListener(tw);
+        if (etButtonAction != null) etButtonAction.addTextChangedListener(tw);
+    }
+
+    private void updateLiveActionSummary() {
+        if (tvActionSummary == null) return;
+
+        String btnLabel = etButtonText != null ? etButtonText.getText().toString().trim() : "";
+        if (btnLabel.isEmpty()) btnLabel = "Botón CTA";
+
+        int actionIndex = spinnerActionType != null ? spinnerActionType.getSelectedItemPosition() : 0;
+        String actionValue = etButtonAction != null ? etButtonAction.getText().toString().trim() : "";
+
+        String summaryText = "Resumen: ";
+        if (actionIndex == 0) {
+            summaryText += "El botón '" + btnLabel + "' abrirá la pantalla interna '" + actionValue + "'.";
+        } else if (actionIndex == 1) {
+            summaryText += "El botón '" + btnLabel + "' abrirá el marcador telefónico con '" + actionValue + "'.";
+        } else if (actionIndex == 2) {
+            summaryText += "El botón '" + btnLabel + "' abrirá la página web/red social '" + actionValue + "'.";
+        } else if (actionIndex == 3) {
+            summaryText += "El botón '" + btnLabel + "' abrirá un chat de WhatsApp al número '" + actionValue + "'.";
+        } else {
+            summaryText += "El botón '" + btnLabel + "' es de solo lectura (sin acción).";
+        }
+
+        tvActionSummary.setText(summaryText);
+    }
+
+    private void updateElementTypeHeaderAndForm(String type) {
+        if (tvElementTypeTitle == null || tvElementTypeSubtitle == null) return;
+
+        String upperType = type != null ? type.toUpperCase(Locale.getDefault()) : "TEXT";
+
+        if ("BUTTON".equalsIgnoreCase(upperType)) {
+            tvElementTypeTitle.setText("Botón / Acción CTA");
+            tvElementTypeSubtitle.setText("Elemento de llamada a la acción para navegar, contactar o abrir un enlace");
+            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.editar);
+
+            if (layoutFieldCardStyle != null) layoutFieldCardStyle.setVisibility(View.GONE);
+            if (layoutFieldText != null) layoutFieldText.setVisibility(View.GONE);
+            if (layoutFieldMedia != null) layoutFieldMedia.setVisibility(View.VISIBLE);
+            if (layoutFieldButton != null) layoutFieldButton.setVisibility(View.VISIBLE);
+            if (layoutFieldAlignment != null) layoutFieldAlignment.setVisibility(View.VISIBLE);
+
+        } else if ("IMAGE".equalsIgnoreCase(upperType) || "BANNER".equalsIgnoreCase(upperType)) {
+            tvElementTypeTitle.setText("Imagen / Banner");
+            tvElementTypeSubtitle.setText("Logotipo, banner, fotografía o ilustración promocional");
+            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.ic_star);
+
+            if (layoutFieldCardStyle != null) layoutFieldCardStyle.setVisibility(View.GONE);
+            if (layoutFieldText != null) layoutFieldText.setVisibility(View.VISIBLE);
+            if (layoutFieldMedia != null) layoutFieldMedia.setVisibility(View.VISIBLE);
+            if (layoutFieldButton != null) layoutFieldButton.setVisibility(View.GONE);
+            if (layoutFieldAlignment != null) layoutFieldAlignment.setVisibility(View.VISIBLE);
+
+        } else if ("ICON".equalsIgnoreCase(upperType)) {
+            tvElementTypeTitle.setText("Ícono de Galería");
+            tvElementTypeSubtitle.setText("Ícono gráfico o vectorial de la galería de la app");
+            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.ic_star);
+
+            if (layoutFieldCardStyle != null) layoutFieldCardStyle.setVisibility(View.GONE);
+            if (layoutFieldText != null) layoutFieldText.setVisibility(View.VISIBLE);
+            if (layoutFieldMedia != null) layoutFieldMedia.setVisibility(View.VISIBLE);
+            if (layoutFieldButton != null) layoutFieldButton.setVisibility(View.GONE);
+            if (layoutFieldAlignment != null) layoutFieldAlignment.setVisibility(View.VISIBLE);
+
+        } else if ("PRODUCT_CARD".equalsIgnoreCase(upperType) || "CARD".equalsIgnoreCase(upperType)) {
+            tvElementTypeTitle.setText("Tarjeta de Producto / Servicio");
+            tvElementTypeSubtitle.setText("Producto, crédito, seguro, remesa u oferta estructurada");
+            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.ic_star);
+
+            if (layoutFieldCardStyle != null) layoutFieldCardStyle.setVisibility(View.VISIBLE);
+            if (layoutFieldText != null) layoutFieldText.setVisibility(View.VISIBLE);
+            if (layoutFieldMedia != null) layoutFieldMedia.setVisibility(View.VISIBLE);
+            if (layoutFieldButton != null) layoutFieldButton.setVisibility(View.VISIBLE);
+            if (layoutFieldAlignment != null) layoutFieldAlignment.setVisibility(View.VISIBLE);
+
+        } else if ("CONTAINER".equalsIgnoreCase(upperType)) {
+            tvElementTypeTitle.setText("Sección / Contenedor Libre");
+            tvElementTypeSubtitle.setText("Agrupa elementos en pantalla sin fondo, borde ni sombra");
+            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.editar);
+
+            if (layoutFieldCardStyle != null) layoutFieldCardStyle.setVisibility(View.GONE);
+            if (layoutFieldText != null) layoutFieldText.setVisibility(View.VISIBLE);
+            if (layoutFieldMedia != null) layoutFieldMedia.setVisibility(View.VISIBLE);
+            if (layoutFieldButton != null) layoutFieldButton.setVisibility(View.VISIBLE);
+            if (layoutFieldAlignment != null) layoutFieldAlignment.setVisibility(View.VISIBLE);
+
+        } else if ("SEPARATOR".equalsIgnoreCase(upperType) || "SPACER".equalsIgnoreCase(upperType)) {
+            tvElementTypeTitle.setText("Separador / Espaciador");
+            tvElementTypeSubtitle.setText("Línea divisora o espacio vertical entre elementos");
+            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.editar);
+
+            if (layoutFieldCardStyle != null) layoutFieldCardStyle.setVisibility(View.GONE);
+            if (layoutFieldText != null) layoutFieldText.setVisibility(View.GONE);
+            if (layoutFieldMedia != null) layoutFieldMedia.setVisibility(View.GONE);
+            if (layoutFieldButton != null) layoutFieldButton.setVisibility(View.GONE);
+            if (layoutFieldAlignment != null) layoutFieldAlignment.setVisibility(View.GONE);
+
+        } else { // TEXT, LIST, etc.
+            tvElementTypeTitle.setText("Texto / Bloque Informativo");
+            tvElementTypeSubtitle.setText("Títulos, subtítulos, párrafos, viñetas y textos informativos");
+            if (ivElementTypeIcon != null) ivElementTypeIcon.setImageResource(R.drawable.editar);
+
+            if (layoutFieldCardStyle != null) layoutFieldCardStyle.setVisibility(View.GONE);
+            if (layoutFieldText != null) layoutFieldText.setVisibility(View.VISIBLE);
+            if (layoutFieldMedia != null) layoutFieldMedia.setVisibility(View.GONE);
+            if (layoutFieldButton != null) layoutFieldButton.setVisibility(View.GONE);
+            if (layoutFieldAlignment != null) layoutFieldAlignment.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void showResourcePickerDialog() {
+        DialogHelper.showResourcePickerDialog(this, (resName, displayLabel) -> {
+            if (etMedia != null) {
+                etMedia.setText(resName);
+                Toast.makeText(this, "Recurso seleccionado: " + resName, Toast.LENGTH_SHORT).show();
+            }
+        }, () -> {
+            try {
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("image/*");
+                startActivityForResult(Intent.createChooser(intent, "Seleccionar archivo de imagen"), REQUEST_PICK_IMAGE);
+            } catch (Exception e) {
+                Toast.makeText(this, "Error al abrir el selector de archivos del dispositivo", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_PICK_IMAGE && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            Uri imageUri = data.getData();
+            String localPath = saveImageToInternalStorage(imageUri);
+            if (localPath != null && !localPath.isEmpty()) {
+                if (etMedia != null) {
+                    etMedia.setText(localPath);
+                    Toast.makeText(this, "Imagen guardada e integrada con éxito", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                if (etMedia != null) {
+                    etMedia.setText(imageUri.toString());
+                }
+            }
+        }
+    }
+
+    private String saveImageToInternalStorage(Uri sourceUri) {
+        if (sourceUri == null) return null;
+        try {
+            File dir = new File(getFilesDir(), "news_images");
+            if (!dir.exists()) dir.mkdirs();
+            String fileName = "block_img_" + System.currentTimeMillis() + ".jpg";
+            File destFile = new File(dir, fileName);
+
+            try (InputStream in = getContentResolver().openInputStream(sourceUri);
+                 OutputStream out = new FileOutputStream(destFile)) {
+                if (in == null) return null;
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
+                }
+                out.flush();
+            }
+            return destFile.getAbsolutePath();
+        } catch (Exception e) {
+            Log.e("COLUA_CMS", "Error copiando imagen a almacenamiento interno", e);
+            return null;
+        }
+    }
+
+    private void loadBlock() {
+        new Thread(() -> {
+            block = repository.getBlockById(blockId);
+            runOnUiThread(() -> {
+                if (block != null) {
+                    etTitle.setText(block.title != null ? block.title : "");
+                    etContent.setText(block.content != null ? block.content : "");
+                    if (etBenefitsList != null) etBenefitsList.setText(block.fontSize != null && block.fontSize.startsWith("BENEFITS:") ? block.fontSize.replace("BENEFITS:", "") : "");
+                    if (etHighlightAmount != null) etHighlightAmount.setText(block.textColor != null && block.textColor.startsWith("MOUNT:") ? block.textColor.replace("MOUNT:", "") : "");
+                    etMedia.setText(block.mediaPath != null ? block.mediaPath : "");
+                    etButtonText.setText(block.buttonText != null ? block.buttonText : "");
+                    etButtonAction.setText(block.buttonAction != null ? block.buttonAction : "");
+
+                    if ("CENTER".equalsIgnoreCase(block.alignment)) {
+                        rbCenter.setChecked(true);
+                    } else if ("RIGHT".equalsIgnoreCase(block.alignment)) {
+                        rbRight.setChecked(true);
+                    } else {
+                        rbLeft.setChecked(true);
+                    }
+
+                    String type = block.type != null ? block.type : "TEXT";
+                    for (int i = 0; i < BLOCK_TYPES.length; i++) {
+                        if (BLOCK_TYPES[i].startsWith(type)) {
+                            spinnerBlockType.setSelection(i);
+                            break;
+                        }
+                    }
+                    updateElementTypeHeaderAndForm(type);
+                    updateLiveActionSummary();
+                }
+            });
+        }).start();
+    }
+
+    private void saveBlock(boolean openPreview) {
+        if (block == null) {
+            block = new ContentBlockEntity();
+            block.id = UUID.randomUUID().toString();
+            block.sectionId = sectionId != null ? sectionId : "sec_home";
+        }
+
+        int typeIndex = spinnerBlockType.getSelectedItemPosition();
+        String selectedType = "TEXT";
+        if (typeIndex >= 0 && typeIndex < BLOCK_TYPES.length) {
+            selectedType = BLOCK_TYPES[typeIndex].split(" ")[0];
+        }
+
+        block.type = selectedType;
+        String titleInput = etTitle.getText().toString().trim();
+        String btnText = etButtonText.getText().toString().trim();
+
+        if (titleInput.isEmpty()) {
+            if ("BUTTON".equalsIgnoreCase(selectedType)) {
+                titleInput = !btnText.isEmpty() ? "Botón: " + btnText : "Botón CTA";
+            } else if ("IMAGE".equalsIgnoreCase(selectedType) || "BANNER".equalsIgnoreCase(selectedType)) {
+                titleInput = "Imagen / Banner";
+            } else if ("ICON".equalsIgnoreCase(selectedType)) {
+                titleInput = "Ícono de Galería";
+            } else if ("CONTAINER".equalsIgnoreCase(selectedType)) {
+                titleInput = "Sección / Contenedor";
+            } else {
+                titleInput = "Bloque de Texto";
+            }
+        }
+
+        block.title = titleInput;
+        block.content = etContent.getText().toString().trim();
+        if (etBenefitsList != null) block.fontSize = "BENEFITS:" + etBenefitsList.getText().toString().trim();
+        if (etHighlightAmount != null) block.textColor = "MOUNT:" + etHighlightAmount.getText().toString().trim();
+        block.mediaPath = etMedia.getText().toString().trim();
+
+        if ("BUTTON".equalsIgnoreCase(selectedType) || "PRODUCT_CARD".equalsIgnoreCase(selectedType) || "CARD".equalsIgnoreCase(selectedType) || "CONTAINER".equalsIgnoreCase(selectedType)) {
+            block.buttonText = btnText;
+            int actionIndex = spinnerActionType != null ? spinnerActionType.getSelectedItemPosition() : 0;
+            String rawActionValue = etButtonAction != null ? etButtonAction.getText().toString().trim() : "";
+
+            if (actionIndex == 1 && !rawActionValue.startsWith("tel:")) {
+                rawActionValue = "tel:" + rawActionValue.replaceAll("[^0-9+]", "");
+            } else if (actionIndex == 3 && !rawActionValue.startsWith("http")) {
+                rawActionValue = "https://wa.me/502" + rawActionValue.replaceAll("[^0-9]", "");
+            }
+            block.buttonAction = rawActionValue;
+        } else {
+            block.buttonText = "";
+            block.buttonAction = "";
+        }
+
+        if (rbCenter.isChecked()) {
+            block.alignment = "CENTER";
+        } else if (rbRight.isChecked()) {
+            block.alignment = "RIGHT";
+        } else {
+            block.alignment = "LEFT";
+        }
+
+        getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
+                .edit()
+                .putBoolean("has_unpublished_changes", true)
+                .apply();
+
+        final String targetSec = block.sectionId;
+
+        Log.d("COLUA_CMS", "Saving block id=" + block.id + " type=" + block.type + " sectionId=" + targetSec + " openPreview=" + openPreview);
 
         new Thread(() -> {
             repository.insertBlock(block);
             runOnUiThread(() -> {
-                Toast.makeText(this, "Bloque actualizado", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Elemento guardado en borrador", Toast.LENGTH_SHORT).show();
+                if (openPreview) {
+                    Class<?> target = DynamicSectionActivity.class;
+                    if ("sec_home".equalsIgnoreCase(targetSec)) target = MainActivity.class;
+                    else if ("sec_agencias".equalsIgnoreCase(targetSec)) target = AgenciasActivity.class;
+
+                    Intent intent = new Intent(this, target);
+                    intent.putExtra("extra_section_id", targetSec);
+                    intent.putExtra("extra_visual_edit_mode", false);
+                    intent.putExtra("extra_is_preview_mode", true);
+                    startActivity(intent);
+                }
                 finish();
             });
         }).start();

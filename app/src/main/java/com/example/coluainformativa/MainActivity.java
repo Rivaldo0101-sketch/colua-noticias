@@ -32,6 +32,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.example.coluainformativa.database.DataSeeder;
 import com.example.coluainformativa.database.SectionEntity;
 import com.example.coluainformativa.repository.ColuaRepository;
+import com.example.coluainformativa.ui.content.BlockAdapter;
 import com.example.coluainformativa.utils.NavInsetHelper;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
@@ -106,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
 
         setupMenuIcons();
         setupNosotrosButton();
+        setupPreviewBanner();
         initData();
         setupRecyclerView();
         setupNavigation();
@@ -122,6 +124,22 @@ public class MainActivity extends AppCompatActivity {
 
         // Escuchar actualizaciones de configuración publicada silenciosamente en segundo plano
         repository.subscribeToPublishedConfig(newVersion -> Unit.INSTANCE);
+    }
+
+    private void setupPreviewBanner() {
+        boolean isPreviewMode = getIntent().getBooleanExtra("extra_is_preview_mode", false) || isVisualEditMode;
+        View layoutPreviewBanner = findViewById(R.id.layout_preview_banner);
+        if (layoutPreviewBanner != null) {
+            if (isPreviewMode) {
+                layoutPreviewBanner.setVisibility(View.VISIBLE);
+                View btnExit = findViewById(R.id.btn_exit_preview);
+                if (btnExit != null) {
+                    btnExit.setOnClickListener(v -> finish());
+                }
+            } else {
+                layoutPreviewBanner.setVisibility(View.GONE);
+            }
+        }
     }
 
     private void showPreviewOptionsDialog() {
@@ -198,8 +216,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         adapter.setEditMode(isVisualEditMode);
-        int spanCount = calculateSpanCount();
-        rvSections.setLayoutManager(new GridLayoutManager(this, spanCount));
+        rvSections.setLayoutManager(new LinearLayoutManager(this));
         rvSections.setAdapter(adapter);
     }
 
@@ -217,15 +234,19 @@ public class MainActivity extends AppCompatActivity {
         if (pb != null) pb.setVisibility(View.VISIBLE);
         rvSections.setVisibility(View.GONE);
 
+        boolean isPreviewMode = getIntent().getBooleanExtra("extra_is_preview_mode", false) || isVisualEditMode;
+
         new Thread(() -> {
             try {
-                // Cargar items del grid para el Home (En modo vista previa borrador, cargar todos)
-                List<ContentItemEntity> items = isVisualEditMode 
+                // Cargar items del grid para el Home (En modo vista previa, cargar borradores)
+                List<ContentItemEntity> items = isPreviewMode 
                         ? repository.getItemsBySection("sec_home") 
                         : repository.getPublishedItemsBySection("sec_home");
                 
                 // Cargar bloques de contenido
-                List<ContentBlockEntity> blocks = repository.getBlocksBySection("sec_home");
+                List<ContentBlockEntity> blocks = isPreviewMode 
+                        ? repository.getBlocksBySection("sec_home") 
+                        : repository.getPublishedBlocksBySection("sec_home");
 
                 // Cargar Slogan, Ayuda y PBX desde la Configuración Global Dinámica
                 String sloganGlobal = repository.getGlobalConfig("slogan_text");
@@ -238,30 +259,84 @@ public class MainActivity extends AppCompatActivity {
                     gridItemList.addAll(items);
                     adapter.notifyDataSetChanged();
 
-                    // Aplicar Slogan Global
-                    if (!sloganGlobal.isEmpty()) {
-                        String[] lines = sloganGlobal.split("\n");
-                        if (lines.length > 0) tvSlogan1.setText(lines[0]);
-                        if (lines.length > 1) tvSlogan2.setText(lines[1]);
+                    // Renderizar bloques dinámicos extra en Inicio
+                    RecyclerView rvMainBlocks = findViewById(R.id.rv_main_blocks);
+                    if (rvMainBlocks != null) {
+                        List<ContentBlockEntity> extraBlocks = blocks.stream()
+                                .filter(b -> !"block_home_institutional_contact".equalsIgnoreCase(b.id)
+                                          && !"block_home_slogan".equalsIgnoreCase(b.id)
+                                          && !"block_home_help".equalsIgnoreCase(b.id))
+                                .collect(Collectors.toList());
+                        rvMainBlocks.setLayoutManager(new LinearLayoutManager(this));
+                        rvMainBlocks.setAdapter(new BlockAdapter(extraBlocks));
                     }
 
-                    // Aplicar Ayuda Global
-                    if (!helpTitleGlobal.isEmpty()) tvHelpTitle.setText(helpTitleGlobal);
-                    if (!helpDescGlobal.isEmpty()) tvHelpDesc.setText(helpDescGlobal);
-
-                    // Configurar PBX
-                    btnPbx.setOnClickListener(v -> showPbxSelectionDialog(pbxListJson));
-
-                    for (ContentBlockEntity block : blocks) {
-                        if ("block_home_slogan".equals(block.id) && sloganGlobal.isEmpty()) {
-                            String[] lines = block.content.split("\n");
-                            if (lines.length > 0) tvSlogan1.setText(lines[0]);
-                            if (lines.length > 1) tvSlogan2.setText(lines[1]);
-                        } else if ("block_home_help".equals(block.id) && helpTitleGlobal.isEmpty()) {
-                            tvHelpTitle.setText(block.title);
-                            tvHelpDesc.setText(block.content);
+                    // Buscar bloque institucional dinámico
+                    ContentBlockEntity instBlock = null;
+                    for (ContentBlockEntity b : blocks) {
+                        if ("block_home_institutional_contact".equalsIgnoreCase(b.id) || "CONTAINER".equalsIgnoreCase(b.type)) {
+                            instBlock = b;
+                            break;
                         }
                     }
+
+                    if (instBlock != null) {
+                        // Logo / Imagen
+                        if (imgDistintivo != null && instBlock.mediaPath != null && !instBlock.mediaPath.isEmpty()) {
+                            int resId = getResources().getIdentifier(instBlock.mediaPath, "drawable", getPackageName());
+                            if (resId != 0) imgDistintivo.setImageResource(resId);
+                        }
+
+                        // Título y Subtítulo
+                        if (instBlock.title != null && !instBlock.title.isEmpty()) {
+                            tvSlogan1.setText(instBlock.title);
+                        }
+
+                        if (instBlock.content != null && !instBlock.content.isEmpty()) {
+                            String[] lines = instBlock.content.split("\n\n");
+                            if (lines.length > 0) {
+                                String[] sloganLines = lines[0].split("\n");
+                                if (sloganLines.length > 0) tvSlogan2.setText(sloganLines[0]);
+                            }
+                            if (lines.length > 1) {
+                                tvHelpTitle.setText(lines[1]);
+                            }
+                            if (lines.length > 2) {
+                                tvHelpDesc.setText(lines[2]);
+                            }
+                        }
+
+                        // Botón PBX
+                        if (btnPbx != null) {
+                            if (instBlock.buttonText != null && !instBlock.buttonText.isEmpty()) {
+                                btnPbx.setText(instBlock.buttonText);
+                            }
+                            final String actionUrl = instBlock.buttonAction != null && !instBlock.buttonAction.isEmpty() ? instBlock.buttonAction : "tel:77957795";
+                            btnPbx.setOnClickListener(v -> {
+                                try {
+                                    Intent dialIntent = new Intent(Intent.ACTION_DIAL, Uri.parse(actionUrl));
+                                    startActivity(dialIntent);
+                                } catch (Exception e) {
+                                    Toast.makeText(this, "No se pudo realizar la llamada al PBX", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    } else {
+                        // Aplicar Slogan Global por defecto
+                        if (!sloganGlobal.isEmpty()) {
+                            String[] lines = sloganGlobal.split("\n");
+                            if (lines.length > 0) tvSlogan1.setText(lines[0]);
+                            if (lines.length > 1) tvSlogan2.setText(lines[1]);
+                        }
+
+                        // Aplicar Ayuda Global
+                        if (!helpTitleGlobal.isEmpty()) tvHelpTitle.setText(helpTitleGlobal);
+                        if (!helpDescGlobal.isEmpty()) tvHelpDesc.setText(helpDescGlobal);
+
+                        // Configurar PBX
+                        btnPbx.setOnClickListener(v -> showPbxSelectionDialog(pbxListJson));
+                    }
+
                     if (pb != null) pb.setVisibility(View.GONE);
                     rvSections.setVisibility(View.VISIBLE);
                 });

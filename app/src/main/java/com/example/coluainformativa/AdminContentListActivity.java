@@ -1,54 +1,89 @@
 package com.example.coluainformativa;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.coluainformativa.database.AgenciaEntity;
 import com.example.coluainformativa.database.AppDatabase;
+import com.example.coluainformativa.database.ContentBlockEntity;
 import com.example.coluainformativa.database.ContentItemEntity;
 import com.example.coluainformativa.database.SectionEntity;
 import com.example.coluainformativa.repository.ColuaRepository;
+import com.example.coluainformativa.security.AdminAuthManager;
+import com.example.coluainformativa.ui.content.ContentItemAdapter;
+
+import android.util.Log;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import com.example.coluainformativa.utils.DialogHelper;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class AdminContentListActivity extends AppCompatActivity {
 
     public static final String EXTRA_SECTION_ID = "extra_section_id";
     public static final String EXTRA_MANAGE_AGENCIAS = "extra_manage_agencias";
+    private static final int REQUEST_PICK_ISSUER_AVATAR = 105;
 
     private ColuaRepository repository;
     private String sectionId;
     private boolean manageAgencias = false;
     private SectionEntity section;
+    private List<SectionEntity> allSections = new ArrayList<>();
     private List<Object> allItems = new ArrayList<>();
     private List<Object> filteredList = new ArrayList<>();
     private List<Object> paginatedList = new ArrayList<>();
     private ContentAdapter adapter;
-    
+    private Spinner spinnerScreenSelector;
+
     private String searchQuery = "";
     private int currentPage = 1;
     private int itemsPerPage = 6;
+
+    private String currentIssuerAvatarPath = "";
+    private ImageView ivDialogIssuerAvatar = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,32 +94,69 @@ public class AdminContentListActivity extends AppCompatActivity {
         sectionId = getIntent().getStringExtra(EXTRA_SECTION_ID);
         manageAgencias = getIntent().getBooleanExtra(EXTRA_MANAGE_AGENCIAS, false);
 
+        if ("sec_agencias".equalsIgnoreCase(sectionId) || "agencias".equalsIgnoreCase(sectionId)) {
+            manageAgencias = true;
+        }
+
         if (sectionId == null && !manageAgencias) {
-            finish();
-            return;
+            sectionId = "sec_creditos"; // Por defecto Créditos
         }
 
         findViewById(R.id.btn_back_content_list).setOnClickListener(v -> finish());
 
-        findViewById(R.id.btn_add_item).setOnClickListener(v -> {
-            if (manageAgencias) {
-                Intent intent = new Intent(this, AdminAgenciaEditActivity.class);
-                startActivity(intent);
+        // Botón Principal: + Agregar Elemento al Canvas / Crear Agencia / Crear Nueva Publicación
+        ExtendedFloatingActionButton btnAdd = findViewById(R.id.btn_add_item);
+        if (btnAdd != null) {
+            if (manageAgencias || "sec_agencias".equalsIgnoreCase(sectionId)) {
+                btnAdd.setText("Agregar Agencia / Punto");
+            } else if ("sec_noticias".equalsIgnoreCase(sectionId) || "noticias".equalsIgnoreCase(sectionId)) {
+                btnAdd.setText("Crear Nueva Publicación");
             } else {
-                Intent intent = new Intent(this, AdminContentEditActivity.class);
-                intent.putExtra(AdminContentEditActivity.EXTRA_SECTION_ID, sectionId);
-                startActivity(intent);
+                btnAdd.setText("Agregar Elemento al Canvas");
             }
-        });
 
+            btnAdd.setOnClickListener(v -> {
+                if (manageAgencias || "sec_agencias".equalsIgnoreCase(sectionId)) {
+                    Intent intent = new Intent(this, AdminAgenciaEditActivity.class);
+                    startActivity(intent);
+                } else if ("sec_noticias".equalsIgnoreCase(sectionId) || "noticias".equalsIgnoreCase(sectionId)) {
+                    Intent intent = new Intent(this, AdminNewsEditActivity.class);
+                    startActivity(intent);
+                } else {
+                    showAddElementOptionsDialog();
+                }
+            });
+        }
+
+        // Botón Propiedades de la Sección
         View btnEditProps = findViewById(R.id.btn_edit_section_properties);
         if (btnEditProps != null) {
             btnEditProps.setOnClickListener(v -> {
-                Intent intent = new Intent(this, AdminSectionEditActivity.class);
-                intent.putExtra(AdminSectionEditActivity.EXTRA_SECTION_ID, sectionId);
-                startActivity(intent);
+                if (sectionId != null) {
+                    Intent intent = new Intent(this, AdminSectionEditActivity.class);
+                    intent.putExtra(AdminSectionEditActivity.EXTRA_SECTION_ID, sectionId);
+                    startActivity(intent);
+                }
             });
         }
+
+        // Acciones de Canvas: Borrador, Vista Previa, Publicar
+        View btnSaveDraft = findViewById(R.id.btn_save_draft_canvas);
+        if (btnSaveDraft != null) {
+            btnSaveDraft.setOnClickListener(v -> saveCanvasDraft());
+        }
+
+        View btnPreview = findViewById(R.id.btn_preview_canvas);
+        if (btnPreview != null) {
+            btnPreview.setOnClickListener(v -> openCanvasPreview());
+        }
+
+        View btnPublish = findViewById(R.id.btn_publish_canvas);
+        if (btnPublish != null) {
+            btnPublish.setOnClickListener(v -> publishCanvasConfiguration());
+        }
+
+        spinnerScreenSelector = findViewById(R.id.spinner_canvas_screen);
 
         setupSearch();
         setupFilters();
@@ -94,11 +166,213 @@ public class AdminContentListActivity extends AppCompatActivity {
         adapter = new ContentAdapter();
         rv.setAdapter(adapter);
 
+        setupScreenSpinner();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         loadData();
+    }
+
+    private void setupScreenSpinner() {
+        if (spinnerScreenSelector == null) return;
+
+        new Thread(() -> {
+            allSections = repository.getAllSections();
+            Collections.sort(allSections, (s1, s2) -> Integer.compare(s1.displayOrder, s2.displayOrder));
+
+            List<String> labels = new ArrayList<>();
+            int selectedIndex = 0;
+
+            for (int i = 0; i < allSections.size(); i++) {
+                SectionEntity s = allSections.get(i);
+                labels.add(s.title + " (/" + (s.slug != null && !s.slug.isEmpty() ? s.slug : s.id) + ")");
+                if (s.id.equals(sectionId)) {
+                    selectedIndex = i;
+                }
+            }
+
+            final int initialIndex = selectedIndex;
+
+            runOnUiThread(() -> {
+                ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<String>(AdminContentListActivity.this,
+                        android.R.layout.simple_spinner_item, labels) {
+                    @NonNull
+                    @Override
+                    public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+                        View v = super.getView(position, convertView, parent);
+                        if (v instanceof TextView) {
+                            ((TextView) v).setTextColor(Color.parseColor("#173789"));
+                            ((TextView) v).setTypeface(null, Typeface.BOLD);
+                            ((TextView) v).setTextSize(14f);
+                        }
+                        return v;
+                    }
+
+                    @Override
+                    public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
+                        View v = super.getDropDownView(position, convertView, parent);
+                        if (v instanceof TextView) {
+                            ((TextView) v).setTextColor(Color.parseColor("#173789"));
+                            ((TextView) v).setTextSize(14f);
+                            ((TextView) v).setPadding(24, 20, 24, 20);
+                        }
+                        return v;
+                    }
+                };
+                spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinnerScreenSelector.setAdapter(spinnerAdapter);
+                if (initialIndex < labels.size()) {
+                    spinnerScreenSelector.setSelection(initialIndex);
+                }
+
+                spinnerScreenSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                        if (position >= 0 && position < allSections.size()) {
+                            SectionEntity chosen = allSections.get(position);
+                            sectionId = chosen.id;
+                            manageAgencias = "sec_agencias".equalsIgnoreCase(sectionId) || "agencias".equalsIgnoreCase(sectionId);
+
+                            ExtendedFloatingActionButton fab = findViewById(R.id.btn_add_item);
+                            if (fab != null) {
+                                if (manageAgencias) {
+                                    fab.setText("Agregar Agencia / Punto");
+                                } else if ("sec_noticias".equalsIgnoreCase(sectionId) || "noticias".equalsIgnoreCase(sectionId)) {
+                                    fab.setText("Crear Nueva Publicación");
+                                } else {
+                                    fab.setText("Agregar Elemento al Canvas");
+                                }
+                            }
+
+                            loadData();
+                        }
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {}
+                });
+
+                loadData();
+            });
+        }).start();
+    }
+
+    private void saveCanvasDraft() {
+        getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
+                .edit()
+                .putBoolean("has_unpublished_changes", true)
+                .apply();
+        String title = section != null ? section.title : "pantalla";
+        Toast.makeText(this, "Borrador de '" + title + "' guardado localmente", Toast.LENGTH_SHORT).show();
+    }
+
+    private void openCanvasPreview() {
+        Class<?> target = DynamicSectionActivity.class;
+        if ("sec_home".equalsIgnoreCase(sectionId)) target = MainActivity.class;
+        else if ("sec_agencias".equalsIgnoreCase(sectionId)) target = AgenciasActivity.class;
+
+        Intent intent = new Intent(this, target);
+        intent.putExtra("extra_section_id", sectionId);
+        intent.putExtra("extra_visual_edit_mode", false);
+        intent.putExtra("extra_is_preview_mode", true);
+        startActivity(intent);
+    }
+
+    private void publishCanvasConfiguration() {
+        String title = section != null ? section.title : "pantalla";
+        DialogHelper.showLightReportDialog(
+                this,
+                "Confirmar Publicación Oficial",
+                "¿Desea publicar todos los cambios de esta pantalla a la nube? Los asociados verán la nueva versión de '" + title + "' inmediatamente.",
+                "PUBLICAR CAMBIOS",
+                () -> {
+                    Toast.makeText(this, "Publicando contenido...", Toast.LENGTH_SHORT).show();
+                    repository.publishCurrentConfiguration(result -> {
+                        if (result.getSuccess()) {
+                            Toast.makeText(this, "¡Contenido publicado exitosamente!", Toast.LENGTH_SHORT).show();
+                            loadData();
+                        } else {
+                            Toast.makeText(this, "Error: " + result.getErrorMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    });
+                },
+                "CANCELAR"
+        );
+    }
+
+    private void showAddElementOptionsDialog() {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_element, null);
+        ListView lvTypes = dialogView.findViewById(R.id.lv_element_types);
+        View btnCancel = dialogView.findViewById(R.id.btn_cancel_dialog);
+
+        final String[] typeKeys = {
+                "TEXT",
+                "IMAGE",
+                "ICON",
+                "BUTTON",
+                "CARD",
+                "CONTAINER",
+                "LIST",
+                "SEPARATOR",
+                "SPACER",
+                "BANNER",
+                "PRODUCT_CARD"
+        };
+
+        final String[] options = {
+                "Texto (Título, Subtítulo, Párrafo, Informativo)",
+                "Imagen (Logo, Banner, Fotografía, Ilustración)",
+                "Ícono (Ícono de Galería)",
+                "Botón (Navegación, PBX, Enlace)",
+                "Tarjeta (Contenedor visual con borde y sombra)",
+                "Sección / Contenedor (Agrupa elementos sin tarjeta)",
+                "Lista (Viñetas, Beneficios, Requisitos)",
+                "Separador (Línea divisora horizontal)",
+                "Espaciador (Separación vertical)",
+                "Banner (Imagen / Bloque Ancho Completo)",
+                "Tarjeta de Producto (Crédito, Ahorro, Seguro, Remesa)"
+        };
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        ArrayAdapter<String> typeAdapter = new ArrayAdapter<String>(this, R.layout.item_dialog_element_type, R.id.tv_element_type_label, options);
+        lvTypes.setAdapter(typeAdapter);
+
+        lvTypes.setOnItemClickListener((parent, view, position, id) -> {
+            dialog.dismiss();
+            String selectedType = typeKeys[position];
+
+            if ("PRODUCT_CARD".equals(selectedType)) {
+                Intent intent = new Intent(this, AdminContentEditActivity.class);
+                intent.putExtra(AdminContentEditActivity.EXTRA_SECTION_ID, sectionId);
+                intent.putExtra("extra_element_type", selectedType);
+                startActivity(intent);
+            } else {
+                Intent intent = new Intent(this, AdminBlockEditActivity.class);
+                intent.putExtra(AdminBlockEditActivity.EXTRA_SECTION_ID, sectionId);
+                intent.putExtra(AdminBlockEditActivity.EXTRA_BLOCK_TYPE, selectedType);
+                startActivity(intent);
+            }
+        });
+
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
     }
 
     private void setupSearch() {
         EditText etSearch = findViewById(R.id.et_search_admin);
+        if (etSearch == null) return;
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -114,10 +388,8 @@ public class AdminContentListActivity extends AppCompatActivity {
 
     private void setupFilters() {
         ChipGroup cg = findViewById(R.id.cg_filters_admin);
-        cg.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            // Lógica de filtrado por categoría si fuera necesario
-            applyFilters();
-        });
+        if (cg == null) return;
+        cg.setOnCheckedStateChangeListener((group, checkedIds) -> applyFilters());
     }
 
     private void loadData() {
@@ -127,53 +399,106 @@ public class AdminContentListActivity extends AppCompatActivity {
 
         new Thread(() -> {
             try {
+                String canonicalId = repository.resolveSectionId(sectionId != null ? sectionId : "sec_noticias");
+
                 if (manageAgencias) {
+                    List<AgenciaEntity> rawAgencias = repository.getAllAgencias();
+                    Map<String, AgenciaEntity> uniqueAgencias = new LinkedHashMap<>();
+                    for (AgenciaEntity a : rawAgencias) {
+                        if (a != null && a.nombre != null) {
+                            String key = (a.nombre.trim() + "_" + (a.departamento != null ? a.departamento.trim() : "")).toLowerCase(Locale.getDefault());
+                            if (!uniqueAgencias.containsKey(key)) {
+                                uniqueAgencias.put(key, a);
+                            }
+                        }
+                    }
                     allItems.clear();
-                    allItems.addAll(repository.getAllAgencias());
+                    allItems.addAll(uniqueAgencias.values());
+
+                    repository.purgarAgenciasDuplicadas(() -> null);
+
                     runOnUiThread(() -> {
-                        ((TextView) findViewById(R.id.tv_admin_section_title)).setText("Gestionar Agencias");
+                        if (isFinishing() || isDestroyed()) return;
+                        TextView tvTitle = findViewById(R.id.tv_admin_section_title);
+                        if (tvTitle != null) tvTitle.setText("Gestionar Agencias (" + uniqueAgencias.size() + ")");
                         applyFilters();
                     });
                 } else {
-                    section = AppDatabase.getDatabase(this).sectionDao().getSectionById(sectionId);
-                    List<ContentItemEntity> items = repository.getItemsBySection(sectionId);
-                    List<com.example.coluainformativa.database.ContentBlockEntity> blocks = repository.getBlocksBySection(sectionId);
-                    
+                    section = AppDatabase.getDatabase(this).sectionDao().getSectionById(canonicalId);
+                    List<ContentItemEntity> items = repository.getItemsBySection(canonicalId);
+                    List<ContentBlockEntity> blocks = repository.getBlocksBySection(canonicalId);
+
                     runOnUiThread(() -> {
-                        if (section != null) {
-                            ((TextView) findViewById(R.id.tv_admin_section_title)).setText("Gestionar " + section.title);
+                        if (isFinishing() || isDestroyed()) return;
+                        TextView tvTitle = findViewById(R.id.tv_admin_section_title);
+                        if (tvTitle != null) {
+                            if (section != null && section.title != null) {
+                                tvTitle.setText("Canvas de " + section.title);
+                            } else if ("sec_noticias".equalsIgnoreCase(canonicalId) || "noticias".equalsIgnoreCase(canonicalId)) {
+                                tvTitle.setText("Canvas de Noticias");
+                            } else {
+                                tvTitle.setText("Canvas de Contenido");
+                            }
                         }
                         allItems.clear();
-                        allItems.addAll(items);
-                        allItems.addAll(blocks);
+                        if (items != null) allItems.addAll(items);
+                        if (blocks != null) allItems.addAll(blocks);
+                        setupIssuerProfileHeader();
                         applyFilters();
                     });
                 }
             } catch (Exception e) {
-                runOnUiThread(() -> Toast.makeText(this, "Error al cargar datos", Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    Toast.makeText(this, "Error al cargar canvas", Toast.LENGTH_SHORT).show();
+                });
             } finally {
-                runOnUiThread(() -> findViewById(R.id.pb_admin_loading).setVisibility(View.GONE));
+                runOnUiThread(() -> {
+                    if (!isFinishing() && !isDestroyed()) {
+                        findViewById(R.id.pb_admin_loading).setVisibility(View.GONE);
+                    }
+                });
             }
         }).start();
     }
 
     private void applyFilters() {
         if (allItems == null) return;
-        
+
         filteredList = allItems.stream().filter(obj -> {
+            if (obj == null) return false;
             if (obj instanceof ContentItemEntity) {
                 ContentItemEntity item = (ContentItemEntity) obj;
-                return searchQuery.isEmpty() || item.title.toLowerCase().contains(searchQuery);
+                String title = item.title != null ? item.title.toLowerCase(Locale.getDefault()) : "";
+                String shortDesc = item.shortDescription != null ? item.shortDescription.toLowerCase(Locale.getDefault()) : "";
+                String desc = item.description != null ? item.description.toLowerCase(Locale.getDefault()) : "";
+                return searchQuery.isEmpty() || title.contains(searchQuery) || shortDesc.contains(searchQuery) || desc.contains(searchQuery);
             } else if (obj instanceof AgenciaEntity) {
                 AgenciaEntity a = (AgenciaEntity) obj;
-                return searchQuery.isEmpty() || a.nombre.toLowerCase().contains(searchQuery);
+                String nombre = a.nombre != null ? a.nombre.toLowerCase(Locale.getDefault()) : "";
+                String depto = a.departamento != null ? a.departamento.toLowerCase(Locale.getDefault()) : "";
+                return searchQuery.isEmpty() || nombre.contains(searchQuery) || depto.contains(searchQuery);
+            } else if (obj instanceof ContentBlockEntity) {
+                ContentBlockEntity b = (ContentBlockEntity) obj;
+                String title = b.title != null ? b.title.toLowerCase(Locale.getDefault()) : "";
+                String content = b.content != null ? b.content.toLowerCase(Locale.getDefault()) : "";
+                return searchQuery.isEmpty() || title.contains(searchQuery) || content.contains(searchQuery);
             }
             return true;
         }).collect(Collectors.toList());
 
         runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) return;
             boolean empty = filteredList.isEmpty();
-            findViewById(R.id.tv_admin_empty).setVisibility(empty ? View.VISIBLE : View.GONE);
+            TextView tvEmpty = findViewById(R.id.tv_admin_empty);
+            if (tvEmpty != null) {
+                if ("sec_noticias".equalsIgnoreCase(sectionId) || "noticias".equalsIgnoreCase(sectionId)) {
+                    tvEmpty.setText("Aún no hay publicaciones. Crea la primera noticia.");
+                } else {
+                    tvEmpty.setText("Esta pantalla aún no tiene bloques internos.\n\nToca '+ Agregar Elemento' abajo para diseñar tarjetas, títulos, imágenes o botones.");
+                }
+                tvEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+            }
             findViewById(R.id.rv_admin_items).setVisibility(empty ? View.GONE : View.VISIBLE);
         });
 
@@ -181,19 +506,241 @@ public class AdminContentListActivity extends AppCompatActivity {
         updatePagination();
     }
 
+    private void setupIssuerProfileHeader() {
+        View cardIssuer = findViewById(R.id.card_admin_issuer_profile);
+        if (cardIssuer == null) return;
+
+        boolean isNoticias = "sec_noticias".equalsIgnoreCase(sectionId) || "noticias".equalsIgnoreCase(sectionId);
+        cardIssuer.setVisibility(isNoticias ? View.VISIBLE : View.GONE);
+
+        if (!isNoticias) return;
+
+        new Thread(() -> {
+            String issuerName = repository.getGlobalConfig("issuer_name");
+            if (issuerName.isEmpty()) issuerName = "Cooperativa COLUA";
+
+            String issuerRole = repository.getGlobalConfig("issuer_role");
+            if (issuerRole.isEmpty()) issuerRole = "Publicando como cuenta oficial";
+
+            String issuerAvatar = repository.getGlobalConfig("issuer_avatar");
+            if (issuerAvatar.isEmpty()) issuerAvatar = "distintivo_colua";
+
+            final String finalName = issuerName;
+            final String finalRole = issuerRole;
+            final String finalAvatar = issuerAvatar;
+
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+
+                TextView tvName = findViewById(R.id.tv_admin_issuer_name);
+                TextView tvRole = findViewById(R.id.tv_admin_issuer_role);
+                ImageView ivAvatar = findViewById(R.id.iv_admin_issuer_avatar);
+
+                if (tvName != null) tvName.setText(finalName);
+                if (tvRole != null) tvRole.setText(finalRole);
+
+                if (ivAvatar != null) {
+                    boolean loaded = false;
+                    if (finalAvatar.startsWith("content://") || finalAvatar.startsWith("file://")) {
+                        try {
+                            ivAvatar.setImageURI(Uri.parse(finalAvatar));
+                            if (ivAvatar.getDrawable() != null) loaded = true;
+                        } catch (Throwable ignored) {}
+                    }
+                    if (!loaded) {
+                        int resId = getResources().getIdentifier(finalAvatar, "drawable", getPackageName());
+                        if (resId != 0) {
+                            ivAvatar.setImageResource(resId);
+                            loaded = true;
+                        }
+                    }
+                    if (!loaded) {
+                        ivAvatar.setImageResource(R.drawable.distintivo_colua);
+                    }
+                }
+
+                View btnEdit = findViewById(R.id.btn_edit_admin_issuer_profile);
+                if (btnEdit != null) {
+                    btnEdit.setOnClickListener(v -> showEditIssuerProfileDialogGlobal());
+                }
+                cardIssuer.setOnClickListener(v -> showEditIssuerProfileDialogGlobal());
+            });
+        }).start();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_PICK_ISSUER_AVATAR && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            Uri uri = data.getData();
+            String localPath = saveImageToInternalStorage(uri);
+            if (localPath != null && !localPath.isEmpty()) {
+                currentIssuerAvatarPath = localPath;
+                if (ivDialogIssuerAvatar != null) {
+                    AdminNewsEditActivity.loadNewsImageIntoView(this, ivDialogIssuerAvatar, localPath);
+                }
+                ImageView ivHeaderAvatar = findViewById(R.id.iv_admin_issuer_avatar);
+                if (ivHeaderAvatar != null) {
+                    AdminNewsEditActivity.loadNewsImageIntoView(this, ivHeaderAvatar, localPath);
+                }
+                Toast.makeText(this, "Foto de perfil cargada. Presiona 'Guardar' para aplicar.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private String saveImageToInternalStorage(Uri sourceUri) {
+        if (sourceUri == null) return null;
+        try {
+            File dir = new File(getFilesDir(), "news_images");
+            if (!dir.exists()) dir.mkdirs();
+            String fileName = "avatar_" + System.currentTimeMillis() + ".jpg";
+            File destFile = new File(dir, fileName);
+
+            try (InputStream in = getContentResolver().openInputStream(sourceUri);
+                 OutputStream out = new FileOutputStream(destFile)) {
+                if (in == null) return null;
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
+                }
+                out.flush();
+            }
+            return destFile.getAbsolutePath();
+        } catch (Exception e) {
+            Log.e("COLUA_CMS", "Error copiando avatar a almacenamiento interno", e);
+            return null;
+        }
+    }
+
+    private void launchDevicePhotoPickerForIssuerProfile() {
+        try {
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("image/*");
+            startActivityForResult(Intent.createChooser(intent, "Seleccionar foto de perfil del emisor"), REQUEST_PICK_ISSUER_AVATAR);
+        } catch (Exception e) {
+            Toast.makeText(this, "Error al abrir selector de fotos", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showEditIssuerProfileDialogGlobal() {
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_edit_issuer_profile, null);
+
+        EditText etName = view.findViewById(R.id.et_dialog_issuer_name);
+        EditText etRole = view.findViewById(R.id.et_dialog_issuer_role);
+        ivDialogIssuerAvatar = view.findViewById(R.id.iv_dialog_issuer_avatar);
+        View btnAvatarCircle = view.findViewById(R.id.btn_change_issuer_avatar_circle);
+        Button btnSave = view.findViewById(R.id.btn_dialog_issuer_save);
+        Button btnCancel = view.findViewById(R.id.btn_dialog_issuer_cancel);
+
+        TextView tvCurrentName = findViewById(R.id.tv_admin_issuer_name);
+        TextView tvCurrentRole = findViewById(R.id.tv_admin_issuer_role);
+
+        if (etName != null) {
+            etName.setText(tvCurrentName != null && tvCurrentName.getText() != null ? tvCurrentName.getText().toString() : "Cooperativa COLUA");
+        }
+        if (etRole != null) {
+            etRole.setText(tvCurrentRole != null && tvCurrentRole.getText() != null ? tvCurrentRole.getText().toString() : "Publicando como cuenta oficial");
+        }
+
+        currentIssuerAvatarPath = repository.getGlobalConfig("issuer_avatar");
+        if (currentIssuerAvatarPath.isEmpty()) currentIssuerAvatarPath = "distintivo_colua";
+
+        if (ivDialogIssuerAvatar != null) {
+            AdminNewsEditActivity.loadNewsImageIntoView(this, ivDialogIssuerAvatar, currentIssuerAvatarPath);
+        }
+
+        if (btnAvatarCircle != null) {
+            btnAvatarCircle.setOnClickListener(v -> {
+                DialogHelper.showResourcePickerDialog(this, (resName, displayLabel) -> {
+                    if (resName != null && !resName.isEmpty()) {
+                        currentIssuerAvatarPath = resName;
+                        if (ivDialogIssuerAvatar != null) {
+                            AdminNewsEditActivity.loadNewsImageIntoView(this, ivDialogIssuerAvatar, resName);
+                        }
+                    }
+                }, () -> {
+                    launchDevicePhotoPickerForIssuerProfile();
+                });
+            });
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(view)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        if (btnSave != null) {
+            btnSave.setOnClickListener(v -> {
+                String newName = etName != null ? etName.getText().toString().trim() : "Cooperativa COLUA";
+                String newRole = etRole != null ? etRole.getText().toString().trim() : "Publicando como cuenta oficial";
+
+                if (newName.isEmpty()) newName = "Cooperativa COLUA";
+                if (newRole.isEmpty()) newRole = "Publicando como cuenta oficial";
+
+                final String finalName = newName;
+                final String finalRole = newRole;
+                final String finalAvatar = currentIssuerAvatarPath;
+
+                dialog.dismiss();
+
+                // Confirmar con contraseña de administrador antes de aplicar cambios
+                DialogHelper.showPasswordConfirmationDialog(
+                        this,
+                        new AdminAuthManager(this),
+                        "Confirmar Cambios de Perfil",
+                        "Para actualizar el Perfil Emisor oficial e ingresar su firma en todas las noticias, ingrese su clave de administrador:",
+                        () -> {
+                            new Thread(() -> {
+                                repository.setGlobalConfig("issuer_name", finalName);
+                                repository.setGlobalConfig("issuer_role", finalRole);
+                                repository.setGlobalConfig("issuer_avatar", finalAvatar);
+
+                                List<ContentItemEntity> allNews = repository.getItemsBySection("sec_noticias");
+                                for (ContentItemEntity news : allNews) {
+                                    news.issuerName = finalName;
+                                    news.issuerRole = finalRole;
+                                    news.iconName = finalAvatar;
+                                    repository.insertItem(news);
+                                }
+
+                                runOnUiThread(() -> {
+                                    if (isFinishing() || isDestroyed()) return;
+                                    Toast.makeText(this, "¡Perfil Emisor actualizado con éxito!", Toast.LENGTH_SHORT).show();
+                                    setupIssuerProfileHeader();
+                                    loadData();
+                                });
+                            }).start();
+                        }
+                );
+            });
+        }
+
+        dialog.show();
+    }
+
     private void updatePagination() {
         int totalItems = filteredList.size();
         int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
 
         if (totalPages <= 1) {
-            findViewById(R.id.layout_pagination).setVisibility(View.GONE);
+            View layoutPag = findViewById(R.id.layout_pagination);
+            if (layoutPag != null) layoutPag.setVisibility(View.GONE);
             paginatedList.clear();
             paginatedList.addAll(filteredList);
         } else {
-            findViewById(R.id.layout_pagination).setVisibility(View.VISIBLE);
+            View layoutPag = findViewById(R.id.layout_pagination);
+            if (layoutPag != null) layoutPag.setVisibility(View.VISIBLE);
             int start = (currentPage - 1) * itemsPerPage;
             int end = Math.min(start + itemsPerPage, totalItems);
-            
+
             paginatedList.clear();
             paginatedList.addAll(filteredList.subList(start, end));
             setupPaginationBar(totalPages);
@@ -202,26 +749,38 @@ public class AdminContentListActivity extends AppCompatActivity {
     }
 
     private void setupPaginationBar(int totalPages) {
-        android.widget.LinearLayout layout = findViewById(R.id.layout_page_numbers);
-        layout.removeAllViews();
-        
-        TextView tvItemsPerPage = findViewById(R.id.tv_items_per_page);
-        if (tvItemsPerPage != null) {
-            tvItemsPerPage.setText(itemsPerPage + " / page");
+        View layoutPag = findViewById(R.id.layout_pagination);
+        if (layoutPag == null) return;
+
+        if (totalPages <= 1) {
+            layoutPag.setVisibility(View.GONE);
+            return;
         }
 
+        layoutPag.setVisibility(View.VISIBLE);
+
+        LinearLayout layoutNumbers = findViewById(R.id.layout_page_numbers);
+        if (layoutNumbers == null) return;
+        layoutNumbers.removeAllViews();
+
         List<Integer> pagesToShow = new ArrayList<>();
-        if (totalPages <= 7) {
+        if (totalPages <= 5) {
             for (int i = 1; i <= totalPages; i++) pagesToShow.add(i);
         } else {
             pagesToShow.add(1);
-            if (currentPage > 3) pagesToShow.add(-1); 
+            if (currentPage > 3) pagesToShow.add(-1);
 
             int start = Math.max(2, currentPage - 1);
             int end = Math.min(totalPages - 1, currentPage + 1);
 
-            if (currentPage <= 3) end = 4;
-            if (currentPage >= totalPages - 2) start = totalPages - 3;
+            if (currentPage <= 3) {
+                start = 2;
+                end = Math.min(3, totalPages - 1);
+            }
+            if (currentPage >= totalPages - 2) {
+                start = Math.max(2, totalPages - 2);
+                end = totalPages - 1;
+            }
 
             for (int i = start; i <= end; i++) {
                 if (!pagesToShow.contains(i)) pagesToShow.add(i);
@@ -233,98 +792,251 @@ public class AdminContentListActivity extends AppCompatActivity {
 
         for (Integer p : pagesToShow) {
             if (p == -1) {
-                TextView tv = new TextView(this);
-                tv.setText("...");
-                tv.setPadding(16, 0, 16, 0);
-                tv.setTextColor(getResources().getColor(R.color.text_grey));
-                layout.addView(tv);
+                TextView tvDots = new TextView(this);
+                tvDots.setText("...");
+                tvDots.setTextSize(14f);
+                tvDots.setGravity(Gravity.CENTER);
+                tvDots.setPadding(12, 0, 12, 0);
+                tvDots.setTextColor(Color.parseColor("#94A3B8"));
+                layoutNumbers.addView(tvDots);
                 continue;
             }
 
-            final int page = p;
-            TextView tv = new TextView(this);
-            tv.setText(String.valueOf(p));
-            tv.setPadding(12, 8, 12, 8);
-            tv.setTextSize(14);
-            tv.setGravity(android.view.Gravity.CENTER);
-            tv.setMinWidth(60);
-            
-            if (p == currentPage) {
-                tv.setTextColor(getResources().getColor(R.color.white));
-                tv.setBackgroundResource(R.drawable.circle_background);
-                tv.setBackgroundTintList(android.content.res.ColorStateList.valueOf(getResources().getColor(R.color.colua_navy)));
+            final int pageNum = p;
+            TextView tvPage = new TextView(this);
+            tvPage.setText(String.valueOf(pageNum));
+            tvPage.setTextSize(13f);
+            tvPage.setTypeface(null, Typeface.BOLD);
+            tvPage.setGravity(Gravity.CENTER);
+
+            int boxSize = (int) (36 * getResources().getDisplayMetrics().density);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(boxSize, boxSize);
+            lp.setMargins(6, 0, 6, 0);
+            tvPage.setLayoutParams(lp);
+
+            if (pageNum == currentPage) {
+                tvPage.setTextColor(Color.WHITE);
+                tvPage.setBackgroundResource(R.drawable.bg_outlined_spinner);
+                tvPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#173789")));
             } else {
-                tv.setTextColor(getResources().getColor(R.color.black));
-                tv.setBackground(null);
+                tvPage.setTextColor(Color.parseColor("#334155"));
+                tvPage.setBackground(null);
             }
 
-            tv.setOnClickListener(v -> {
-                currentPage = page;
+            tvPage.setOnClickListener(v -> {
+                currentPage = pageNum;
                 updatePagination();
             });
-            layout.addView(tv);
+
+            layoutNumbers.addView(tvPage);
         }
 
-        findViewById(R.id.btn_pagination_prev).setOnClickListener(v -> {
-            if (currentPage > 1) {
-                currentPage--;
-                updatePagination();
-            }
-        });
+        View btnPrev = findViewById(R.id.btn_pagination_prev);
+        if (btnPrev != null) {
+            btnPrev.setOnClickListener(v -> {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updatePagination();
+                }
+            });
+        }
 
-        findViewById(R.id.btn_pagination_next).setOnClickListener(v -> {
-            if (currentPage < totalPages) {
-                currentPage++;
-                updatePagination();
-            }
-        });
+        View btnNext = findViewById(R.id.btn_pagination_next);
+        if (btnNext != null) {
+            btnNext.setOnClickListener(v -> {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updatePagination();
+                }
+            });
+        }
     }
 
     class ContentAdapter extends RecyclerView.Adapter<ContentAdapter.ViewHolder> {
+        private static final int TYPE_STANDARD = 0;
+        private static final int TYPE_NEWS = 1;
+
+        @Override
+        public int getItemViewType(int position) {
+            Object obj = paginatedList.get(position);
+            if (obj instanceof ContentItemEntity) {
+                ContentItemEntity item = (ContentItemEntity) obj;
+                if ("sec_noticias".equalsIgnoreCase(item.sectionId) || "noticias".equalsIgnoreCase(item.sectionId) || "sec_noticias".equalsIgnoreCase(sectionId) || "noticias".equalsIgnoreCase(sectionId)) {
+                    return TYPE_NEWS;
+                }
+            }
+            return TYPE_STANDARD;
+        }
+
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_admin_content, parent, false);
-            return new ViewHolder(v);
+            View v;
+            if (viewType == TYPE_NEWS) {
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_admin_news_card, parent, false);
+            } else {
+                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_admin_content, parent, false);
+            }
+            return new ViewHolder(v, viewType);
         }
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             Object obj = paginatedList.get(position);
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
 
             if (obj instanceof ContentItemEntity) {
                 ContentItemEntity item = (ContentItemEntity) obj;
+
+                if (getItemViewType(position) == TYPE_NEWS) {
+                    if (holder.tvNewsFeaturedTag != null) {
+                        holder.tvNewsFeaturedTag.setText(item.isFeatured ? "🟢 NOTICIA DESTACADA #" + (position + 1) : "⚫ NOTICIA #" + (position + 1));
+                    }
+
+                    if (holder.tvNewsStatusBadge != null) {
+                        String statusText = item.isDraft ? "Borrador" : "✔ Publicado";
+                        int bgColor = item.isDraft ? 0xFFFFF3E0 : 0xFFE8F5E9;
+                        int textColor = item.isDraft ? 0xFFE65100 : 0xFF2E7D32;
+                        holder.tvNewsStatusBadge.setText(statusText);
+                        holder.tvNewsStatusBadge.setBackgroundTintList(ColorStateList.valueOf(bgColor));
+                        holder.tvNewsStatusBadge.setTextColor(textColor);
+                    }
+
+                    if (holder.tvNewsCardTitle != null) {
+                        holder.tvNewsCardTitle.setText(item.title != null && !item.title.trim().isEmpty() ? item.title : "Noticia sin título");
+                    }
+
+                    if (holder.tvNewsCardDesc != null) {
+                        String desc = item.description != null && !item.description.trim().isEmpty() ? item.description : (item.shortDescription != null ? item.shortDescription : "");
+                        holder.tvNewsCardDesc.setText(desc);
+                    }
+
+                    if (holder.tvNewsCardDate != null) {
+                        SimpleDateFormat sdf = new SimpleDateFormat("dd MMM, yyyy", Locale.getDefault());
+                        holder.tvNewsCardDate.setText("📅 " + sdf.format(new Date(item.updatedAt)));
+                    }
+
+                    if (holder.tvNewsLikesCount != null) {
+                        holder.tvNewsLikesCount.setText("❤️ " + item.likesCount + " me gusta  •  🔁 " + item.sharesCount + " compartidos");
+                    }
+
+                    if (holder.tvNewsActionTarget != null) {
+                        String actionText = item.subtitle != null && !item.subtitle.trim().isEmpty() ? item.subtitle : "Ver detalles completos";
+                        holder.tvNewsActionTarget.setText("🔗 Acción: " + actionText + " (INFORMATIVO)");
+                    }
+
+                    List<String> photos = ContentItemAdapter.parsePhotosList(item);
+                    View thumbContainer = holder.itemView.findViewById(R.id.layout_admin_news_thumb_container);
+                    TextView tvBadge = holder.itemView.findViewById(R.id.tv_photos_count_badge);
+
+                    if (thumbContainer != null) {
+                        if (photos.isEmpty()) {
+                            thumbContainer.setVisibility(View.GONE);
+                        } else {
+                            thumbContainer.setVisibility(View.VISIBLE);
+                            if (holder.ivNewsThumb != null) {
+                                AdminNewsEditActivity.loadNewsImageIntoView(AdminContentListActivity.this, holder.ivNewsThumb, photos.get(0));
+                            }
+                            if (tvBadge != null) {
+                                if (photos.size() > 1) {
+                                    tvBadge.setVisibility(View.VISIBLE);
+                                    tvBadge.setText("📷 " + photos.size() + " fotos");
+                                } else {
+                                    tvBadge.setVisibility(View.GONE);
+                                }
+                            }
+                        }
+                    }
+
+                    // Subir / Bajar
+                    if (holder.btnMoveUp != null) {
+                        holder.btnMoveUp.setOnClickListener(v -> moveItemOrder(item, -1));
+                    }
+                    if (holder.btnMoveDown != null) {
+                        holder.btnMoveDown.setOnClickListener(v -> moveItemOrder(item, 1));
+                    }
+
+                    // ✏️ Editar (Abre AdminNewsEditActivity)
+                    if (holder.btnEdit != null) {
+                        holder.btnEdit.setOnClickListener(v -> {
+                            Intent intent = new Intent(AdminContentListActivity.this, AdminNewsEditActivity.class);
+                            intent.putExtra(AdminNewsEditActivity.EXTRA_ITEM_ID, item.id);
+                            startActivity(intent);
+                        });
+                    }
+
+                    // 📋 Duplicar
+                    if (holder.btnDuplicate != null) {
+                        holder.btnDuplicate.setOnClickListener(v -> duplicateItem(item));
+                    }
+
+                    // 👁️ Vista previa
+                    if (holder.btnToggleVisibility != null) {
+                        holder.btnToggleVisibility.setOnClickListener(v -> openCanvasPreview());
+                    }
+
+                    // 🗑️ Eliminar
+                    if (holder.btnDelete != null) {
+                        holder.btnDelete.setOnClickListener(v -> deleteItem(item));
+                    }
+                    return;
+                }
+
+                if (holder.tvType != null) {
+                    holder.tvType.setText("[ TARJETA DE PRODUCTO ]");
+                }
+
                 holder.tvTitle.setText(item.title);
-                holder.tvSubtitle.setText(item.shortDescription);
-                holder.tvDate.setText("Última edición: " + sdf.format(new Date(item.updatedAt)));
-                
-                String statusText = "Activo";
+                holder.tvSubtitle.setText(item.shortDescription != null && !item.shortDescription.isEmpty() ? item.shortDescription : item.subtitle);
+
+                if (holder.tvTargetPreview != null) {
+                    String target = item.targetSectionId != null && !item.targetSectionId.isEmpty() ? item.targetSectionId : "Ninguno (Informativo)";
+                    holder.tvTargetPreview.setText("Destino botón: " + target);
+                }
+
+                String statusText = "Publicado";
                 int bgColor = 0xFFE8F5E9;
                 int textColor = 0xFF2E7D32;
-                
+
                 if (item.isDraft) {
                     statusText = "Borrador";
                     bgColor = 0xFFFFF3E0;
                     textColor = 0xFFE65100;
-                } else if (item.publicationDate > System.currentTimeMillis()) {
-                    statusText = "Programado";
-                    bgColor = 0xFFE3F2FD;
-                    textColor = 0xFF1565C0;
                 } else if (!item.isVisible) {
                     statusText = "Oculto";
                     bgColor = 0xFFF5F5F5;
                     textColor = 0xFF757575;
                 }
-                
+
                 holder.tvStatus.setText(statusText);
-                holder.tvStatus.setBackgroundTintList(android.content.res.ColorStateList.valueOf(bgColor));
+                holder.tvStatus.setBackgroundTintList(ColorStateList.valueOf(bgColor));
                 holder.tvStatus.setTextColor(textColor);
 
-                if (item.accentColor != null) {
-                    try { holder.sideBorder.setBackgroundColor(android.graphics.Color.parseColor(item.accentColor)); } catch (Exception ignored) {}
+                if (item.accentColor != null && !item.accentColor.isEmpty()) {
+                    try { holder.sideBorder.setBackgroundColor(Color.parseColor(item.accentColor)); } catch (Exception ignored) {}
                 }
 
+                int iconRes = getResources().getIdentifier(item.iconName, "drawable", getPackageName());
+                if (iconRes != 0) {
+                    holder.ivIcon.setImageResource(iconRes);
+                    if (item.iconName != null && item.iconName.startsWith("ic_")) {
+                        holder.ivIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#173789")));
+                    } else {
+                        holder.ivIcon.setImageTintList(null);
+                    }
+                } else {
+                    holder.ivIcon.setImageResource(R.drawable.ic_star);
+                    holder.ivIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#173789")));
+                }
+
+                // Subir / Bajar
+                if (holder.btnMoveUp != null) {
+                    holder.btnMoveUp.setOnClickListener(v -> moveItemOrder(item, -1));
+                }
+                if (holder.btnMoveDown != null) {
+                    holder.btnMoveDown.setOnClickListener(v -> moveItemOrder(item, 1));
+                }
+
+                // Editar (Propiedades)
                 holder.btnEdit.setOnClickListener(v -> {
                     Intent intent = new Intent(AdminContentListActivity.this, AdminContentEditActivity.class);
                     intent.putExtra(AdminContentEditActivity.EXTRA_ITEM_ID, item.id);
@@ -332,68 +1044,362 @@ public class AdminContentListActivity extends AppCompatActivity {
                     startActivity(intent);
                 });
 
-                holder.btnOrder.setOnClickListener(v -> showOrderDialog(item));
+                // Duplicar
+                if (holder.btnDuplicate != null) {
+                    holder.btnDuplicate.setOnClickListener(v -> duplicateItem(item));
+                }
+
+                // Ocultar / Mostrar
+                if (holder.btnToggleVisibility != null) {
+                    holder.btnToggleVisibility.setOnClickListener(v -> toggleVisibility(item));
+                }
+
+                // Eliminar
                 holder.btnDelete.setOnClickListener(v -> deleteItem(item));
 
             } else if (obj instanceof AgenciaEntity) {
                 AgenciaEntity a = (AgenciaEntity) obj;
+                if (holder.tvType != null) holder.tvType.setText("[ AGENCIA / PUNTO ]");
                 holder.tvTitle.setText(a.nombre);
                 holder.tvSubtitle.setText(a.departamento + " - " + a.tipo);
-                holder.tvDate.setText("Última edición: " + sdf.format(new Date(a.updatedAt)));
-                holder.tvStatus.setText(a.isVisible ? "Activo" : "Borrador");
-                
-                if (a.colorHex != null) {
-                    try { holder.sideBorder.setBackgroundColor(android.graphics.Color.parseColor(a.colorHex)); } catch (Exception ignored) {}
+
+                if (holder.tvTargetPreview != null) {
+                    holder.tvTargetPreview.setText("Teléfono: " + (a.telefono != null && !a.telefono.isEmpty() ? a.telefono : "Sin número"));
                 }
 
+                String statusText = a.isVisible ? "Activo" : "Oculto";
+                int bgColor = a.isVisible ? 0xFFE8F5E9 : 0xFFF5F5F5;
+                int textColor = a.isVisible ? 0xFF2E7D32 : 0xFF757575;
+
+                holder.tvStatus.setText(statusText);
+                holder.tvStatus.setBackgroundTintList(ColorStateList.valueOf(bgColor));
+                holder.tvStatus.setTextColor(textColor);
+
+                if (a.colorHex != null && !a.colorHex.isEmpty()) {
+                    try { holder.sideBorder.setBackgroundColor(Color.parseColor(a.colorHex)); } catch (Exception ignored) {}
+                }
+
+                // Subir / Bajar
+                if (holder.btnMoveUp != null) {
+                    holder.btnMoveUp.setOnClickListener(v -> moveAgenciaOrder(a, -1));
+                }
+                if (holder.btnMoveDown != null) {
+                    holder.btnMoveDown.setOnClickListener(v -> moveAgenciaOrder(a, 1));
+                }
+
+                // 1. Editar
                 holder.btnEdit.setOnClickListener(v -> {
                     Intent intent = new Intent(AdminContentListActivity.this, AdminAgenciaEditActivity.class);
                     intent.putExtra(AdminAgenciaEditActivity.EXTRA_AGENCIA_ID, a.id);
                     startActivity(intent);
                 });
-                
-                holder.btnDelete.setOnClickListener(v -> deleteAgencia(a));
-            } else if (obj instanceof com.example.coluainformativa.database.ContentBlockEntity) {
-                com.example.coluainformativa.database.ContentBlockEntity block = (com.example.coluainformativa.database.ContentBlockEntity) obj;
-                holder.tvTitle.setText("[ESTRUCTURAL] " + (block.title != null ? block.title : block.type));
-                holder.tvSubtitle.setText(block.content);
-                holder.btnDelete.setVisibility(View.GONE);
 
+                // 2. Duplicar
+                if (holder.btnDuplicate != null) {
+                    holder.btnDuplicate.setOnClickListener(v -> duplicateAgencia(a));
+                }
+
+                // 3. Ocultar / Mostrar (Ojo)
+                if (holder.btnToggleVisibility != null) {
+                    holder.btnToggleVisibility.setOnClickListener(v -> toggleAgenciaVisibility(a));
+                }
+
+                // 4. Eliminar
+                holder.btnDelete.setOnClickListener(v -> deleteAgencia(a));
+            } else if (obj instanceof ContentBlockEntity) {
+                ContentBlockEntity block = (ContentBlockEntity) obj;
+
+                String typeTag = "[ BLOQUE / ELEMENTO ]";
+                String blockType = block.type != null ? block.type.toUpperCase(Locale.getDefault()) : "TEXT";
+
+                if ("BUTTON".equalsIgnoreCase(blockType)) {
+                    typeTag = "[ BOTÓN / ACCIÓN CTA ]";
+                } else if ("IMAGE".equalsIgnoreCase(blockType) || "BANNER".equalsIgnoreCase(blockType)) {
+                    typeTag = "[ IMAGEN / LOGOTIPO ]";
+                } else if ("ICON".equalsIgnoreCase(blockType)) {
+                    typeTag = "[ ÍCONO DE GALERÍA ]";
+                } else if ("CARD".equalsIgnoreCase(blockType)) {
+                    typeTag = "[ TARJETA CONTENEDOR ]";
+                } else if ("CONTAINER".equalsIgnoreCase(blockType)) {
+                    typeTag = "[ SECCIÓN / CONTENEDOR ]";
+                } else if ("LIST".equalsIgnoreCase(blockType)) {
+                    typeTag = "[ LISTA DE BENEFICIOS ]";
+                } else if ("PRODUCT_CARD".equalsIgnoreCase(blockType)) {
+                    typeTag = "[ TARJETA DE PRODUCTO ]";
+                } else if ("TEXT".equalsIgnoreCase(blockType)) {
+                    typeTag = "[ TEXTO LIBRE / ENCABEZADO ]";
+                }
+
+                if (holder.tvType != null) {
+                    holder.tvType.setText(typeTag);
+                }
+
+                // Título del bloque
+                String displayTitle = "Elemento libre";
+                if (block.title != null && !block.title.trim().isEmpty()) {
+                    displayTitle = block.title;
+                } else if (block.buttonText != null && !block.buttonText.trim().isEmpty()) {
+                    displayTitle = "Botón: " + block.buttonText;
+                } else if (block.content != null && !block.content.trim().isEmpty()) {
+                    displayTitle = block.content;
+                }
+                holder.tvTitle.setText(displayTitle);
+
+                // Subtítulo / Párrafo
+                String displaySubtitle = block.content != null ? block.content : "";
+                if (displaySubtitle.isEmpty() && block.buttonText != null) {
+                    displaySubtitle = "Texto del botón: " + block.buttonText;
+                }
+                holder.tvSubtitle.setText(displaySubtitle);
+
+                // Enlace / Destino
+                if (holder.tvTargetPreview != null) {
+                    String action = block.buttonAction != null && !block.buttonAction.trim().isEmpty() ? block.buttonAction : "Ninguno (Informativo)";
+                    holder.tvTargetPreview.setText("Acción / Destino: " + action);
+                }
+
+                // Estado dinámico: Borrador, Publicado o Oculto
+                String statusText = "Publicado";
+                int bgColor = 0xFFE8F5E9;
+                int textColor = 0xFF2E7D32;
+
+                if (block.isDraft) {
+                    statusText = "Borrador";
+                    bgColor = 0xFFFFF3E0;
+                    textColor = 0xFFE65100;
+                } else if (!block.isVisible) {
+                    statusText = "Oculto";
+                    bgColor = 0xFFF5F5F5;
+                    textColor = 0xFF757575;
+                }
+
+                holder.tvStatus.setText(statusText);
+                holder.tvStatus.setBackgroundTintList(ColorStateList.valueOf(bgColor));
+                holder.tvStatus.setTextColor(textColor);
+
+                if (holder.sideBorder != null) {
+                    holder.sideBorder.setBackgroundColor(Color.parseColor("#173789"));
+                }
+
+                // Ícono
+                String media = block.mediaPath != null && !block.mediaPath.isEmpty() ? block.mediaPath : "editar";
+                int iconRes = getResources().getIdentifier(media, "drawable", getPackageName());
+                if (iconRes != 0) {
+                    holder.ivIcon.setImageResource(iconRes);
+                    if (media.startsWith("ic_")) {
+                        holder.ivIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#173789")));
+                    } else {
+                        holder.ivIcon.setImageTintList(null);
+                    }
+                } else {
+                    holder.ivIcon.setImageResource(R.drawable.editar);
+                    holder.ivIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#173789")));
+                }
+
+                // Subir / Bajar
+                if (holder.btnMoveUp != null) {
+                    holder.btnMoveUp.setOnClickListener(v -> moveBlockOrder(block, -1));
+                }
+                if (holder.btnMoveDown != null) {
+                    holder.btnMoveDown.setOnClickListener(v -> moveBlockOrder(block, 1));
+                }
+
+                // Editar (Abre AdminBlockEditActivity)
                 holder.btnEdit.setOnClickListener(v -> {
                     Intent intent = new Intent(AdminContentListActivity.this, AdminBlockEditActivity.class);
                     intent.putExtra(AdminBlockEditActivity.EXTRA_BLOCK_ID, block.id);
+                    intent.putExtra(AdminBlockEditActivity.EXTRA_SECTION_ID, sectionId);
                     startActivity(intent);
                 });
+
+                // Duplicar
+                if (holder.btnDuplicate != null) {
+                    holder.btnDuplicate.setOnClickListener(v -> duplicateBlock(block));
+                }
+
+                // Vista Previa
+                if (holder.btnToggleVisibility != null) {
+                    holder.btnToggleVisibility.setOnClickListener(v -> openCanvasPreview());
+                }
+
+                // Eliminar
+                holder.btnDelete.setOnClickListener(v -> deleteBlock(block));
             }
         }
 
-        private void showOrderDialog(ContentItemEntity item) {
-            EditText et = new EditText(AdminContentListActivity.this);
-            et.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-            et.setText(String.valueOf(item.displayOrder));
-            et.setHint("Prioridad (ej: 1, 2, 3...)");
+        private void moveBlockOrder(ContentBlockEntity block, int delta) {
+            block.displayOrder = Math.max(1, block.displayOrder + delta);
+            new Thread(() -> {
+                repository.insertBlock(block);
+                getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
+                        .edit()
+                        .putBoolean("has_unpublished_changes", true)
+                        .apply();
+                runOnUiThread(AdminContentListActivity.this::loadData);
+            }).start();
+        }
 
-            new androidx.appcompat.app.AlertDialog.Builder(AdminContentListActivity.this)
-                    .setTitle("Reordenar Elemento")
-                    .setMessage("Ingrese un número para cambiar la posición:")
-                    .setView(et)
-                    .setPositiveButton("CAMBIAR", (d, w) -> {
-                        try {
-                            item.displayOrder = Integer.parseInt(et.getText().toString());
-                            new Thread(() -> {
-                                repository.insertItem(item);
-                                runOnUiThread(AdminContentListActivity.this::loadData);
-                            }).start();
-                        } catch (Exception ignored) {}
-                    })
-                    .setNegativeButton("CANCELAR", null)
-                    .show();
+        private void duplicateBlock(ContentBlockEntity block) {
+            ContentBlockEntity clone = new ContentBlockEntity(
+                    UUID.randomUUID().toString(),
+                    block.contentItemId,
+                    block.type,
+                    block.content,
+                    block.displayOrder + 1,
+                    block.mediaPath,
+                    (block.title != null ? block.title : "Bloque") + " (Copia)",
+                    block.buttonText,
+                    block.buttonAction,
+                    block.sectionId,
+                    block.backgroundColor,
+                    block.textColor,
+                    block.fontSize,
+                    block.fontWeight,
+                    block.alignment
+            );
+
+            new Thread(() -> {
+                repository.insertBlock(clone);
+                getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
+                        .edit()
+                        .putBoolean("has_unpublished_changes", true)
+                        .apply();
+                runOnUiThread(() -> {
+                    Toast.makeText(AdminContentListActivity.this, "Bloque duplicado como borrador", Toast.LENGTH_SHORT).show();
+                    loadData();
+                });
+            }).start();
+        }
+
+        private void deleteBlock(ContentBlockEntity block) {
+            confirmWithPassword(() -> {
+                new Thread(() -> {
+                    repository.deleteBlockById(block.id);
+                    getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
+                            .edit()
+                            .putBoolean("has_unpublished_changes", true)
+                            .apply();
+                    runOnUiThread(() -> {
+                        allItems.remove(block);
+                        applyFilters();
+                        Toast.makeText(AdminContentListActivity.this, "Bloque eliminado del canvas", Toast.LENGTH_SHORT).show();
+                    });
+                }).start();
+            });
+        }
+
+        private void moveItemOrder(ContentItemEntity item, int delta) {
+            item.displayOrder = Math.max(1, item.displayOrder + delta);
+            new Thread(() -> {
+                repository.insertItem(item);
+                getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
+                        .edit()
+                        .putBoolean("has_unpublished_changes", true)
+                        .apply();
+                runOnUiThread(AdminContentListActivity.this::loadData);
+            }).start();
+        }
+
+        private void duplicateItem(ContentItemEntity item) {
+            ContentItemEntity clone = new ContentItemEntity(
+                    UUID.randomUUID().toString(),
+                    item.sectionId,
+                    item.title + " (Copia)",
+                    item.shortDescription,
+                    item.description,
+                    item.accentColor,
+                    item.displayOrder + 1
+            );
+            clone.subtitle = item.subtitle;
+            clone.iconName = item.iconName;
+            clone.imagePath = item.imagePath;
+            clone.targetSectionId = item.targetSectionId;
+            clone.isDraft = true;
+            clone.isVisible = true;
+
+            new Thread(() -> {
+                repository.insertItem(clone);
+                getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
+                        .edit()
+                        .putBoolean("has_unpublished_changes", true)
+                        .apply();
+                runOnUiThread(() -> {
+                    Toast.makeText(AdminContentListActivity.this, "Bloque duplicado como borrador", Toast.LENGTH_SHORT).show();
+                    loadData();
+                });
+            }).start();
+        }
+
+        private void toggleAgenciaVisibility(AgenciaEntity a) {
+            a.isVisible = !a.isVisible;
+            new Thread(() -> {
+                repository.insertAgencias(a);
+                getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
+                        .edit()
+                        .putBoolean("has_unpublished_changes", true)
+                        .apply();
+                runOnUiThread(() -> {
+                    Toast.makeText(AdminContentListActivity.this, a.isVisible ? "Agencia activada" : "Agencia ocultada", Toast.LENGTH_SHORT).show();
+                    loadData();
+                });
+            }).start();
+        }
+
+        private void duplicateAgencia(AgenciaEntity a) {
+            AgenciaEntity clone = new AgenciaEntity(
+                    UUID.randomUUID().toString(),
+                    a.nombre + " (Copia)",
+                    a.departamento,
+                    a.direccion,
+                    a.telefono,
+                    a.colorHex,
+                    a.tipo,
+                    a.mapUrl,
+                    false,
+                    System.currentTimeMillis()
+            );
+
+            new Thread(() -> {
+                repository.insertAgencias(clone);
+                getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
+                        .edit()
+                        .putBoolean("has_unpublished_changes", true)
+                        .apply();
+                runOnUiThread(() -> {
+                    Toast.makeText(AdminContentListActivity.this, "Agencia duplicada correctamente", Toast.LENGTH_SHORT).show();
+                    loadData();
+                });
+            }).start();
+        }
+
+        private void moveAgenciaOrder(AgenciaEntity a, int delta) {
+            Toast.makeText(AdminContentListActivity.this, "Agencia " + a.nombre + " reordenada", Toast.LENGTH_SHORT).show();
+            loadData();
+        }
+
+        private void toggleVisibility(ContentItemEntity item) {
+            item.isVisible = !item.isVisible;
+            new Thread(() -> {
+                repository.insertItem(item);
+                getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
+                        .edit()
+                        .putBoolean("has_unpublished_changes", true)
+                        .apply();
+                runOnUiThread(() -> {
+                    Toast.makeText(AdminContentListActivity.this, item.isVisible ? "Bloque visible" : "Bloque oculto", Toast.LENGTH_SHORT).show();
+                    loadData();
+                });
+            }).start();
         }
 
         private void deleteItem(ContentItemEntity item) {
             confirmWithPassword(() -> {
                 new Thread(() -> {
                     repository.deleteItemById(item.id);
+                    getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
+                            .edit()
+                            .putBoolean("has_unpublished_changes", true)
+                            .apply();
                     runOnUiThread(() -> { allItems.remove(item); applyFilters(); });
                 }).start();
             });
@@ -403,56 +1409,66 @@ public class AdminContentListActivity extends AppCompatActivity {
             confirmWithPassword(() -> {
                 new Thread(() -> {
                     repository.deleteAgencia(a);
+                    getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
+                            .edit()
+                            .putBoolean("has_unpublished_changes", true)
+                            .apply();
                     runOnUiThread(() -> { allItems.remove(a); applyFilters(); });
                 }).start();
             });
         }
 
         private void confirmWithPassword(Runnable onConfirm) {
-            android.widget.EditText et = new android.widget.EditText(AdminContentListActivity.this);
-            et.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
-            et.setHint("Clave de Administrador");
-            
-            android.widget.FrameLayout container = new android.widget.FrameLayout(AdminContentListActivity.this);
-            android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            params.leftMargin = params.rightMargin = 60;
-            et.setLayoutParams(params);
-            container.addView(et);
-
-            new androidx.appcompat.app.AlertDialog.Builder(AdminContentListActivity.this)
-                    .setTitle("Confirmar Eliminación")
-                    .setMessage("ADVERTENCIA: Esta acción es irreversible. Ingrese su clave para continuar:")
-                    .setView(container)
-                    .setPositiveButton("ELIMINAR", (d, w) -> {
-                        if (repository.checkAdminPassword(et.getText().toString())) {
-                            onConfirm.run();
-                        } else {
-                            Toast.makeText(AdminContentListActivity.this, "Clave incorrecta", Toast.LENGTH_SHORT).show();
-                        }
-                    })
-                    .setNegativeButton("CANCELAR", null)
-                    .show();
+            DialogHelper.showPasswordConfirmationDialog(AdminContentListActivity.this, new AdminAuthManager(AdminContentListActivity.this), "Confirmar Eliminación", "ADVERTENCIA: Esta acción eliminará el bloque del canvas. Ingrese su clave para continuar:", onConfirm);
         }
 
         @Override
         public int getItemCount() { return paginatedList.size(); }
 
         class ViewHolder extends RecyclerView.ViewHolder {
-            TextView tvTitle, tvSubtitle, tvDate, tvStatus;
+            TextView tvType, tvTitle, tvSubtitle, tvTargetPreview, tvStatus;
+            ImageView ivIcon;
             View sideBorder;
-            Button btnEdit, btnOrder;
-            ImageButton btnDelete;
+            View btnEdit;
+            ImageButton btnMoveUp, btnMoveDown, btnDuplicate, btnToggleVisibility, btnDelete;
 
-            ViewHolder(View v) {
+            TextView tvNewsFeaturedTag, tvNewsStatusBadge, tvNewsCardTitle, tvNewsCardDesc, tvNewsCardDate, tvNewsLikesCount, tvNewsActionTarget;
+            ImageView ivNewsThumb;
+
+            ViewHolder(View v, int viewType) {
                 super(v);
-                tvTitle = v.findViewById(R.id.tv_admin_item_title);
-                tvSubtitle = v.findViewById(R.id.tv_admin_item_subtitle);
-                tvDate = v.findViewById(R.id.tv_admin_item_date);
-                tvStatus = v.findViewById(R.id.tv_admin_item_status);
-                sideBorder = v.findViewById(R.id.side_border_admin);
-                btnEdit = v.findViewById(R.id.btn_edit_item);
-                btnOrder = v.findViewById(R.id.btn_order_item);
-                btnDelete = v.findViewById(R.id.btn_delete_item);
+                if (viewType == TYPE_NEWS) {
+                    tvNewsFeaturedTag = v.findViewById(R.id.tv_news_featured_tag);
+                    tvNewsStatusBadge = v.findViewById(R.id.tv_news_status_badge);
+                    tvNewsCardTitle = v.findViewById(R.id.tv_news_card_title);
+                    tvNewsCardDesc = v.findViewById(R.id.tv_news_card_desc);
+                    tvNewsCardDate = v.findViewById(R.id.tv_news_card_date);
+                    tvNewsLikesCount = v.findViewById(R.id.tv_news_likes_count);
+                    tvNewsActionTarget = v.findViewById(R.id.tv_news_action_target);
+                    ivNewsThumb = v.findViewById(R.id.iv_news_thumb);
+
+                    btnMoveUp = v.findViewById(R.id.btn_move_up);
+                    btnMoveDown = v.findViewById(R.id.btn_move_down);
+                    btnEdit = v.findViewById(R.id.btn_edit_item);
+                    btnDuplicate = v.findViewById(R.id.btn_duplicate_item);
+                    btnToggleVisibility = v.findViewById(R.id.btn_toggle_visibility);
+                    btnDelete = v.findViewById(R.id.btn_delete_item);
+                } else {
+                    tvType = v.findViewById(R.id.tv_admin_item_type);
+                    tvTitle = v.findViewById(R.id.tv_admin_item_title);
+                    tvSubtitle = v.findViewById(R.id.tv_admin_item_subtitle);
+                    tvTargetPreview = v.findViewById(R.id.tv_admin_item_target_preview);
+                    tvStatus = v.findViewById(R.id.tv_admin_item_status);
+                    ivIcon = v.findViewById(R.id.iv_admin_item_icon);
+                    sideBorder = v.findViewById(R.id.side_border_admin);
+
+                    btnMoveUp = v.findViewById(R.id.btn_move_up);
+                    btnMoveDown = v.findViewById(R.id.btn_move_down);
+                    btnEdit = v.findViewById(R.id.btn_edit_item);
+                    btnDuplicate = v.findViewById(R.id.btn_duplicate_item);
+                    btnToggleVisibility = v.findViewById(R.id.btn_toggle_visibility);
+                    btnDelete = v.findViewById(R.id.btn_delete_item);
+                }
             }
         }
     }

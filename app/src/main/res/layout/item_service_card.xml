@@ -3,123 +3,126 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="6dp"
     app:cardBackgroundColor="@color/white"
-    app:cardCornerRadius="14dp"
-    app:cardElevation="6dp"
-    app:strokeWidth="0dp">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#E2E8F0">
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="16dp">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <View
-            android:id="@+id/side_border"
-            android:layout_width="4dp"
-            android:layout_height="0dp"
-            android:background="@color/colua_green"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            <!-- 1. Borde vertical de color izquierdo -->
+            <View
+                android:id="@+id/side_border"
+                android:layout_width="6dp"
+                android:layout_height="match_parent"
+                android:background="#EF8819" />
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:orientation="vertical"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/side_border"
-            app:layout_constraintTop_toTopOf="parent">
-
+            <!-- 2. Contenedor de Ícono Circular con fondo suave tintado -->
             <FrameLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginVertical="14dp"
+                android:layout_marginStart="12dp">
 
                 <View
                     android:id="@+id/icon_background"
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:background="@drawable/circle_background" />
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/circle_background"
+                    android:backgroundTint="#FFF3E0" />
 
                 <ImageView
                     android:id="@+id/service_icon"
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_star"
-                    app:tint="@color/white" />
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ahorros" />
             </FrameLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/service_button"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginTop="16dp"
-                android:clickable="false"
-                android:fontFamily="@font/poppins_regular"
-                android:focusable="false"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="0dp"
-                android:text="¡Ahorro!"
-                android:textColor="@color/colua_navy"
-                android:textSize="12sp"
-                android:textStyle="normal"
-                app:cornerRadius="18dp"
-                app:strokeColor="@color/colua_navy"
-                app:strokeWidth="1dp" />
-
-            <TextView
-                android:id="@+id/service_description"
-                android:layout_width="match_parent"
+            <!-- 3. Columna Central con Título, Subtítulo y Tagline con divisor -->
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:fontFamily="@font/poppins_regular"
-                android:gravity="center"
-                android:text="Cuentas de Ahorro\nAhorro Infantil y Juvenil"
-                android:textColor="@color/colua_navy"
-                android:textSize="14sp"
-                android:textStyle="normal" />
+                android:layout_marginStart="14dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingVertical="12dp">
 
-            <View
-                android:layout_width="100dp"
-                android:layout_height="1dp"
-                android:layout_marginTop="12dp"
-                android:background="#F0F0F0" />
+                <TextView
+                    android:id="@+id/service_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="¡Ahorro!"
+                    android:textColor="#0F172A"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/service_footer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:fontFamily="@font/poppins_regular"
-                android:gravity="center"
-                android:text="Seguridad para tu futuro"
-                android:textColor="@color/text_grey"
-                android:textSize="11sp" />
+                <TextView
+                    android:id="@+id/service_description"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Cuentas de Ahorro,\nAhorro Infantil y Juvenil"
+                    android:textColor="#334155"
+                    android:textSize="12sp" />
+
+                <View
+                    android:id="@+id/view_divider"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="4dp"
+                    android:background="#E2E8F0" />
+
+                <TextView
+                    android:id="@+id/service_footer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Seguridad para tu futuro"
+                    android:textColor="@color/text_grey"
+                    android:textSize="11sp" />
+
+            </LinearLayout>
+
+            <!-- 4. Flecha Derecha Chevron -->
+            <ImageView
+                android:id="@+id/iv_arrow_chevron"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/ic_chevron_right"
+                app:tint="#94A3B8" />
 
         </LinearLayout>
-        </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <!-- Botón Opcional de Edición en Modo CMS -->
         <ImageButton
             android:id="@+id/btn_edit_item"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_gravity="top|end"
             android:layout_margin="8dp"
-            android:src="@android:drawable/ic_menu_edit"
             android:background="@drawable/circle_background"
             android:backgroundTint="@color/colua_orange"
-            app:tint="@color/white"
-            android:visibility="gone" />
+            android:src="@android:drawable/ic_menu_edit"
+            android:visibility="gone"
+            app:tint="@color/white" />
 
     </FrameLayout>
 </com.google.android.material.card.MaterialCardView>
