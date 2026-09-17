@@ -3,6 +3,7 @@ package com.example.coluainformativa;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -20,7 +21,9 @@ import com.example.coluainformativa.database.ContentItemEntity;
 import com.example.coluainformativa.database.SectionEntity;
 import com.example.coluainformativa.repository.ColuaRepository;
 import com.example.coluainformativa.utils.DialogHelper;
+import com.example.coluainformativa.utils.SupabaseStorageManager;
 import com.google.android.material.chip.ChipGroup;
+import kotlin.Unit;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -44,6 +47,7 @@ public class AdminContentEditActivity extends AppCompatActivity {
 
     private EditText etTitle, etSubtitle, etShortDesc, etLongDesc, etTargetId, etImage, etColor, etValue;
     private EditText etPubDate, etEventDate;
+    private String currentImagePath = "";
     private MaterialSwitch switchVisible;
     private ChipGroup cgColors;
     private TextInputLayout tilCustomColor;
@@ -121,7 +125,7 @@ public class AdminContentEditActivity extends AppCompatActivity {
                         if (etImage != null) etImage.setText(resName);
                         updateLivePreview();
                     }
-                }, null);
+                }, this::openImagePickerForContent);
             });
         }
 
@@ -139,6 +143,33 @@ public class AdminContentEditActivity extends AppCompatActivity {
 
         if (btnBrowseScreen != null) {
             btnBrowseScreen.setOnClickListener(v -> showScreenPicker());
+        }
+    }
+
+    private static final int REQUEST_PICK_CONTENT_IMAGE = 302;
+
+    private void openImagePickerForContent() {
+        try {
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("image/*");
+            startActivityForResult(Intent.createChooser(intent, "Seleccionar imagen/ícono"), REQUEST_PICK_CONTENT_IMAGE);
+        } catch (Exception e) {
+            Toast.makeText(this, "Error al abrir el selector de imágenes", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_PICK_CONTENT_IMAGE && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            Uri imageUri = data.getData();
+            SupabaseStorageManager.uploadImageAsync(this, imageUri, remoteUrl -> {
+                String finalPath = (remoteUrl != null && !remoteUrl.isEmpty()) ? remoteUrl : imageUri.toString();
+                currentImagePath = finalPath;
+                if (etImage != null) etImage.setText(SupabaseStorageManager.getShortDisplayLabel(finalPath));
+                updateLivePreview();
+                return Unit.INSTANCE;
+            });
         }
     }
 
@@ -306,7 +337,8 @@ public class AdminContentEditActivity extends AppCompatActivity {
                     if (etShortDesc != null) etShortDesc.setText(item.shortDescription != null ? item.shortDescription : "");
                     if (etLongDesc != null) etLongDesc.setText(item.description != null ? item.description : "");
                     if (etTargetId != null) etTargetId.setText(item.targetSectionId != null ? item.targetSectionId : "");
-                    if (etImage != null) etImage.setText(item.imagePath != null && !item.imagePath.isEmpty() ? item.imagePath : (item.iconName != null ? item.iconName : "credito"));
+                    currentImagePath = item.imagePath != null && !item.imagePath.isEmpty() ? item.imagePath : (item.iconName != null ? item.iconName : "credito");
+                    if (etImage != null) etImage.setText(SupabaseStorageManager.getShortDisplayLabel(currentImagePath));
                     if (etColor != null) etColor.setText(item.accentColor != null ? item.accentColor : "#173789");
                     if (switchVisible != null) switchVisible.setChecked(item.isVisible);
 
@@ -364,9 +396,14 @@ public class AdminContentEditActivity extends AppCompatActivity {
         if (etLongDesc != null) item.description = etLongDesc.getText().toString().trim();
         if (etTargetId != null) item.targetSectionId = etTargetId.getText().toString().trim();
         if (etImage != null) {
-            String img = etImage.getText().toString().trim();
-            item.imagePath = img;
-            item.iconName = img;
+            String enteredText = etImage.getText().toString().trim();
+            if (currentImagePath != null && !currentImagePath.isEmpty() && (enteredText.contains("📷") || enteredText.contains("☁️") || enteredText.contains("📁"))) {
+                item.imagePath = currentImagePath;
+                item.iconName = currentImagePath;
+            } else {
+                item.imagePath = enteredText;
+                item.iconName = enteredText;
+            }
         }
         if (etColor != null) item.accentColor = etColor.getText().toString().trim();
         if (switchVisible != null) item.isVisible = switchVisible.isChecked();

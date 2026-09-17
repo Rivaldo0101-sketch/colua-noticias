@@ -57,7 +57,7 @@ public class DialogHelper {
                     dialog.dismiss();
                     onSuccess.run();
                 } else {
-                    Toast.makeText(context, "Clave de administrador incorrecta", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Credenciales incorrectas.", Toast.LENGTH_SHORT).show();
                 }
             });
         }
@@ -215,9 +215,21 @@ public class DialogHelper {
                 "noticias_colua", "sostenibilidad_cooperativa", "grupo", "public_service",
                 "ahorros", "credito", "seguro", "ubicacion", "servicios_digitales",
                 "beneficios", "inicio", "perfil", "portal_administrativo",
-                "ahorro_infanto_juvenil", "ahorro_programado", "credi_consumo", "credi_vehiculo",
-                "credito_consumo", "credito_productivo", "credito_vivienda", "remesa",
-                "seguro_de_cancer", "seguro_de_vida_individual_o_familar", "seguro_edad_de_oro"
+                "ahorro1", "ahorro2", "ahorro_infanto_juvenil", "ahorro_programado",
+                "apoyo_quirurgico", "beneficio", "beneficio1", "beneficio2", "beneficio_de_oro",
+                "credi_consumo", "credi_vehiculo", "credito1", "credito2", "credito_consumo",
+                "credito_productivo", "credito_vivienda", "cuentas1", "desarrollo_comunitario",
+                "educacion", "empleabilidad", "equipo", "home", "home1", "instrucciones",
+                "manejo_seguro", "nosotros1", "nosotros2", "noticia1", "noticia2", "noticias",
+                "pantallas", "pbx", "programa_huellas", "programa_wachalal", "propositovisionario",
+                "propuesta_de_valor1", "propuesta_de_valor_2", "proyectos", "publicar_cambios",
+                "rd1", "rd2", "rd3", "rd4", "rd5", "remesa", "remesa1", "remesa2", "renta_diaria",
+                "requisito1", "requisito2", "seguro_accidentes_infanto_juvenil", "seguro_cv_personal",
+                "seguro_de_ahorrantes", "seguro_de_cancer", "seguro_de_deudores",
+                "seguro_de_vida_individual_o_familar", "seguro_edad_de_oro", "seguro_vida_saludable",
+                "seguros_1", "seguros_2", "servicio_funerario", "servicios_digitales11",
+                "solicituddetarjetas", "tallerescomunitarios", "tarjeta_debito", "valores_colua",
+                "valores_colua_1", "ver", "vision1"
         };
         showVisualResourceGridDialog(context, "Galería de Imágenes Oficiales", "Selecciona una imagen PNG de la app:", imageResources, listener);
     }
@@ -272,6 +284,7 @@ public class DialogHelper {
                     String resName = resources[position];
                     ImageView ivThumb = holder.itemView.findViewById(R.id.iv_grid_thumb);
                     TextView tvLabel = holder.itemView.findViewById(R.id.tv_grid_label);
+                    View cardItem = holder.itemView.findViewById(R.id.card_grid_item);
 
                     if (tvLabel != null) tvLabel.setText(resName);
 
@@ -289,12 +302,17 @@ public class DialogHelper {
                         }
                     }
 
-                    holder.itemView.setOnClickListener(v -> {
+                    View.OnClickListener selectListener = v -> {
                         dialog.dismiss();
                         if (listener != null) {
                             listener.onResourceSelected(resName, resName);
                         }
-                    });
+                    };
+
+                    holder.itemView.setOnClickListener(selectListener);
+                    if (cardItem != null) cardItem.setOnClickListener(selectListener);
+                    if (ivThumb != null) ivThumb.setOnClickListener(selectListener);
+                    if (tvLabel != null) tvLabel.setOnClickListener(selectListener);
                 }
 
                 @Override

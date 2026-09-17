@@ -142,6 +142,70 @@
                     app:backgroundTint="@color/colua_navy"
                     app:cornerRadius="12dp" />
 
+                <!-- CARD: IDENTIDAD VISUAL E IMÁGENES (Configuración del Logo y Distintivo) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_edit_identity"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#E2E8F0">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:contentDescription="Identidad visual"
+                            android:src="@drawable/ic_info"
+                            app:tint="@color/colua_navy" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppins_regular"
+                                android:text="Identidad Visual e Imágenes"
+                                android:textColor="@color/black"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppins_regular"
+                                android:text="Configura el Logo y Distintivo global"
+                                android:textColor="@color/text_grey"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <ImageButton
+                            android:id="@+id/btn_edit_identity"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="Editar identidad visual"
+                            android:src="@android:drawable/ic_menu_edit"
+                            app:tint="@color/colua_navy" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
                 <!-- Encabezado y Botón + Nueva Pantalla -->
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -507,129 +571,6 @@
                             android:text="Mostrando 0 usuarios coincidentes"
                             android:textColor="@color/text_grey"
                             android:textSize="11sp" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Identidad Visual -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/card_global_config"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="1dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#E0E0E0">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="16dp">
-
-                        <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:contentDescription="Icono de identidad visual"
-                            android:src="@drawable/ic_info"
-                            app:tint="@color/colua_navy" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/poppins_regular"
-                                android:text="Identidad Visual e Imágenes"
-                                android:textColor="@color/black"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/poppins_regular"
-                                android:text="Configura el Logo y Distintivo global"
-                                android:textColor="@color/text_grey"
-                                android:textSize="11sp" />
-                        </LinearLayout>
-
-                        <ImageButton
-                            android:id="@+id/btn_edit_identity"
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="Editar identidad visual"
-                            android:src="@android:drawable/ic_menu_edit"
-                            app:tint="@color/colua_navy" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Mantenimiento de Sistema -->
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:layout_marginBottom="30dp"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="1dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#E0E0E0">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppins_regular"
-                            android:text="Mantenimiento de Sistema"
-                            android:textColor="@color/colua_navy"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_change_password"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:layout_marginTop="12dp"
-                            android:fontFamily="@font/poppins_regular"
-                            android:text="CAMBIAR CONTRASEÑA ADMIN"
-                            android:textColor="@color/colua_navy"
-                            app:strokeColor="@color/colua_navy" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_restore_data"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:layout_marginTop="12dp"
-                            android:fontFamily="@font/poppins_regular"
-                            android:text="RESTAURAR DATOS INICIALES"
-                            android:textColor="#D32F2F"
-                            app:strokeColor="#D32F2F" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_wipe_users"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:layout_marginTop="12dp"
-                            android:fontFamily="@font/poppins_regular"
-                            android:text="LIMPIEZA PROFUNDA DE USUARIOS"
-                            android:textColor="#B71C1C"
-                            app:strokeColor="#B71C1C" />
-
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -1099,6 +1040,482 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- CARD 8: MANTENIMIENTO DE SISTEMA - CONTROL DE OPERACIONES Y ACCESOS -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#E2E8F0">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="18dp">
+
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+
+                            <TextView
+                                android:id="@+id/tv_system_health_badge"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:layout_centerVertical="true"
+                                android:background="@drawable/circle_background"
+                                android:backgroundTint="#E8F5E9"
+                                android:fontFamily="@font/poppins_regular"
+                                android:paddingHorizontal="10dp"
+                                android:paddingVertical="4dp"
+                                android:text="🟢 Estado Óptimo"
+                                android:textColor="#2E7D32"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentStart="true"
+                                android:layout_toStartOf="@id/tv_system_health_badge"
+                                android:layout_marginEnd="8dp"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="@font/poppins_regular"
+                                    android:text="MANTENIMIENTO DE SISTEMA"
+                                    android:textColor="#64748B"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="@font/poppins_regular"
+                                    android:text="Control de Operaciones y Accesos"
+                                    android:textColor="@color/colua_navy"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </RelativeLayout>
+
+                        <!-- Card A: Cambiar Contraseña Admin -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/btn_change_password"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="14dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            app:cardBackgroundColor="#F8FAFC"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="#E2E8F0">
+
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:padding="14dp">
+
+                                <ImageView
+                                    android:id="@+id/iv_icon_change_pass"
+                                    android:layout_width="38dp"
+                                    android:layout_height="38dp"
+                                    android:layout_alignParentStart="true"
+                                    android:layout_centerVertical="true"
+                                    android:background="@drawable/circle_background"
+                                    android:backgroundTint="#E0F2FE"
+                                    android:padding="8dp"
+                                    android:src="@drawable/ic_security"
+                                    app:tint="#0284C7" />
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_centerVertical="true"
+                                    android:layout_marginStart="12dp"
+                                    android:layout_toEndOf="@id/iv_icon_change_pass"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:fontFamily="@font/poppins_regular"
+                                        android:text="Cambiar Contraseña Admin"
+                                        android:textColor="@color/colua_navy"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:fontFamily="@font/poppins_regular"
+                                        android:text="Actualiza tus credenciales maestras de acceso seguro"
+                                        android:textColor="@color/text_grey"
+                                        android:textSize="11sp" />
+                                </LinearLayout>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_centerVertical="true"
+                                    android:fontFamily="@font/poppins_regular"
+                                    android:text="›"
+                                    android:textColor="@color/text_grey"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold" />
+                            </RelativeLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <!-- Card B: Gestionar Managers (Dark Navy Card) -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/btn_manage_managers"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            app:cardBackgroundColor="#0F172A"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="2dp"
+                            app:strokeWidth="0dp">
+
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:padding="14dp">
+
+                                <ImageView
+                                    android:id="@+id/iv_icon_managers"
+                                    android:layout_width="38dp"
+                                    android:layout_height="38dp"
+                                    android:layout_alignParentStart="true"
+                                    android:layout_centerVertical="true"
+                                    android:background="@drawable/circle_background"
+                                    android:backgroundTint="#1E293B"
+                                    android:padding="8dp"
+                                    android:src="@drawable/ic_person"
+                                    app:tint="#F59E0B" />
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_centerVertical="true"
+                                    android:layout_marginStart="12dp"
+                                    android:layout_toEndOf="@id/iv_icon_managers"
+                                    android:orientation="vertical">
+
+                                    <LinearLayout
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:gravity="center_vertical"
+                                        android:orientation="horizontal">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:fontFamily="@font/poppins_regular"
+                                            android:text="Gestionar Managers"
+                                            android:textColor="@color/white"
+                                            android:textSize="14sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginStart="8dp"
+                                            android:background="@drawable/circle_background"
+                                            android:backgroundTint="#1D4ED8"
+                                            android:fontFamily="@font/poppins_regular"
+                                            android:paddingHorizontal="8dp"
+                                            android:paddingVertical="2dp"
+                                            android:text="RBAC"
+                                            android:textColor="@color/white"
+                                            android:textSize="10sp"
+                                            android:textStyle="bold" />
+                                    </LinearLayout>
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:fontFamily="@font/poppins_regular"
+                                        android:text="Asignar privilegios, roles de edición y cuentas individuales"
+                                        android:textColor="#94A3B8"
+                                        android:textSize="11sp" />
+                                </LinearLayout>
+
+                            </RelativeLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <!-- Card C: Actividad de Managers (Bitácora) -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/btn_manager_activity"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            app:cardBackgroundColor="#F8FAFC"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="#E2E8F0">
+
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:padding="14dp">
+
+                                <ImageView
+                                    android:id="@+id/iv_icon_activity"
+                                    android:layout_width="38dp"
+                                    android:layout_height="38dp"
+                                    android:layout_alignParentStart="true"
+                                    android:layout_centerVertical="true"
+                                    android:background="@drawable/circle_background"
+                                    android:backgroundTint="#FEF3C7"
+                                    android:padding="8dp"
+                                    android:src="@drawable/ic_receipt"
+                                    app:tint="#D97706" />
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_centerVertical="true"
+                                    android:layout_marginStart="12dp"
+                                    android:layout_toEndOf="@id/iv_icon_activity"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:fontFamily="@font/poppins_regular"
+                                        android:text="Actividad de Managers (Bitácora)"
+                                        android:textColor="@color/colua_navy"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:fontFamily="@font/poppins_regular"
+                                        android:text="Auditoría detallada de publicaciones y últimos cambios"
+                                        android:textColor="@color/text_grey"
+                                        android:textSize="11sp" />
+                                </LinearLayout>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_centerVertical="true"
+                                    android:fontFamily="@font/poppins_regular"
+                                    android:text="›"
+                                    android:textColor="@color/text_grey"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold" />
+                            </RelativeLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="18dp"
+                            android:layout_marginBottom="8dp"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="🛡️ ACCIONES AVANZADAS DE RESTAURACIÓN"
+                            android:textColor="#475569"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <!-- Card D: Reversión de Versión (Rollback) -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            app:cardBackgroundColor="#F0F9FF"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="#BAE6FD">
+
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:padding="12dp">
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentStart="true"
+                                    android:layout_centerVertical="true"
+                                    android:layout_toStartOf="@id/btn_version_rollback"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:fontFamily="@font/poppins_regular"
+                                        android:text="Reversión de Versión (Rollback)"
+                                        android:textColor="#0369A1"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:fontFamily="@font/poppins_regular"
+                                        android:text="Restablecer la última versión estable aprobada"
+                                        android:textColor="#0284C7"
+                                        android:textSize="11sp" />
+                                </LinearLayout>
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btn_version_rollback"
+                                    style="@style/Widget.Material3.Button.UnelevatedButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="38dp"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_centerVertical="true"
+                                    android:fontFamily="@font/poppins_regular"
+                                    android:text="Revertir"
+                                    android:textColor="#0369A1"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold"
+                                    app:backgroundTint="#E0F2FE"
+                                    app:cornerRadius="10dp" />
+                            </RelativeLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <!-- Card E: Limpieza Profunda de Usuarios -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            app:cardBackgroundColor="#FEFCE8"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="#FEF08A">
+
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:padding="12dp">
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentStart="true"
+                                    android:layout_centerVertical="true"
+                                    android:layout_toStartOf="@id/btn_wipe_users"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:fontFamily="@font/poppins_regular"
+                                        android:text="Limpieza Profunda de Usuarios"
+                                        android:textColor="#A16207"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:fontFamily="@font/poppins_regular"
+                                        android:text="Depurar tokens expirados y caché de sesiones"
+                                        android:textColor="#CA8A04"
+                                        android:textSize="11sp" />
+                                </LinearLayout>
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btn_wipe_users"
+                                    style="@style/Widget.Material3.Button.UnelevatedButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="38dp"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_centerVertical="true"
+                                    android:fontFamily="@font/poppins_regular"
+                                    android:text="Depurar"
+                                    android:textColor="#A16207"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold"
+                                    app:backgroundTint="#FEF9C3"
+                                    app:cornerRadius="10dp" />
+                            </RelativeLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <!-- Card F: Restaurar Datos Iniciales -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            app:cardBackgroundColor="#FEF2F2"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="#FCA5A5">
+
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:padding="12dp">
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentStart="true"
+                                    android:layout_centerVertical="true"
+                                    android:layout_toStartOf="@id/btn_restore_data"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:fontFamily="@font/poppins_regular"
+                                        android:text="Restaurar Datos Iniciales"
+                                        android:textColor="#B91C1C"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:fontFamily="@font/poppins_regular"
+                                        android:text="Reinicio de fábrica del contenido CMS"
+                                        android:textColor="#DC2626"
+                                        android:textSize="11sp" />
+                                </LinearLayout>
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btn_restore_data"
+                                    style="@style/Widget.Material3.Button.UnelevatedButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="38dp"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_centerVertical="true"
+                                    android:fontFamily="@font/poppins_regular"
+                                    android:text="Restaurar"
+                                    android:textColor="@color/white"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold"
+                                    app:backgroundTint="#DC2626"
+                                    app:cornerRadius="10dp" />
+                            </RelativeLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 
@@ -1141,9 +1558,9 @@
                                 android:layout_height="wrap_content"
                                 android:layout_alignParentStart="true"
                                 android:fontFamily="@font/poppins_regular"
-                                android:text="📖 MANUAL COMPLETO DEL ADMINISTRADOR"
+                                android:text="📖 MANUAL COMPLETO Y GUÍA CMS"
                                 android:textColor="@color/white"
-                                android:textSize="15sp"
+                                android:textSize="16sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -1155,9 +1572,9 @@
                                 android:fontFamily="@font/poppins_regular"
                                 android:paddingHorizontal="10dp"
                                 android:paddingVertical="3dp"
-                                android:text="v1.2 CMS Activo"
+                                android:text="v2.0 RBAC Activo"
                                 android:textColor="#94A3B8"
-                                android:textSize="10sp"
+                                android:textSize="11sp"
                                 android:textStyle="bold" />
                         </RelativeLayout>
 
@@ -1166,14 +1583,14 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
                             android:fontFamily="@font/poppins_regular"
-                            android:lineSpacingExtra="3dp"
-                            android:text="Guía oficial completa paso a paso para la gestión de publicaciones, noticias, pantallas, tarjetas interactivas y sincronización en la nube de la App COLUA MICOOPE."
+                            android:lineSpacingExtra="4dp"
+                            android:text="Guía oficial de referencia completa paso a paso para la gestión de publicaciones, noticias, pantallas, roles, arquitectura doble nube y sincronización de la App COLUA MICOOPE."
                             android:textColor="#E2E8F0"
-                            android:textSize="12sp" />
+                            android:textSize="13sp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- 2. Card: Módulo de Noticias y Comunicados -->
+                <!-- 2. Card: Control de Acceso por Roles (RBAC) -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -1188,36 +1605,35 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="18dp">
+                        android:padding="20dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="1. Crear, Editar y Gestionar Noticias"
+                            android:text="🛡️ 1. Control de Acceso por Roles (RBAC)"
                             android:textColor="@color/colua_navy"
-                            android:textSize="15sp"
+                            android:textSize="16sp"
                             android:textStyle="bold" />
 
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
-                            android:layout_marginTop="10dp"
-                            android:layout_marginBottom="10dp"
+                            android:layout_marginVertical="10dp"
                             android:background="#F1F5F9" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppins_regular"
-                            android:lineSpacingExtra="4dp"
-                            android:text="• Paso 1: Ingreso al Muro de Noticias\nEn la pestaña 'Contenido', selecciona la pantalla 'Noticias (/noticias)' o abre el menú lateral y elige Noticias.\n\n• Paso 2: Crear Nueva Publicación\nPresiona el botón flotante '+ Crear Nueva Publicación'. Ingresa el Título Oficial, Descripción o Comunicado y Hashtags institucionales (ej. #COLUAVerde #MICOOPE).\n\n• Paso 3: Cargar Imágenes y Carrusel\nPresiona '📷 Añadir Imágenes (Múltiple)' para adjuntar 1 o varias fotos desde tu dispositivo. La app armará automáticamente un carrusel táctil con contador (1/3) e indicador de puntos (● ○ ○).\n\n• Paso 4: Perfil Emisor Oficial\nToca el Perfil Emisor en la parte superior para definir el Nombre (ej. Cooperativa COLUA), la leyenda y la Foto de Perfil Oficial. Ingresa tu clave de administrador para confirmar los cambios.\n\n• Paso 5: Botón de Acción e Integraciones\n- Enlace Vacío: El botón 'Leer artículo completo ›' expandirá el texto de la noticia directamente en la tarjeta (modo Ver más / Ver menos).\n- Enlace Web/PBX: Si colocas un link (http:// o tel:), redirigirá afuera.\n- Link de Compartido: Configura la URL de la Play Store para que se copie al portapapeles cuando los asociados compartan la noticia."
+                            android:lineSpacingExtra="5dp"
+                            android:text="• Doble Factor de Ingreso al CMS:\nEl ingreso requiere primero validar la Clave Universal maestra (1234) y posteriormente verificar en la nube que la cuenta activa posea el rol de Administrador.\n\n• Super Administrador (coluarl@gmail.com):\n- Posee control maestro total sobre el sistema.\n- Asigna y modifica los roles de cualquier usuario (ADMIN, ASOCIADO, INVITADO) desde la lista de Usuarios Activos.\n- Acceso a herramientas de mantenimiento, bitácora de auditoría de managers y reversión de versiones (Rollback).\n\n• Managers de Contenido / Administradores:\n- Diseñan, crean y editan borradores de noticias, pantallas, tarjetas y agencias.\n- Publican cambios a la nube hacia todos los asociados.\n- Sin privilegios para modificar roles de otros usuarios ni reiniciar el sistema."
                             android:textColor="#334155"
-                            android:textSize="12sp" />
+                            android:textSize="13sp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- 3. Card: Módulo de Pantallas y Secciones -->
+                <!-- 3. Card: Instrucciones de Manejo de Pantallas -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -1232,36 +1648,35 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="18dp">
+                        android:padding="20dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="2. Crear y Configurar Nuevas Pantallas"
+                            android:text="🖥️ 2. Instrucciones de Manejo de Pantallas"
                             android:textColor="@color/colua_navy"
-                            android:textSize="15sp"
+                            android:textSize="16sp"
                             android:textStyle="bold" />
 
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
-                            android:layout_marginTop="10dp"
-                            android:layout_marginBottom="10dp"
+                            android:layout_marginVertical="10dp"
                             android:background="#F1F5F9" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppins_regular"
-                            android:lineSpacingExtra="4dp"
-                            android:text="• Paso 1: Pestaña Pantallas\nAccede a la pestaña 'Pantallas' en la barra inferior del portal y presiona '+ Crear Nueva Pantalla'.\n\n• Paso 2: Datos Básicos\nIndica el Nombre de la pantalla, Subtítulo descriptivo, Ícono gráfico y Color temático de acento.\n\n• Paso 3: Modo Borrador Automático\nLa pantalla se guardará inicialmente vacía en modo borrador y se asignará al menú lateral para que puedas agregarle tarjetas y contenidos."
+                            android:lineSpacingExtra="5dp"
+                            android:text="• Paso 1: Pestaña Pantallas\nEn la barra inferior presiona 'Pantallas' y toca el botón '+ Crear Nueva Pantalla'.\n\n• Paso 2: Nombre de Pantalla y Slug Automático\nAl escribir el nombre (ej. Créditos Educativos), el sistema genera la ruta técnica en minúsculas sin espacios (ej. /sec_creditos_educativos).\n\n• Paso 3: Ícono y Color Temático Hexadecimal\nSelecciona el ícono institucional de la galería y asigna un color de acento por Chip o código #HEX.\n\n• Paso 4: Ubicación de Navegación\nElige dónde se mostrará la pantalla:\n - Menú lateral (Predeterminado)\n - Barra inferior fija\n - Acceso superior (Navbar)\n - Botón dentro de otra pantalla (permite seleccionar la pantalla padre y el texto del botón de enlace)\n - Sin acceso visible (NONE, oculta o por enlace directo)\n\n• Paso 5: Switch de Visibilidad\nPermite encender o apagar la pantalla inmediatamente sin necesidad de eliminarla."
                             android:textColor="#334155"
-                            android:textSize="12sp" />
+                            android:textSize="13sp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- 4. Card: Editor Maestro de Tarjetas y Servicios -->
+                <!-- 4. Card: Instrucciones de Manejo de Contenido -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -1276,36 +1691,35 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="18dp">
+                        android:padding="20dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="3. Editar Tarjetas y Servicios (Editor Maestro)"
+                            android:text="📝 3. Instrucciones de Manejo de Contenido"
                             android:textColor="@color/colua_navy"
-                            android:textSize="15sp"
+                            android:textSize="16sp"
                             android:textStyle="bold" />
 
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
-                            android:layout_marginTop="10dp"
-                            android:layout_marginBottom="10dp"
+                            android:layout_marginVertical="10dp"
                             android:background="#F1F5F9" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppins_regular"
-                            android:lineSpacingExtra="4dp"
-                            android:text="• Previsualización en Vivo\nAl presionar 'Editar' en cualquier tarjeta (Ahorros, Créditos, Seguros, Agencias), el Editor Maestro te mostrará la tarjeta real en tiempo real mientras escribes.\n\n• Identidad y Color de Acento\nConfigura el título, ícono gráfico (usa el botón 'Elegir' o las sugerencias rápidas), etiqueta de píldora (ej. ¡CRÉDITO!) y selecciona el color temático.\n\n• Oferta y Redirección\nIngresa la oferta o tasa destacada (ej. 5% Interés) y selecciona mediante el botón 'Examinar' la pantalla interna que se abrirá al pulsar la tarjeta."
+                            android:lineSpacingExtra="5dp"
+                            android:text="• Selección de Pantallas a Editar:\nEn la pestaña 'Contenido', toca cualquier pantalla activa (Servicios, Ahorros, Créditos, Agencias) para desplegar su editor de tarjetas e ítems.\n\n• Editor Maestro en Vivo:\nAl presionar 'Editar' en cualquier tarjeta o servicio, podrás modificar títulos, ofertas/tasas, botones CTA y colores observando la tarjeta real en tiempo real.\n\n• Gestión de Agencias y Sucursales:\nPermite agregar, editar y ordenar las 25 agencias oficiales con su dirección, PBX y ubicación."
                             android:textColor="#334155"
-                            android:textSize="12sp" />
+                            android:textSize="13sp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- 5. Card: Publicación y Sincronización Nube -->
+                <!-- 5. Card: Apartado Especial - Publicación y Subida de Noticias -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -1320,36 +1734,35 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="18dp">
+                        android:padding="20dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="4. Publicar y Sincronizar Cambios a la Nube"
+                            android:text="📰 4. Apartado Especial: Publicación y Subida de Noticias"
                             android:textColor="@color/colua_navy"
-                            android:textSize="15sp"
+                            android:textSize="16sp"
                             android:textStyle="bold" />
 
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
-                            android:layout_marginTop="10dp"
-                            android:layout_marginBottom="10dp"
+                            android:layout_marginVertical="10dp"
                             android:background="#F1F5F9" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppins_regular"
-                            android:lineSpacingExtra="4dp"
-                            android:text="• Guardado Seguro Local (Borrador)\nTodos los cambios en noticias, fotos y tarjetas se guardan primero localmente como borrador para que puedas previsualizar tu trabajo sin afectar la app pública.\n\n• Despliegue Global\nPara enviar los cambios a todos los asociados, dirígete a la pestaña 'Publicar' y presiona 'Sincronizar y Publicar Todo'. Los datos se actualizarán de inmediato en Firestore."
+                            android:lineSpacingExtra="5dp"
+                            android:text="⚡ PUBLICACIÓN RÁPIDA DESDE EL INICIO:\n¡No necesitas ingresar a la pestaña 'Publicar' para subir una noticia! Al inicio de la pestaña 'Pantallas' verás el botón destacado '+ Nueva Publicación Rápida'. Puedes publicar noticias directamente desde ahí en su propio espacio independiente.\n\n• Paso 1: Título Principal (et_news_title)\nCampo obligatorio donde ingresas el titular de la noticia.\n\n• Paso 2: Comunicado y Contador (et_news_description)\nEspacio para redactar el cuerpo con contador dinámico de caracteres (ej. 124 / 500 car.).\n\n• Paso 3: Hashtags (et_news_tags)\nEtiquetas institucionales para categorizar (ej. #COLUAVerde #MICOOPE).\n\n• Paso 4: Carga de Fotos y Carrusel Táctil\n- Presiona '↑ Subir nueva' o '✱ Múltiples fotos' para adjuntar 1 o varias imágenes.\n- La app genera automáticamente un carrusel táctil con indicador (1/3) e indicador de puntos (● ○ ○).\n- También puedes capturar fotos en vivo con el botón 'Cámara'.\n\n• Paso 5: Botón de Acción Interactivo y Enlaces\n- Enlace Vacío: El botón expandirá el artículo completo dentro de la misma app.\n- Enlace Web o PBX: Si colocas una URL (http:// o tel:), redirigirá afuera.\n- Link para Compartir: Define la URL que se copiará al presionar 'Compartir'.\n\n• Paso 6: Noticia Destacada (cb_is_featured)\nAncla la noticia en la parte superior del muro general con la insignia 'Destacada'."
                             android:textColor="#334155"
-                            android:textSize="12sp" />
+                            android:textSize="13sp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- 6. Card: Sistema de Likes y Asociados -->
+                <!-- 6. Card: Arquitectura Nube Doble (Firebase + Supabase) -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -1364,32 +1777,74 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="18dp">
+                        android:padding="20dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppins_regular"
-                            android:text="5. Reacciones, Likes y Seguridad"
+                            android:text="☁️ 5. Conexión de Nube Doble (Firebase + Supabase)"
                             android:textColor="@color/colua_navy"
-                            android:textSize="15sp"
+                            android:textSize="16sp"
                             android:textStyle="bold" />
 
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
-                            android:layout_marginTop="10dp"
-                            android:layout_marginBottom="10dp"
+                            android:layout_marginVertical="10dp"
                             android:background="#F1F5F9" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppins_regular"
-                            android:lineSpacingExtra="4dp"
-                            android:text="• Interacción de Asociados\nLos 'Me gusta' y compartidos son realizados directamente por asociados con sesión activa. Los invitados son guiados a registrar su perfil antes de poder interactuar.\n\n• Protección de Clave Administrador\nCualquier modificación en el Perfil Emisor oficial o cambios globales del sistema requerirán confirmación por contraseña de administrador."
+                            android:lineSpacingExtra="5dp"
+                            android:text="• Google Firebase Firestore (Bases de Datos):\nSincroniza la estructura, borradores, perfiles de usuario, roles, reacciones y datos en tiempo real entre todos los dispositivos.\n\n• Supabase Storage (Servidor de Imágenes):\nAloja de forma pública todas las fotografías de noticias, galerías y bloques en el servidor dedicado de Supabase (bucket 'imagenes').\n\n• Sincronización Automática:\nAl adjuntar una foto, la app la sube a Supabase, guarda la URL pública en Firestore y la hace visible para todos los asociados en cualquier dispositivo inmediatamente."
                             android:textColor="#334155"
-                            android:textSize="12sp" />
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 7. Card: Auditoría, Bitácora y Reversión (Rollback) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#E2E8F0">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="20dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="📋 6. Auditoría, Bitácora y Reversión (Rollback)"
+                            android:textColor="@color/colua_navy"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginVertical="10dp"
+                            android:background="#F1F5F9" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:lineSpacingExtra="5dp"
+                            android:text="• Pestaña Publicar y Verificación:\nEl Centro de Control muestra la versión actual (ej. v33 local vs v32 publicada) y el botón 'Revisar Detalle de Cambios'.\n\n• Bitácora de Auditoría:\nRegistra con fecha, hora, rol y UID de dispositivo cada modificación realizada en el CMS.\n\n• Reversión de Versión / Rollback:\nHerramienta de emergencia del Super Administrador para comprobar y regresar la app a la última versión estable aprobada en caso de error."
+                            android:textColor="#334155"
+                            android:textSize="13sp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

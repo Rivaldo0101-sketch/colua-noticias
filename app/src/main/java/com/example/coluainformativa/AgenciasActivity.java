@@ -1,5 +1,7 @@
 package com.example.coluainformativa;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -201,9 +203,23 @@ public class AgenciasActivity extends AppCompatActivity {
 
         btnLogin.setOnClickListener(v -> {
             String pass = etPassword.getText().toString();
+            // Paso 1: Verificar la Clave Global de Seguridad (1234 / admin123)
             if (authManager.checkPassword(pass)) {
                 dialog.dismiss();
-                startActivity(new Intent(this, AdminActivity.class));
+
+                // Paso 2: Verificar si el usuario que está en sesión tiene el Rol de ADMIN o es el Super Admin coluarl@gmail.com
+                SharedPreferences pref = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+                String userRole = pref.getString("user_role", "GUEST");
+                String userEmail = pref.getString("user_email", "");
+
+                boolean isAdmin = "ADMIN".equalsIgnoreCase(userRole) 
+                        || "coluarl@gmail.com".equalsIgnoreCase(userEmail);
+
+                if (isAdmin) {
+                    startActivity(new Intent(this, AdminActivity.class));
+                } else {
+                    Toast.makeText(this, "Acceso denegado: Tu cuenta no tiene permisos de administrador.", Toast.LENGTH_LONG).show();
+                }
             } else {
                 Toast.makeText(this, "Clave incorrecta. Solo personal autorizado.", Toast.LENGTH_SHORT).show();
             }

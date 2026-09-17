@@ -33,7 +33,9 @@ import com.example.coluainformativa.repository.ColuaRepository;
 import com.example.coluainformativa.security.AdminAuthManager;
 import com.example.coluainformativa.ui.content.ElementTypeAdapter;
 import com.example.coluainformativa.utils.DialogHelper;
+import com.example.coluainformativa.utils.SupabaseStorageManager;
 import com.google.android.material.chip.ChipGroup;
+import kotlin.Unit;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -60,6 +62,8 @@ public class AdminBlockEditActivity extends AppCompatActivity {
 
     private Spinner spinnerActionType, spinnerTargetScreen, spinnerCardStyle;
     private String selectedBlockTypeKey = "TEXT";
+    private String currentMediaPath = "";
+    private boolean isMediaNameExpanded = false;
     private TextView tvElementTypeTitle, tvElementTypeSubtitle, tvActionSummary;
     private ImageView ivElementTypeIcon;
     private EditText etTitle, etContent, etBenefitsList, etHighlightAmount, etMedia, etButtonText, etButtonAction;
@@ -468,6 +472,8 @@ public class AdminBlockEditActivity extends AppCompatActivity {
         ImageView ivThumb = findViewById(R.id.iv_media_preview_thumb);
         TextView tvStatus = findViewById(R.id.tv_media_selected_status);
         TextView tvName = findViewById(R.id.tv_media_selected_name);
+        TextView btnToggle = findViewById(R.id.btn_toggle_media_name);
+        View scrollContainer = findViewById(R.id.scroll_media_selected_name);
 
         if (cardPreview == null || path == null || path.trim().isEmpty()) {
             if (cardPreview != null) cardPreview.setVisibility(View.GONE);
@@ -479,6 +485,34 @@ public class AdminBlockEditActivity extends AppCompatActivity {
 
         if (tvStatus != null) tvStatus.setText("✓ Imagen / Ícono seleccionado con éxito");
         if (tvName != null) tvName.setText(cleanPath);
+
+        boolean isLongString = cleanPath.length() > 60 || cleanPath.startsWith("data:image/") || cleanPath.contains("base64");
+
+        if (btnToggle != null && scrollContainer != null) {
+            if (isLongString) {
+                btnToggle.setVisibility(View.VISIBLE);
+                int defaultHeightPx = (int) (70 * getResources().getDisplayMetrics().density);
+
+                ViewGroup.LayoutParams lp = scrollContainer.getLayoutParams();
+                lp.height = isMediaNameExpanded ? ViewGroup.LayoutParams.WRAP_CONTENT : defaultHeightPx;
+                scrollContainer.setLayoutParams(lp);
+
+                btnToggle.setText(isMediaNameExpanded ? "🔼 Colapsar vista" : "👁️ Ver completo");
+
+                btnToggle.setOnClickListener(v -> {
+                    isMediaNameExpanded = !isMediaNameExpanded;
+                    ViewGroup.LayoutParams p = scrollContainer.getLayoutParams();
+                    p.height = isMediaNameExpanded ? ViewGroup.LayoutParams.WRAP_CONTENT : defaultHeightPx;
+                    scrollContainer.setLayoutParams(p);
+                    btnToggle.setText(isMediaNameExpanded ? "🔼 Colapsar vista" : "👁️ Ver completo");
+                });
+            } else {
+                btnToggle.setVisibility(View.GONE);
+                ViewGroup.LayoutParams p = scrollContainer.getLayoutParams();
+                p.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                scrollContainer.setLayoutParams(p);
+            }
+        }
 
         if (ivThumb != null) {
             AdminNewsEditActivity.loadNewsImageIntoView(this, ivThumb, cleanPath);
@@ -508,19 +542,19 @@ public class AdminBlockEditActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_PICK_IMAGE && resultCode == RESULT_OK && data != null && data.getData() != null) {
             Uri imageUri = data.getData();
-            String localPath = saveImageToInternalStorage(imageUri);
-            if (localPath != null && !localPath.isEmpty()) {
+            SupabaseStorageManager.uploadImageAsync(this, imageUri, remoteUrl -> {
+                String finalPath = (remoteUrl != null && !remoteUrl.isEmpty()) ? remoteUrl : saveImageToInternalStorage(imageUri);
+                if (finalPath == null) finalPath = imageUri.toString();
+
+                currentMediaPath = finalPath;
+
                 if (etMedia != null) {
-                    etMedia.setText(localPath);
-                    Toast.makeText(this, "✓ Foto integrada con éxito", Toast.LENGTH_SHORT).show();
+                    etMedia.setText(SupabaseStorageManager.getShortDisplayLabel(finalPath));
+                    Toast.makeText(this, "✓ Foto procesada para Supabase", Toast.LENGTH_SHORT).show();
                 }
-                updateLiveImagePreview(localPath);
-            } else {
-                if (etMedia != null) {
-                    etMedia.setText(imageUri.toString());
-                }
-                updateLiveImagePreview(imageUri.toString());
-            }
+                updateLiveImagePreview(finalPath);
+                return Unit.INSTANCE;
+            });
         }
     }
 
@@ -558,9 +592,12 @@ public class AdminBlockEditActivity extends AppCompatActivity {
                     etContent.setText(block.content != null ? block.content : "");
                     if (etBenefitsList != null) etBenefitsList.setText(block.fontSize != null && block.fontSize.startsWith("BENEFITS:") ? block.fontSize.replace("BENEFITS:", "") : "");
                     if (etHighlightAmount != null) etHighlightAmount.setText(block.textColor != null && block.textColor.startsWith("MOUNT:") ? block.textColor.replace("MOUNT:", "") : "");
-                    etMedia.setText(block.mediaPath != null ? block.mediaPath : "");
-                    if (block.mediaPath != null && !block.mediaPath.trim().isEmpty()) {
-                        updateLiveImagePreview(block.mediaPath);
+                    
+                    currentMediaPath = block.mediaPath != null ? block.mediaPath : "";
+                    etMedia.setText(SupabaseStorageManager.getShortDisplayLabel(currentMediaPath));
+
+                    if (!currentMediaPath.trim().isEmpty()) {
+                        updateLiveImagePreview(currentMediaPath);
                     }
                     etButtonText.setText(block.buttonText != null ? block.buttonText : "");
                     etButtonAction.setText(block.buttonAction != null ? block.buttonAction : "");
@@ -618,7 +655,13 @@ public class AdminBlockEditActivity extends AppCompatActivity {
         block.content = etContent.getText().toString().trim();
         if (etBenefitsList != null) block.fontSize = "BENEFITS:" + etBenefitsList.getText().toString().trim();
         if (etHighlightAmount != null) block.textColor = "MOUNT:" + etHighlightAmount.getText().toString().trim();
-        block.mediaPath = etMedia.getText().toString().trim();
+
+        String enteredMediaText = etMedia.getText().toString().trim();
+        if (currentMediaPath != null && !currentMediaPath.isEmpty() && (enteredMediaText.contains("📷") || enteredMediaText.contains("☁️") || enteredMediaText.contains("📁"))) {
+            block.mediaPath = currentMediaPath;
+        } else {
+            block.mediaPath = enteredMediaText;
+        }
 
         if ("BUTTON".equalsIgnoreCase(selectedType) || "PRODUCT_CARD".equalsIgnoreCase(selectedType) || "CARD".equalsIgnoreCase(selectedType) || "CONTAINER".equalsIgnoreCase(selectedType)) {
             block.buttonText = btnText;

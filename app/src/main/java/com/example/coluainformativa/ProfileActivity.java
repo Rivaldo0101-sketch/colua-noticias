@@ -106,8 +106,38 @@ public class ProfileActivity extends AppCompatActivity {
         btnCancelProfileEdit.setOnClickListener(v -> cancelEditMode());
         btnSaveProfile.setOnClickListener(v -> saveProfileChanges());
 
+        MaterialButton btnLogoutProfile = findViewById(R.id.btn_logout_profile);
+        if (btnLogoutProfile != null) {
+            btnLogoutProfile.setOnClickListener(v -> showLogoutConfirmationDialog());
+        }
+
         setupChangeDetection();
         loadProfileData();
+    }
+
+    private void showLogoutConfirmationDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Cerrar Sesión")
+                .setMessage("¿Deseas cerrar tu sesión actual?")
+                .setPositiveButton("Cerrar Sesión", (dialog, which) -> performLogout())
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void performLogout() {
+        try {
+            FirebaseAuth.getInstance().signOut();
+        } catch (Exception ignored) {}
+
+        getSharedPreferences("UserPrefs", MODE_PRIVATE).edit().clear().apply();
+        getSharedPreferences("AdminSecurityPrefs", MODE_PRIVATE).edit().clear().apply();
+
+        Toast.makeText(this, "Sesión cerrada correctamente", Toast.LENGTH_SHORT).show();
+
+        Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private void loadProfileData() {

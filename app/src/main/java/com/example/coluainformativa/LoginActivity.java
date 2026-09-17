@@ -61,10 +61,25 @@ public class LoginActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
 
         SharedPreferences pref = getSharedPreferences("UserPrefs", MODE_PRIVATE);
-        if (pref.contains("user_name") && mAuth.getCurrentUser() != null) {
+        boolean remember = pref.getBoolean("remember_me", true);
+        String savedUserId = pref.getString("user_id", "");
+        String savedUserName = pref.getString("user_name", "");
+        String savedUserEmail = pref.getString("user_email", "");
+
+        boolean hasSavedSession = !savedUserId.trim().isEmpty() 
+                || !savedUserName.trim().isEmpty() 
+                || !savedUserEmail.trim().isEmpty();
+
+        if (remember && hasSavedSession && mAuth.getCurrentUser() != null) {
             startActivity(new Intent(this, MainActivity.class));
             finish();
             return;
+        }
+
+        if (!hasSavedSession) {
+            try {
+                mAuth.signOut();
+            } catch (Exception ignored) {}
         }
 
         setContentView(R.layout.activity_login);
@@ -356,7 +371,7 @@ public class LoginActivity extends AppCompatActivity {
                             repository.crearPerfilUsuarioFirestore(uid, name, phone, dpi, email, false, (success, userId, errorMsg) -> {
                                 runOnUiThread(() -> {
                                     if (success) {
-                                        Toast.makeText(LoginActivity.this, "¡Registro exitoso! ID: " + userId, Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(LoginActivity.this, "¡Registro exitoso!", Toast.LENGTH_SHORT).show();
                                         saveUserSession(userId, name, phone, email, "MEMBER");
                                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
                                         finish();
@@ -387,7 +402,7 @@ public class LoginActivity extends AppCompatActivity {
                                         String storedRole = userMap.get("role");
                                         saveUserSession(userId, storedName, storedPhone, email, storedRole);
                                         
-                                        Toast.makeText(LoginActivity.this, "¡Inicio de sesión correcto! ID: " + userId, Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(LoginActivity.this, "¡Inicio de sesión exitoso!", Toast.LENGTH_SHORT).show();
                                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
                                         finish();
                                     } else {
@@ -507,12 +522,14 @@ public class LoginActivity extends AppCompatActivity {
 
     private void saveUserSession(String id, String name, String phone, String email, String role) {
         SharedPreferences pref = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+        boolean remember = cbRememberLogin == null || cbRememberLogin.isChecked();
         pref.edit()
                 .putString("user_id", id)
                 .putString("user_name", name)
                 .putString("user_phone", phone)
                 .putString("user_email", email)
                 .putString("user_role", role)
+                .putBoolean("remember_me", remember)
                 .apply();
     }
 }

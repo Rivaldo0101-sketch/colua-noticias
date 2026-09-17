@@ -297,23 +297,26 @@ public class ContentItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (item == null) return list;
 
         if (item.photosJson != null && !item.photosJson.trim().isEmpty()) {
-            String raw = item.photosJson.replace("[", "").replace("]", "").replace("\"", "");
-            String[] parts = raw.split(",");
+            String raw = item.photosJson.trim();
+            if (raw.startsWith("[") && raw.endsWith("]")) {
+                raw = raw.substring(1, raw.length() - 1);
+            }
+            String[] parts = raw.split(",\\s*(?=(http|data:image|file:|content:|[a-zA-Z0-9_]+))");
             for (String p : parts) {
                 String cleanP = p.trim();
+                if (cleanP.startsWith("\"") && cleanP.endsWith("\"") && cleanP.length() > 2) {
+                    cleanP = cleanP.substring(1, cleanP.length() - 1);
+                }
                 if (!cleanP.isEmpty() && !list.contains(cleanP)) {
                     list.add(cleanP);
                 }
             }
         }
 
-        if (item.imagePath != null && !item.imagePath.trim().isEmpty()) {
-            String[] parts = item.imagePath.split(",");
-            for (String p : parts) {
-                String cleanP = p.trim();
-                if (!cleanP.isEmpty() && !list.contains(cleanP)) {
-                    list.add(cleanP);
-                }
+        if (list.isEmpty() && item.imagePath != null && !item.imagePath.trim().isEmpty()) {
+            String clean = item.imagePath.trim();
+            if (!list.contains(clean)) {
+                list.add(clean);
             }
         }
 
@@ -346,6 +349,31 @@ public class ContentItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             btnEdit = itemView.findViewById(R.id.btn_edit_content_item);
         }
 
+        private String getCategoryPillFromTags(String tags) {
+            if (tags == null || tags.trim().isEmpty()) return "📢 COLUA Informativa";
+            String tagLower = tags.toLowerCase();
+            if (tagLower.contains("verde") || tagLower.contains("reforestacion") || tagLower.contains("ambiente") || tagLower.contains("arbol")) {
+                return "🌱 COLUA Verde";
+            } else if (tagLower.contains("educacion") || tagLower.contains("escuela") || tagLower.contains("estudio")) {
+                return "🎓 COLUA Educación";
+            } else if (tagLower.contains("solidaria") || tagLower.contains("ayuda") || tagLower.contains("donacion")) {
+                return "🤝 COLUA Solidaria";
+            } else if (tagLower.contains("trabajo") || tagLower.contains("empleo") || tagLower.contains("capacitacion")) {
+                return "💼 COLUA Trabajo";
+            } else if (tagLower.contains("noticia") || tagLower.contains("novedad")) {
+                return "📰 COLUA Noticias";
+            } else if (tagLower.contains("beneficio") || tagLower.contains("promocion")) {
+                return "🎁 COLUA Beneficios";
+            } else if (tagLower.contains("financiera") || tagLower.contains("ahorro") || tagLower.contains("credito")) {
+                return "💰 COLUA Financiera";
+            } else if (tagLower.contains("social") || tagLower.contains("comunidad")) {
+                return "❤️ COLUA Social";
+            } else if (tagLower.contains("evento") || tagLower.contains("asamblea")) {
+                return "🎉 COLUA Eventos";
+            }
+            return "📢 COLUA Informativa";
+        }
+
         public void bind(ContentItemEntity item, OnItemClickListener listener, boolean isEditMode) {
             if (tvTitle != null) tvTitle.setText(item.title != null ? item.title : "Noticia");
             if (tvDesc != null) {
@@ -367,29 +395,14 @@ public class ContentItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 AdminNewsEditActivity.loadNewsImageIntoView(itemView.getContext(), ivAuthorAvatar, avatarPath);
             }
 
-            // Etiqueta píldora sobre la foto según los hashtags de la noticia
+            // Etiqueta píldora sobre la foto según la categoría seleccionada o hashtags
             if (tvPhotoTagPill != null) {
-                String tagStr = item.tags != null ? item.tags.trim() : "";
-                if (tagStr.toLowerCase().contains("verde") || tagStr.toLowerCase().contains("reforestacion") || tagStr.toLowerCase().contains("ambiente")) {
-                    tvPhotoTagPill.setText("🌲 COLUA Verde");
-                    tvPhotoTagPill.setVisibility(View.VISIBLE);
-                } else if (tagStr.toLowerCase().contains("ahorro") || tagStr.toLowerCase().contains("cuenta")) {
-                    tvPhotoTagPill.setText("💰 COLUA Ahorros");
-                    tvPhotoTagPill.setVisibility(View.VISIBLE);
-                } else if (tagStr.toLowerCase().contains("credito") || tagStr.toLowerCase().contains("prestamo")) {
-                    tvPhotoTagPill.setText("💳 COLUA Crédito");
-                    tvPhotoTagPill.setVisibility(View.VISIBLE);
-                } else if (tagStr.toLowerCase().contains("seguro")) {
-                    tvPhotoTagPill.setText("🛡️ COLUA Seguro");
-                    tvPhotoTagPill.setVisibility(View.VISIBLE);
-                } else if (!tagStr.isEmpty()) {
-                    String firstTag = tagStr.split(" ")[0].replace("#", "");
-                    tvPhotoTagPill.setText("📢 " + firstTag);
-                    tvPhotoTagPill.setVisibility(View.VISIBLE);
-                } else {
-                    tvPhotoTagPill.setText("📢 Noticia Oficial");
-                    tvPhotoTagPill.setVisibility(View.VISIBLE);
-                }
+                String tagPill = (item.accentColor != null && !item.accentColor.trim().isEmpty())
+                        ? item.accentColor.trim()
+                        : getCategoryPillFromTags(item.tags);
+
+                tvPhotoTagPill.setText(tagPill);
+                tvPhotoTagPill.setVisibility(View.VISIBLE);
             }
 
             // Manejo dinámico de fotos y carrusel táctil con gestos de deslizar

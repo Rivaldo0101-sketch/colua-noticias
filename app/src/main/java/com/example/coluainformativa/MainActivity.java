@@ -18,6 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import com.example.coluainformativa.security.AdminAuthManager;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
@@ -478,7 +479,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateUIBasedOnRole() {
-        if ("ADMIN".equals(userRole)) {
+        AdminAuthManager authManager = new AdminAuthManager(this);
+        if (authManager.isSessionActive()) {
             Toast.makeText(this, "Modo Administrador Activo", Toast.LENGTH_SHORT).show();
         }
         
@@ -679,17 +681,29 @@ public class MainActivity extends AppCompatActivity {
 
         btnLogin.setOnClickListener(v -> {
             String pass = etPassword.getText().toString();
+            // Paso 1: Verificar la Clave Global de Seguridad (1234 / admin123)
             if (authManager.checkPassword(pass)) {
                 dialog.dismiss();
-                // Registrar al Administrador en la nube al entrar con la nueva estrategia real
+
+                // Paso 2: Verificar si el usuario que está en sesión tiene el Rol de ADMIN o es el Super Admin coluarl@gmail.com
                 SharedPreferences pref = getSharedPreferences("UserPrefs", MODE_PRIVATE);
-                repository.registrarUsuarioReal(
-                    pref.getString("user_name", "Admin COLUA"),
-                    "", // Teléfono
-                    pref.getString("user_id", "admin_01"),
-                    false // No es invitado
-                );
-                startActivity(new Intent(this, AdminActivity.class));
+                String userRole = pref.getString("user_role", "GUEST");
+                String userEmail = pref.getString("user_email", "");
+
+                boolean isAdmin = "ADMIN".equalsIgnoreCase(userRole) 
+                        || "coluarl@gmail.com".equalsIgnoreCase(userEmail);
+
+                if (isAdmin) {
+                    repository.registrarUsuarioReal(
+                        pref.getString("user_name", "Admin COLUA"),
+                        "",
+                        pref.getString("user_id", "admin_01"),
+                        false
+                    );
+                    startActivity(new Intent(this, AdminActivity.class));
+                } else {
+                    Toast.makeText(this, "Acceso denegado: Tu cuenta no tiene permisos de administrador.", Toast.LENGTH_LONG).show();
+                }
             } else {
                 Toast.makeText(this, "Clave incorrecta. Solo personal autorizado.", Toast.LENGTH_SHORT).show();
             }

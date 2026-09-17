@@ -311,6 +311,25 @@
                     app:backgroundTint="@color/colua_navy"
                     app:cornerRadius="12dp" />
 
+                <!-- Botón: Cerrar Sesión -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_logout_profile"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="12dp"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Cerrar sesión"
+                    android:textColor="#D32F2F"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="#D32F2F"
+                    app:strokeWidth="1.5dp"
+                    app:icon="@drawable/cerrar"
+                    app:iconTint="#D32F2F"
+                    app:iconGravity="textStart" />
+
                 <!-- Badge de Sincronización y Última Actualización -->
                 <TextView
                     android:id="@+id/tv_profile_sync_badge"

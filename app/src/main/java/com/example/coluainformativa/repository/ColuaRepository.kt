@@ -238,6 +238,26 @@ class ColuaRepository(private val context: Context) {
         val cleanId = sectionId.lowercase(Locale.getDefault())
         val altId = if (cleanId.startsWith("sec_")) cleanId.replace("sec_", "") else "sec_$cleanId"
 
+        if (isCloudEnabled()) {
+            try {
+                val task = firestore.collection("content_items").whereIn("sectionId", listOf(cleanId, altId)).get()
+                val cloud = await(task)?.toObjects(ContentItemEntity::class.java)
+                if (cloud != null) {
+                    val cloudIds = cloud.map { it.id }.toSet()
+                    val oldLocal = localDb.contentDao().getItemsBySection(cleanId)
+                    for (loc in oldLocal) {
+                        if (!cloudIds.contains(loc.id)) {
+                            localDb.contentDao().deleteItemById(loc.id)
+                        }
+                    }
+                    cloud.forEach { localDb.contentDao().insertItem(it) }
+                    return cloud.sortedBy { it.displayOrder }
+                }
+            } catch (e: Exception) {
+                Log.e("REPO", "Error syncing items from Firestore: ${e.message}")
+            }
+        }
+
         val local = localDb.contentDao().getItemsBySection(cleanId).toMutableList()
         val altLocal = localDb.contentDao().getItemsBySection(altId)
 
@@ -247,24 +267,7 @@ class ColuaRepository(private val context: Context) {
             }
         }
 
-        for (item in local) {
-            if (item.likesCount == 184 || item.likesCount == 183 || item.likesCount == 96 || item.likesCount == 112) {
-                item.likesCount = 0
-                item.sharesCount = 0
-                localDb.contentDao().insertItem(item)
-            }
-        }
-
-        if (local.isNotEmpty()) return local.sortedBy { it.displayOrder }
-
-        if (!isCloudEnabled()) return local
-        val task = firestore.collection("content_items").whereIn("sectionId", listOf(cleanId, altId)).get()
-        val cloud = await(task)?.toObjects(ContentItemEntity::class.java)
-        if (cloud != null && cloud.isNotEmpty()) {
-            cloud.forEach { localDb.contentDao().insertItem(it) }
-            return cloud.sortedBy { it.displayOrder }
-        }
-        return local
+        return local.sortedBy { it.displayOrder }
     }
 
     fun getPublishedItemsBySection(sectionId: String): List<ContentItemEntity> {
@@ -303,6 +306,26 @@ class ColuaRepository(private val context: Context) {
         val cleanId = sectionId.lowercase(Locale.getDefault())
         val altId = if (cleanId.startsWith("sec_")) cleanId.replace("sec_", "") else "sec_$cleanId"
 
+        if (isCloudEnabled()) {
+            try {
+                val task = firestore.collection("content_blocks").whereIn("sectionId", listOf(cleanId, altId)).get()
+                val cloud = await(task)?.toObjects(ContentBlockEntity::class.java)
+                if (cloud != null) {
+                    val cloudIds = cloud.map { it.id }.toSet()
+                    val oldLocal = localDb.contentDao().getBlocksBySection(cleanId)
+                    for (loc in oldLocal) {
+                        if (!cloudIds.contains(loc.id)) {
+                            localDb.contentDao().deleteBlockById(loc.id)
+                        }
+                    }
+                    cloud.forEach { localDb.contentDao().insertBlock(it) }
+                    return cloud.sortedBy { it.displayOrder }
+                }
+            } catch (e: Exception) {
+                Log.e("REPO", "Error syncing blocks from Firestore: ${e.message}")
+            }
+        }
+
         val local = localDb.contentDao().getBlocksBySection(cleanId).toMutableList()
         val altLocal = localDb.contentDao().getBlocksBySection(altId)
 
@@ -312,16 +335,7 @@ class ColuaRepository(private val context: Context) {
             }
         }
 
-        if (local.isNotEmpty()) return local.sortedBy { it.displayOrder }
-
-        if (!isCloudEnabled()) return local
-        val task = firestore.collection("content_blocks").whereIn("sectionId", listOf(cleanId, altId)).get()
-        val cloud = await(task)?.toObjects(ContentBlockEntity::class.java)
-        if (cloud != null && cloud.isNotEmpty()) {
-            cloud.forEach { localDb.contentDao().insertBlock(it) }
-            return cloud.sortedBy { it.displayOrder }
-        }
-        return local
+        return local.sortedBy { it.displayOrder }
     }
 
     fun getPublishedBlocksBySection(sectionId: String): List<ContentBlockEntity> {
@@ -609,11 +623,15 @@ class ColuaRepository(private val context: Context) {
                 val cleanPhone = formatPhone(telefono)
                 val telefonoCompleto = "+502$cleanPhone"
 
+                val isAdminEmail = email.trim().equals("coluarl@gmail.com", ignoreCase = true)
+                val tipoUsuarioFinal = if (isAdminEmail) "ADMIN" else "ASOCIADO"
+                val roleFinal = if (isAdminEmail) "ADMIN" else "MEMBER"
+
                 val profileData = linkedMapOf<String, Any>(
                     "firebaseUid" to uid,
                     "userId" to formattedId,
                     "idNumerico" to idNumerico,
-                    "tipoUsuario" to "ASOCIADO",
+                    "tipoUsuario" to tipoUsuarioFinal,
                     "nombre" to nombre,
                     "dpi" to formattedDpi,
                     "dpiNormalizado" to normalizedDpi,
@@ -630,8 +648,8 @@ class ColuaRepository(private val context: Context) {
                 // Guardamos usando formattedId ("0000001", "0000002"...) como ID de documento
                 firestore.collection("usuarios").document(formattedId).set(profileData)
                     .addOnSuccessListener {
-                        saveLocalUser(formattedId, formattedDpi, nombre, cleanPhone, email, "", "MEMBER")
-                        upsertDeviceSubcollection(formattedId, "ASOCIADO", installId)
+                        saveLocalUser(formattedId, formattedDpi, nombre, cleanPhone, email, "", roleFinal)
+                        upsertDeviceSubcollection(formattedId, tipoUsuarioFinal, installId)
                         callback(true, formattedId, null)
                     }
                     .addOnFailureListener { e ->
@@ -655,16 +673,24 @@ class ColuaRepository(private val context: Context) {
             return
         }
 
+        val isAdminEmail = email.trim().equals("coluarl@gmail.com", ignoreCase = true)
+
         // Buscamos el perfil por firebaseUid
         firestore.collection("usuarios").whereEqualTo("firebaseUid", uid).get()
             .addOnSuccessListener { query ->
                 if (!query.isEmpty) {
                     val doc = query.documents[0]
                     val userId = doc.id // Esto será "0000001", "0000002", etc.
-                    val nombre = doc.getString("nombre") ?: "Asociado COLUA"
+                    val nombre = doc.getString("nombre") ?: if (isAdminEmail) "Administrador COLUA" else "Asociado COLUA"
                     val telefono = doc.getString("telefono") ?: ""
-                    val tipoUsuario = doc.getString("tipoUsuario") ?: "ASOCIADO"
-                    val role = if (tipoUsuario == "INVITADO") "GUEST" else "MEMBER"
+                    var tipoUsuario = doc.getString("tipoUsuario") ?: "ASOCIADO"
+                    
+                    if (isAdminEmail && tipoUsuario != "ADMIN") {
+                        tipoUsuario = "ADMIN"
+                        doc.reference.update("tipoUsuario", "ADMIN")
+                    }
+
+                    val role = if (tipoUsuario == "ADMIN") "ADMIN" else if (tipoUsuario == "INVITADO") "GUEST" else "MEMBER"
                     
                     saveLocalUser(userId, doc.getString("dpi") ?: "", nombre, telefono, email, "", role)
                     
@@ -680,13 +706,89 @@ class ColuaRepository(private val context: Context) {
                     )
                     callback(true, result, null)
                 } else {
-                    callback(false, null, "No se encontró el perfil de usuario asociado a esta cuenta.")
+                    if (isAdminEmail) {
+                        crearPerfilAdminOficial(uid, email, callback)
+                    } else {
+                        callback(false, null, "No se encontró el perfil de usuario asociado a esta cuenta.")
+                    }
                 }
             }
             .addOnFailureListener { e ->
                 Log.e("FIREBASE_AUTH", "Error obteniendo perfil: ${e.message}")
-                callback(false, null, "Error obteniendo perfil: ${e.message}")
+                if (isAdminEmail) {
+                    crearPerfilAdminOficial(uid, email, callback)
+                } else {
+                    callback(false, null, "Error obteniendo perfil: ${e.message}")
+                }
             }
+    }
+
+    private fun crearPerfilAdminOficial(
+        uid: String,
+        email: String,
+        callback: (Boolean, Map<String, String>?, String?) -> Unit
+    ) {
+        getInstallationId { installId ->
+            val adminId = "admin_01"
+            val profileData = linkedMapOf<String, Any>(
+                "firebaseUid" to uid,
+                "userId" to adminId,
+                "tipoUsuario" to "ADMIN",
+                "nombre" to "Administrador COLUA",
+                "email" to email,
+                "dpi" to "0000000000000",
+                "telefono" to "77957795",
+                "estadoCuenta" to "ACTIVA",
+                "installationId" to installId,
+                "fechaRegistro" to FieldValue.serverTimestamp(),
+                "ultimaActividad" to FieldValue.serverTimestamp(),
+                "schemaVersion" to 3
+            )
+
+            firestore.collection("usuarios").document(adminId).set(profileData, SetOptions.merge())
+                .addOnSuccessListener {
+                    saveLocalUser(adminId, "0000000000000", "Administrador COLUA", "77957795", email, "", "ADMIN")
+                    upsertDeviceSubcollection(adminId, "ADMIN", installId)
+                    val result = mapOf(
+                        "userId" to adminId,
+                        "nombre" to "Administrador COLUA",
+                        "telefono" to "77957795",
+                        "role" to "ADMIN"
+                    )
+                    callback(true, result, null)
+                }
+                .addOnFailureListener { e ->
+                    Log.e("FIREBASE_AUTH", "Error creando perfil admin oficial: ${e.message}")
+                    callback(false, null, "Error creando perfil admin oficial: ${e.message}")
+                }
+        }
+    }
+
+    fun cambiarRolUsuario(
+        userId: String,
+        nuevoTipoUsuario: String,
+        callback: (Boolean, String?) -> Unit
+    ) {
+        if (!isCloudEnabled()) {
+            callback(false, "Conexión a la nube requerida para actualizar roles.")
+            return
+        }
+
+        val nuevoRole = if (nuevoTipoUsuario == "ADMIN") "ADMIN" else if (nuevoTipoUsuario == "INVITADO") "GUEST" else "MEMBER"
+        val docRef = firestore.collection("usuarios").document(userId)
+
+        docRef.update(
+            mapOf(
+                "tipoUsuario" to nuevoTipoUsuario,
+                "role" to nuevoRole
+            )
+        ).addOnSuccessListener {
+            Log.i("REPO_ROLE", "Rol de usuario $userId cambiado exitosamente a $nuevoTipoUsuario")
+            callback(true, null)
+        }.addOnFailureListener { e ->
+            Log.e("REPO_ROLE", "Error actualizando rol de usuario $userId: ${e.message}")
+            callback(false, e.message)
+        }
     }
 
     @JvmOverloads

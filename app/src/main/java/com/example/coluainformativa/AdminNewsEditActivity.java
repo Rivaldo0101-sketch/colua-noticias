@@ -17,6 +17,9 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
+import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,7 +30,9 @@ import com.example.coluainformativa.database.ContentItemEntity;
 import com.example.coluainformativa.repository.ColuaRepository;
 import com.example.coluainformativa.security.AdminAuthManager;
 import com.example.coluainformativa.utils.DialogHelper;
+import com.example.coluainformativa.utils.SupabaseStorageManager;
 import com.google.android.material.button.MaterialButton;
+import kotlin.Unit;
 import com.google.android.material.card.MaterialCardView;
 
 import android.view.LayoutInflater;
@@ -46,11 +51,27 @@ public class AdminNewsEditActivity extends AppCompatActivity {
     public static final String EXTRA_ITEM_ID = "extra_item_id";
     private static final int REQUEST_PICK_MULTI_IMAGES = 101;
 
+    public static final String[] NEWS_CATEGORIES = {
+            "📢 COLUA Informativa",
+            "📰 COLUA Noticias",
+            "🌱 COLUA Verde",
+            "🎓 COLUA Educación",
+            "🤝 COLUA Solidaria",
+            "💼 COLUA Trabajo",
+            "🎁 COLUA Beneficios",
+            "💰 COLUA Financiera",
+            "❤️ COLUA Social",
+            "🎉 COLUA Eventos",
+            "👥 COLUA Comunidad",
+            "🏆 COLUA Juventud"
+    };
+
     private ColuaRepository repository;
     private String itemId;
     private ContentItemEntity newsItem;
 
     private EditText etTitle, etDescription, etTags, etButtonText, etButtonAction, etShareAppUrl;
+    private Spinner spinnerCategory;
     private CheckBox cbIsFeatured;
     private TextView tvCharCounter, tvPhotosBadge, tvIssuerName, tvIssuerRole;
     private ImageView ivMainPreview, ivIssuerAvatar;
@@ -72,7 +93,31 @@ public class AdminNewsEditActivity extends AppCompatActivity {
         etButtonText = findViewById(R.id.et_news_button_text);
         etButtonAction = findViewById(R.id.et_news_button_action);
         etShareAppUrl = findViewById(R.id.et_share_app_url);
+        spinnerCategory = findViewById(R.id.spinner_news_category);
         cbIsFeatured = findViewById(R.id.cb_is_featured);
+
+        if (spinnerCategory != null) {
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, NEWS_CATEGORIES);
+            spinnerCategory.setAdapter(adapter);
+            spinnerCategory.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    String selectedCat = NEWS_CATEGORIES[position];
+                    if (newsItem != null) {
+                        newsItem.accentColor = selectedCat;
+                    }
+                    if (etTags != null) {
+                        String currentTag = etTags.getText().toString().trim();
+                        if (currentTag.isEmpty() || currentTag.contains("#COLUAVerde")) {
+                            String cleanCat = selectedCat.replaceAll("[^a-zA-Z0-9]", "");
+                            etTags.setText("#" + cleanCat + " #MICOOPE #Asociados");
+                        }
+                    }
+                }
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {}
+            });
+        }
         tvCharCounter = findViewById(R.id.tv_char_counter);
         tvPhotosBadge = findViewById(R.id.tv_photos_selected_badge);
         ivMainPreview = findViewById(R.id.iv_main_photo_preview);
@@ -287,20 +332,23 @@ public class AdminNewsEditActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_PICK_ISSUER_AVATAR && resultCode == RESULT_OK && data != null && data.getData() != null) {
             Uri uri = data.getData();
-            String localPath = saveImageToInternalStorage(uri);
-            if (localPath != null && !localPath.isEmpty()) {
-                currentIssuerAvatarPath = localPath;
-                if (ivDialogIssuerAvatar != null) {
-                    loadNewsImageIntoView(this, ivDialogIssuerAvatar, localPath);
+            SupabaseStorageManager.uploadImageAsync(this, uri, remoteUrl -> {
+                String finalPath = (remoteUrl != null && !remoteUrl.isEmpty()) ? remoteUrl : saveImageToInternalStorage(uri);
+                if (finalPath != null && !finalPath.isEmpty()) {
+                    currentIssuerAvatarPath = finalPath;
+                    if (ivDialogIssuerAvatar != null) {
+                        loadNewsImageIntoView(this, ivDialogIssuerAvatar, finalPath);
+                    }
+                    if (ivIssuerAvatar != null) {
+                        loadNewsImageIntoView(this, ivIssuerAvatar, finalPath);
+                    }
+                    if (newsItem != null) {
+                        newsItem.iconName = finalPath;
+                    }
+                    Toast.makeText(this, "Foto de perfil cargada. Presiona 'Guardar' para aplicar.", Toast.LENGTH_SHORT).show();
                 }
-                if (ivIssuerAvatar != null) {
-                    loadNewsImageIntoView(this, ivIssuerAvatar, localPath);
-                }
-                if (newsItem != null) {
-                    newsItem.iconName = localPath;
-                }
-                Toast.makeText(this, "Foto de perfil cargada. Presiona 'Guardar' para aplicar.", Toast.LENGTH_SHORT).show();
-            }
+                return Unit.INSTANCE;
+            });
             return;
         }
 
@@ -310,22 +358,29 @@ public class AdminNewsEditActivity extends AppCompatActivity {
                 for (int i = 0; i < clipData.getItemCount(); i++) {
                     Uri uri = clipData.getItemAt(i).getUri();
                     if (uri != null) {
-                        String localPath = saveImageToInternalStorage(uri);
-                        if (localPath != null && !photoList.contains(localPath)) {
-                            photoList.add(0, localPath);
-                        }
+                        SupabaseStorageManager.uploadImageAsync(this, uri, remoteUrl -> {
+                            String finalPath = (remoteUrl != null && !remoteUrl.isEmpty()) ? remoteUrl : saveImageToInternalStorage(uri);
+                            if (finalPath != null && !photoList.contains(finalPath)) {
+                                photoList.add(0, finalPath);
+                                renderPhotoThumbnails();
+                            }
+                            return Unit.INSTANCE;
+                        });
                     }
                 }
             } else if (data.getData() != null) {
                 Uri uri = data.getData();
                 if (uri != null) {
-                    String localPath = saveImageToInternalStorage(uri);
-                    if (localPath != null && !photoList.contains(localPath)) {
-                        photoList.add(0, localPath);
-                    }
+                    SupabaseStorageManager.uploadImageAsync(this, uri, remoteUrl -> {
+                        String finalPath = (remoteUrl != null && !remoteUrl.isEmpty()) ? remoteUrl : saveImageToInternalStorage(uri);
+                        if (finalPath != null && !photoList.contains(finalPath)) {
+                            photoList.add(0, finalPath);
+                            renderPhotoThumbnails();
+                        }
+                        return Unit.INSTANCE;
+                    });
                 }
             }
-            renderPhotoThumbnails();
         }
     }
 
@@ -360,6 +415,11 @@ public class AdminNewsEditActivity extends AppCompatActivity {
         if (imageView == null || context == null) return;
         if (path == null) path = "";
         path = path.trim();
+
+        if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:image/") || path.startsWith("data:;base64,")) {
+            SupabaseStorageManager.loadImageFromSupabaseOrLocal(context, imageView, path);
+            return;
+        }
 
         boolean loaded = false;
 
@@ -409,7 +469,7 @@ public class AdminNewsEditActivity extends AppCompatActivity {
         }
 
         if (!loaded) {
-            imageView.setImageResource(R.drawable.noticias_colua);
+            imageView.setImageResource(R.drawable.sin_conexion);
         }
     }
 
@@ -484,6 +544,16 @@ public class AdminNewsEditActivity extends AppCompatActivity {
                         etButtonText.setText(newsItem.subtitle != null ? newsItem.subtitle : "Ver detalles completos");
                         etButtonAction.setText(newsItem.targetSectionId != null ? newsItem.targetSectionId : "");
                         cbIsFeatured.setChecked(newsItem.isFeatured);
+
+                        if (spinnerCategory != null && newsItem.accentColor != null && !newsItem.accentColor.trim().isEmpty()) {
+                            String currentCat = newsItem.accentColor.trim();
+                            for (int i = 0; i < NEWS_CATEGORIES.length; i++) {
+                                if (NEWS_CATEGORIES[i].equalsIgnoreCase(currentCat) || NEWS_CATEGORIES[i].contains(currentCat)) {
+                                    spinnerCategory.setSelection(i);
+                                    break;
+                                }
+                            }
+                        }
 
                         if (newsItem.issuerName != null && !newsItem.issuerName.isEmpty()) {
                             tvIssuerName.setText(newsItem.issuerName);
@@ -578,6 +648,12 @@ public class AdminNewsEditActivity extends AppCompatActivity {
         newsItem.isFeatured = cbIsFeatured != null && cbIsFeatured.isChecked();
         newsItem.isDraft = isDraft;
         newsItem.isVisible = true;
+
+        if (spinnerCategory != null && spinnerCategory.getSelectedItem() != null) {
+            newsItem.accentColor = spinnerCategory.getSelectedItem().toString();
+        } else if (newsItem.accentColor == null || newsItem.accentColor.trim().isEmpty()) {
+            newsItem.accentColor = "📢 COLUA Informativa";
+        }
 
         if (etShareAppUrl != null) {
             String customShareUrl = etShareAppUrl.getText().toString().trim();
