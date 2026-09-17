@@ -424,20 +424,25 @@ public class LoginActivity extends AppCompatActivity {
     private String getFriendlyErrorMessage(Exception e) {
         if (e == null) return "Ocurrió un error inesperado. Por favor intenta de nuevo.";
         String msg = e.getMessage() != null ? e.getMessage() : "";
-        if (msg.contains("sign-in provider is disabled") || msg.contains("OPERATION_NOT_ALLOWED")) {
-            return "El servicio de registro e inicio de sesión no se encuentra disponible temporalmente. Por favor intenta más tarde o ingresa como invitado.";
-        } else if (msg.contains("email-already-in-use") || msg.contains("already in use") || msg.contains("in use by another account")) {
-            return "Este correo electrónico ya está registrado en el sistema. Por favor utiliza un correo diferente o inicia sesión con tu cuenta existente.";
-        } else if (msg.contains("invalid-email")) {
+        String msgLower = msg.toLowerCase(Locale.getDefault());
+
+        if (msgLower.contains("sign-in provider is disabled") || msgLower.contains("operation_not_allowed")) {
+            return "El servicio de registro e inicio de sesión no se encuentra disponible temporalmente.";
+        } else if (msgLower.contains("email-already-in-use") || msgLower.contains("already in use") || msgLower.contains("already exists")) {
+            return "Este correo electrónico ya está registrado en el sistema. Inicia sesión con tu cuenta existente.";
+        } else if (msgLower.contains("invalid-email") || msgLower.contains("badly formatted")) {
             return "El formato del correo electrónico ingresado no es válido.";
-        } else if (msg.contains("weak-password")) {
+        } else if (msgLower.contains("weak-password")) {
             return "La contraseña es muy débil. Asegúrate de cumplir con los requisitos de seguridad.";
-        } else if (msg.contains("wrong-password") || msg.contains("invalid-credential") || msg.contains("user-not-found")) {
-            return "Correo electrónico o contraseña incorrectos. Si aún no tienes cuenta, por favor regístrate.";
-        } else if (msg.contains("network-request-failed")) {
+        } else if (msgLower.contains("wrong-password") || msgLower.contains("invalid-credential") || msgLower.contains("invalid_login_credentials") || msgLower.contains("user-not-found") || msgLower.contains("user_not_found")) {
+            return "Correo electrónico o contraseña incorrectos. Verifica que la contraseña coincida con tu registro.";
+        } else if (msgLower.contains("network-request-failed") || msgLower.contains("network") || msgLower.contains("connection")) {
             return "Sin conexión a internet. Verifica tu red e intenta nuevamente.";
+        } else if (msgLower.contains("too-many-requests") || msgLower.contains("blocked")) {
+            return "Demasiados intentos fallidos. Por seguridad, espera unos minutos antes de intentar de nuevo.";
         }
-        return "No pudimos procesar tu solicitud en este momento. Por favor verifica tu conexión a internet o intenta más tarde.";
+
+        return "Error de acceso: " + msg;
     }
 
     private void showForgotPasswordDialog() {
@@ -462,21 +467,47 @@ public class LoginActivity extends AppCompatActivity {
             btnSendReset.setOnClickListener(v -> {
                 String email = etResetEmail != null && etResetEmail.getText() != null ? etResetEmail.getText().toString().trim() : "";
                 if (email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                    Toast.makeText(this, "Ingresa un correo electrónico válido", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Ingresa un correo electrónico válido (ej. usuario@ejemplo.com)", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                dialog.dismiss();
-                Toast.makeText(this, "Enviando solicitud de recuperación...", Toast.LENGTH_SHORT).show();
+                // Paso 1: Confirmar con el usuario que la dirección ingresada es correcta
+                DialogHelper.showLightReportDialog(
+                        LoginActivity.this,
+                        "Confirmar Correo Electrónico",
+                        "¿Estás seguro de que tu correo electrónico es correcto?\n\n📧 " + email + "\n\nAl confirmar, enviaremos las instrucciones de recuperación a esta dirección.",
+                        "Sí, enviar enlace",
+                        () -> {
+                            dialog.dismiss();
+                            Toast.makeText(LoginActivity.this, "Enviando solicitud de recuperación...", Toast.LENGTH_SHORT).show();
 
-                FirebaseAuth.getInstance().sendPasswordResetEmail(email)
-                        .addOnCompleteListener(task -> {
-                            new AlertDialog.Builder(LoginActivity.this)
-                                    .setTitle("✓ Recuperación Enviada")
-                                    .setMessage("Se ha procesado la solicitud de recuperación para el correo:\n\n" + email + "\n\nPor favor revisa tu bandeja de entrada o spam para restablecer tu contraseña.")
-                                    .setPositiveButton("Entendido", null)
-                                    .show();
-                        });
+                            FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+                                    .addOnCompleteListener(task -> {
+                                        if (task.isSuccessful()) {
+                                            // Paso 2: Notificar envío exitoso y avisar sobre SPAM
+                                            DialogHelper.showLightReportDialog(
+                                                    LoginActivity.this,
+                                                    "¡Enlace Enviado con Éxito!",
+                                                    "Hemos enviado las instrucciones para restablecer tu contraseña a:\n\n📧 " + email + "\n\n💡 NOTA IMPORTANTE: Si el mensaje no aparece en tu bandeja de entrada principal en un par de minutos, por favor revisa tu carpeta de Correo no deseado (SPAM) o Promociones.",
+                                                    "ENTENDIDO",
+                                                    null,
+                                                    null
+                                            );
+                                        } else {
+                                            String friendlyMsg = getFriendlyErrorMessage(task.getException());
+                                            DialogHelper.showLightReportDialog(
+                                                    LoginActivity.this,
+                                                    "Error al Enviar",
+                                                    "No pudimos enviar el enlace de recuperación:\n\n" + friendlyMsg,
+                                                    "Entendido",
+                                                    null,
+                                                    null
+                                            );
+                                        }
+                                    });
+                        },
+                        "Verificar correo"
+                );
             });
         }
 

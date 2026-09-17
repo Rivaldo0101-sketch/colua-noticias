@@ -1042,6 +1042,7 @@
 
                 <!-- CARD 8: MANTENIMIENTO DE SISTEMA - CONTROL DE OPERACIONES Y ACCESOS -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_system_maintenance_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
@@ -1325,193 +1326,201 @@
                             </RelativeLayout>
                         </com.google.android.material.card.MaterialCardView>
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="18dp"
-                            android:layout_marginBottom="8dp"
-                            android:fontFamily="@font/poppins_regular"
-                            android:text="🛡️ ACCIONES AVANZADAS DE RESTAURACIÓN"
-                            android:textColor="#475569"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-
-                        <!-- Card D: Reversión de Versión (Rollback) -->
-                        <com.google.android.material.card.MaterialCardView
+                        <LinearLayout
+                            android:id="@+id/layout_advanced_restoration"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            app:cardBackgroundColor="#F0F9FF"
-                            app:cardCornerRadius="14dp"
-                            app:cardElevation="0dp"
-                            app:strokeWidth="1dp"
-                            app:strokeColor="#BAE6FD">
+                            android:orientation="vertical">
 
-                            <RelativeLayout
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="18dp"
+                                android:layout_marginBottom="8dp"
+                                android:fontFamily="@font/poppins_regular"
+                                android:text="🛡️ ACCIONES AVANZADAS DE RESTAURACIÓN"
+                                android:textColor="#475569"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+
+                            <!-- Card D: Reversión de Versión (Rollback) -->
+                            <com.google.android.material.card.MaterialCardView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:padding="12dp">
+                                android:layout_marginTop="4dp"
+                                app:cardBackgroundColor="#F0F9FF"
+                                app:cardCornerRadius="14dp"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="1dp"
+                                app:strokeColor="#BAE6FD">
 
-                                <LinearLayout
-                                    android:layout_width="wrap_content"
+                                <RelativeLayout
+                                    android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:layout_alignParentStart="true"
-                                    android:layout_centerVertical="true"
-                                    android:layout_toStartOf="@id/btn_version_rollback"
-                                    android:orientation="vertical">
+                                    android:padding="12dp">
 
-                                    <TextView
+                                    <LinearLayout
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
+                                        android:layout_alignParentStart="true"
+                                        android:layout_centerVertical="true"
+                                        android:layout_toStartOf="@id/btn_version_rollback"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:fontFamily="@font/poppins_regular"
+                                            android:text="Reversión de Versión (Rollback)"
+                                            android:textColor="#0369A1"
+                                            android:textSize="13sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:fontFamily="@font/poppins_regular"
+                                            android:text="Restablecer la última versión estable aprobada"
+                                            android:textColor="#0284C7"
+                                            android:textSize="11sp" />
+                                    </LinearLayout>
+
+                                    <com.google.android.material.button.MaterialButton
+                                        android:id="@+id/btn_version_rollback"
+                                        style="@style/Widget.Material3.Button.UnelevatedButton"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="38dp"
+                                        android:layout_alignParentEnd="true"
+                                        android:layout_centerVertical="true"
                                         android:fontFamily="@font/poppins_regular"
-                                        android:text="Reversión de Versión (Rollback)"
+                                        android:text="Revertir"
                                         android:textColor="#0369A1"
-                                        android:textSize="13sp"
-                                        android:textStyle="bold" />
+                                        android:textSize="12sp"
+                                        android:textStyle="bold"
+                                        app:backgroundTint="#E0F2FE"
+                                        app:cornerRadius="10dp" />
+                                </RelativeLayout>
+                            </com.google.android.material.card.MaterialCardView>
 
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:fontFamily="@font/poppins_regular"
-                                        android:text="Restablecer la última versión estable aprobada"
-                                        android:textColor="#0284C7"
-                                        android:textSize="11sp" />
-                                </LinearLayout>
-
-                                <com.google.android.material.button.MaterialButton
-                                    android:id="@+id/btn_version_rollback"
-                                    style="@style/Widget.Material3.Button.UnelevatedButton"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="38dp"
-                                    android:layout_alignParentEnd="true"
-                                    android:layout_centerVertical="true"
-                                    android:fontFamily="@font/poppins_regular"
-                                    android:text="Revertir"
-                                    android:textColor="#0369A1"
-                                    android:textSize="12sp"
-                                    android:textStyle="bold"
-                                    app:backgroundTint="#E0F2FE"
-                                    app:cornerRadius="10dp" />
-                            </RelativeLayout>
-                        </com.google.android.material.card.MaterialCardView>
-
-                        <!-- Card E: Limpieza Profunda de Usuarios -->
-                        <com.google.android.material.card.MaterialCardView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            app:cardBackgroundColor="#FEFCE8"
-                            app:cardCornerRadius="14dp"
-                            app:cardElevation="0dp"
-                            app:strokeWidth="1dp"
-                            app:strokeColor="#FEF08A">
-
-                            <RelativeLayout
+                            <!-- Card E: Limpieza Profunda de Usuarios -->
+                            <com.google.android.material.card.MaterialCardView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:padding="12dp">
+                                android:layout_marginTop="8dp"
+                                app:cardBackgroundColor="#FEFCE8"
+                                app:cardCornerRadius="14dp"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="1dp"
+                                app:strokeColor="#FEF08A">
 
-                                <LinearLayout
-                                    android:layout_width="wrap_content"
+                                <RelativeLayout
+                                    android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:layout_alignParentStart="true"
-                                    android:layout_centerVertical="true"
-                                    android:layout_toStartOf="@id/btn_wipe_users"
-                                    android:orientation="vertical">
+                                    android:padding="12dp">
 
-                                    <TextView
+                                    <LinearLayout
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
+                                        android:layout_alignParentStart="true"
+                                        android:layout_centerVertical="true"
+                                        android:layout_toStartOf="@id/btn_wipe_users"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:fontFamily="@font/poppins_regular"
+                                            android:text="Limpieza Profunda de Usuarios"
+                                            android:textColor="#A16207"
+                                            android:textSize="13sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:fontFamily="@font/poppins_regular"
+                                            android:text="Depurar tokens expirados y caché de sesiones"
+                                            android:textColor="#CA8A04"
+                                            android:textSize="11sp" />
+                                    </LinearLayout>
+
+                                    <com.google.android.material.button.MaterialButton
+                                        android:id="@+id/btn_wipe_users"
+                                        style="@style/Widget.Material3.Button.UnelevatedButton"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="38dp"
+                                        android:layout_alignParentEnd="true"
+                                        android:layout_centerVertical="true"
                                         android:fontFamily="@font/poppins_regular"
-                                        android:text="Limpieza Profunda de Usuarios"
+                                        android:text="Depurar"
                                         android:textColor="#A16207"
-                                        android:textSize="13sp"
-                                        android:textStyle="bold" />
+                                        android:textSize="12sp"
+                                        android:textStyle="bold"
+                                        app:backgroundTint="#FEF9C3"
+                                        app:cornerRadius="10dp" />
+                                </RelativeLayout>
+                            </com.google.android.material.card.MaterialCardView>
 
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:fontFamily="@font/poppins_regular"
-                                        android:text="Depurar tokens expirados y caché de sesiones"
-                                        android:textColor="#CA8A04"
-                                        android:textSize="11sp" />
-                                </LinearLayout>
-
-                                <com.google.android.material.button.MaterialButton
-                                    android:id="@+id/btn_wipe_users"
-                                    style="@style/Widget.Material3.Button.UnelevatedButton"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="38dp"
-                                    android:layout_alignParentEnd="true"
-                                    android:layout_centerVertical="true"
-                                    android:fontFamily="@font/poppins_regular"
-                                    android:text="Depurar"
-                                    android:textColor="#A16207"
-                                    android:textSize="12sp"
-                                    android:textStyle="bold"
-                                    app:backgroundTint="#FEF9C3"
-                                    app:cornerRadius="10dp" />
-                            </RelativeLayout>
-                        </com.google.android.material.card.MaterialCardView>
-
-                        <!-- Card F: Restaurar Datos Iniciales -->
-                        <com.google.android.material.card.MaterialCardView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            app:cardBackgroundColor="#FEF2F2"
-                            app:cardCornerRadius="14dp"
-                            app:cardElevation="0dp"
-                            app:strokeWidth="1dp"
-                            app:strokeColor="#FCA5A5">
-
-                            <RelativeLayout
+                            <!-- Card F: Restaurar Datos Iniciales -->
+                            <com.google.android.material.card.MaterialCardView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:padding="12dp">
+                                android:layout_marginTop="8dp"
+                                app:cardBackgroundColor="#FEF2F2"
+                                app:cardCornerRadius="14dp"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="1dp"
+                                app:strokeColor="#FCA5A5">
 
-                                <LinearLayout
-                                    android:layout_width="wrap_content"
+                                <RelativeLayout
+                                    android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:layout_alignParentStart="true"
-                                    android:layout_centerVertical="true"
-                                    android:layout_toStartOf="@id/btn_restore_data"
-                                    android:orientation="vertical">
+                                    android:padding="12dp">
 
-                                    <TextView
+                                    <LinearLayout
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:fontFamily="@font/poppins_regular"
-                                        android:text="Restaurar Datos Iniciales"
-                                        android:textColor="#B91C1C"
-                                        android:textSize="13sp"
-                                        android:textStyle="bold" />
+                                        android:layout_alignParentStart="true"
+                                        android:layout_centerVertical="true"
+                                        android:layout_toStartOf="@id/btn_restore_data"
+                                        android:orientation="vertical">
 
-                                    <TextView
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:fontFamily="@font/poppins_regular"
+                                            android:text="Restaurar Datos Iniciales"
+                                            android:textColor="#B91C1C"
+                                            android:textSize="13sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:fontFamily="@font/poppins_regular"
+                                            android:text="Reinicio de fábrica del contenido CMS"
+                                            android:textColor="#DC2626"
+                                            android:textSize="11sp" />
+                                    </LinearLayout>
+
+                                    <com.google.android.material.button.MaterialButton
+                                        android:id="@+id/btn_restore_data"
+                                        style="@style/Widget.Material3.Button.UnelevatedButton"
                                         android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
+                                        android:layout_height="38dp"
+                                        android:layout_alignParentEnd="true"
+                                        android:layout_centerVertical="true"
                                         android:fontFamily="@font/poppins_regular"
-                                        android:text="Reinicio de fábrica del contenido CMS"
-                                        android:textColor="#DC2626"
-                                        android:textSize="11sp" />
-                                </LinearLayout>
+                                        android:text="Restaurar"
+                                        android:textColor="@color/white"
+                                        android:textSize="12sp"
+                                        android:textStyle="bold"
+                                        app:backgroundTint="#DC2626"
+                                        app:cornerRadius="10dp" />
+                                </RelativeLayout>
+                            </com.google.android.material.card.MaterialCardView>
 
-                                <com.google.android.material.button.MaterialButton
-                                    android:id="@+id/btn_restore_data"
-                                    style="@style/Widget.Material3.Button.UnelevatedButton"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="38dp"
-                                    android:layout_alignParentEnd="true"
-                                    android:layout_centerVertical="true"
-                                    android:fontFamily="@font/poppins_regular"
-                                    android:text="Restaurar"
-                                    android:textColor="@color/white"
-                                    android:textSize="12sp"
-                                    android:textStyle="bold"
-                                    app:backgroundTint="#DC2626"
-                                    app:cornerRadius="10dp" />
-                            </RelativeLayout>
-                        </com.google.android.material.card.MaterialCardView>
+                        </LinearLayout>
 
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -1564,6 +1573,7 @@
                                 android:textStyle="bold" />
 
                             <TextView
+                                android:id="@+id/tv_instruction_version_badge"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_alignParentEnd="true"
@@ -1572,7 +1582,7 @@
                                 android:fontFamily="@font/poppins_regular"
                                 android:paddingHorizontal="10dp"
                                 android:paddingVertical="3dp"
-                                android:text="v2.0 RBAC Activo"
+                                android:text="v84 RBAC Activo"
                                 android:textColor="#94A3B8"
                                 android:textSize="11sp"
                                 android:textStyle="bold" />
@@ -1592,6 +1602,7 @@
 
                 <!-- 2. Card: Control de Acceso por Roles (RBAC) -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_instruction_rbac"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
@@ -1623,11 +1634,12 @@
                             android:background="#F1F5F9" />
 
                         <TextView
+                            android:id="@+id/tv_instruction_rbac_content"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/poppins_regular"
                             android:lineSpacingExtra="5dp"
-                            android:text="• Doble Factor de Ingreso al CMS:\nEl ingreso requiere primero validar la Clave Universal maestra (1234) y posteriormente verificar en la nube que la cuenta activa posea el rol de Administrador.\n\n• Super Administrador (coluarl@gmail.com):\n- Posee control maestro total sobre el sistema.\n- Asigna y modifica los roles de cualquier usuario (ADMIN, ASOCIADO, INVITADO) desde la lista de Usuarios Activos.\n- Acceso a herramientas de mantenimiento, bitácora de auditoría de managers y reversión de versiones (Rollback).\n\n• Managers de Contenido / Administradores:\n- Diseñan, crean y editan borradores de noticias, pantallas, tarjetas y agencias.\n- Publican cambios a la nube hacia todos los asociados.\n- Sin privilegios para modificar roles de otros usuarios ni reiniciar el sistema."
+                            android:text="• Doble Factor de Ingreso al CMS:\nEl ingreso requiere validar primero la Clave Maestra Global activa del sistema (modificable libremente por el Super Administrador desde la opción 'Cambiar Contraseña Admin') y posteriormente verificar en la nube que la cuenta posea el rol de Administrador.\n\n• Super Administrador (coluarl@gmail.com):\n- Posee control maestro total sobre el sistema.\n- Asigna y modifica los roles de cualquier usuario (ADMIN, ASOCIADO, INVITADO) desde la lista de Usuarios Activos.\n- Acceso a herramientas de mantenimiento, gestión de managers RBAC, bitácora de auditoría y reversión de versiones (Rollback).\n\n• Managers de Contenido / Administradores:\n- Diseñan, crean y editan borradores de noticias, pantallas, tarjetas y agencias.\n- Publican cambios a la nube hacia todos los asociados.\n- Las acciones críticas o destructivas requieren la clave maestra de autorización del Super Administrador."
                             android:textColor="#334155"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -1764,6 +1776,7 @@
 
                 <!-- 6. Card: Arquitectura Nube Doble (Firebase + Supabase) -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_instruction_cloud"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
@@ -1807,6 +1820,7 @@
 
                 <!-- 7. Card: Auditoría, Bitácora y Reversión (Rollback) -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_instruction_rollback"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"

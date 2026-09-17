@@ -19,6 +19,9 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import com.example.coluainformativa.security.AdminAuthManager;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
+import kotlin.Unit;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
@@ -681,35 +684,112 @@ public class MainActivity extends AppCompatActivity {
 
         btnLogin.setOnClickListener(v -> {
             String pass = etPassword.getText().toString();
-            // Paso 1: Verificar la Clave Global de Seguridad (1234 / admin123)
+            // Paso 1: Verificar la Clave Global de Seguridad (1234)
             if (authManager.checkPassword(pass)) {
                 dialog.dismiss();
-
-                // Paso 2: Verificar si el usuario que está en sesión tiene el Rol de ADMIN o es el Super Admin coluarl@gmail.com
-                SharedPreferences pref = getSharedPreferences("UserPrefs", MODE_PRIVATE);
-                String userRole = pref.getString("user_role", "GUEST");
-                String userEmail = pref.getString("user_email", "");
-
-                boolean isAdmin = "ADMIN".equalsIgnoreCase(userRole) 
-                        || "coluarl@gmail.com".equalsIgnoreCase(userEmail);
-
-                if (isAdmin) {
-                    repository.registrarUsuarioReal(
-                        pref.getString("user_name", "Admin COLUA"),
-                        "",
-                        pref.getString("user_id", "admin_01"),
-                        false
-                    );
-                    startActivity(new Intent(this, AdminActivity.class));
-                } else {
-                    Toast.makeText(this, "Acceso denegado: Tu cuenta no tiene permisos de administrador.", Toast.LENGTH_LONG).show();
-                }
+                // Paso 2: Abrir diálogo de identificación (Correo + Contraseña personal de Firebase)
+                showAdminStep2Dialog();
             } else {
                 Toast.makeText(this, "Clave incorrecta. Solo personal autorizado.", Toast.LENGTH_SHORT).show();
             }
         });
 
         btnCancel.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    private void showAdminStep2Dialog() {
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_admin_step2_login, null);
+
+        TextInputEditText etEmail = view.findViewById(R.id.et_admin_step2_email);
+        TextInputEditText etPassword = view.findViewById(R.id.et_admin_step2_password);
+        Button btnCancel = view.findViewById(R.id.btn_admin_step2_cancel);
+        Button btnLogin = view.findViewById(R.id.btn_admin_step2_login);
+
+        SharedPreferences pref = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+        String currentEmail = pref.getString("user_email", "");
+        if (etEmail != null && !currentEmail.isEmpty()) {
+            etEmail.setText(currentEmail);
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(view)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        if (btnLogin != null) {
+            btnLogin.setOnClickListener(v -> {
+                String email = etEmail != null ? etEmail.getText().toString().trim() : "";
+                String pass = etPassword != null ? etPassword.getText().toString().trim() : "";
+
+                if (email.isEmpty() || pass.isEmpty()) {
+                    Toast.makeText(this, "Por favor ingrese su correo y contraseña", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Toast.makeText(this, "Verificando credenciales en la nube...", Toast.LENGTH_SHORT).show();
+                btnLogin.setEnabled(false);
+
+                FirebaseAuth.getInstance().signInWithEmailAndPassword(email, pass)
+                        .addOnCompleteListener(this, task -> {
+                            if (task.isSuccessful() && task.getResult() != null && task.getResult().getUser() != null) {
+                                String uid = task.getResult().getUser().getUid();
+                                repository.obtenerPerfilUsuarioFirestore(uid, email, (success, userMap, errorMsg) -> {
+                                    runOnUiThread(() -> {
+                                        if (success && userMap != null) {
+                                            String userId = userMap.get("userId");
+                                            String storedName = userMap.get("nombre");
+                                            String storedPhone = userMap.get("telefono");
+                                            String storedRole = userMap.get("role");
+
+                                            boolean isSuperAdmin = "coluarl@gmail.com".equalsIgnoreCase(email) || "SUPER_ADMIN".equalsIgnoreCase(storedRole);
+                                            boolean isAdmin = isSuperAdmin || "ADMIN".equalsIgnoreCase(storedRole);
+
+                                            if (isAdmin) {
+                                                String finalRole = isSuperAdmin ? "SUPER_ADMIN" : "ADMIN";
+                                                pref.edit()
+                                                        .putString("user_id", userId)
+                                                        .putString("user_name", storedName)
+                                                        .putString("user_phone", storedPhone)
+                                                        .putString("user_email", email)
+                                                        .putString("user_role", finalRole)
+                                                        .apply();
+
+                                                dialog.dismiss();
+                                                String toastMsg = isSuperAdmin 
+                                                        ? "✓ Acceso Super Administrador (Control Maestro)" 
+                                                        : "✓ Acceso Manager (" + storedName + ")";
+                                                Toast.makeText(MainActivity.this, toastMsg, Toast.LENGTH_LONG).show();
+
+                                                startActivity(new Intent(MainActivity.this, AdminActivity.class));
+                                            } else {
+                                                btnLogin.setEnabled(true);
+                                                Toast.makeText(MainActivity.this, "Acceso denegado: La cuenta " + email + " no posee rol de Administrador ni Manager.", Toast.LENGTH_LONG).show();
+                                            }
+                                        } else {
+                                            btnLogin.setEnabled(true);
+                                            Toast.makeText(MainActivity.this, "Error al consultar perfil en la nube: " + errorMsg, Toast.LENGTH_LONG).show();
+                                        }
+                                    });
+                                    return Unit.INSTANCE;
+                                });
+                            } else {
+                                runOnUiThread(() -> {
+                                    btnLogin.setEnabled(true);
+                                    Toast.makeText(MainActivity.this, "Credenciales incorrectas para " + email + ". Verifique su contraseña.", Toast.LENGTH_LONG).show();
+                                });
+                            }
+                        });
+            });
+        }
+
         dialog.show();
     }
 }

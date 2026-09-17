@@ -1,6 +1,7 @@
 package com.example.coluainformativa;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -37,9 +38,11 @@ import com.example.coluainformativa.database.NavigationItemEntity;
 import com.example.coluainformativa.database.SectionEntity;
 import java.util.stream.Collectors;
 import com.example.coluainformativa.repository.ColuaRepository;
+import com.google.firebase.auth.FirebaseAuth;
 import com.example.coluainformativa.security.AdminAuthManager;
 import com.example.coluainformativa.utils.DialogHelper;
 import com.example.coluainformativa.utils.NavInsetHelper;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -129,7 +132,7 @@ public class AdminActivity extends AppCompatActivity {
         findViewById(R.id.btn_change_password).setOnClickListener(v -> showChangePasswordDialog());
 
         View btnManageManagers = findViewById(R.id.btn_manage_managers);
-        if (btnManageManagers != null) btnManageManagers.setOnClickListener(v -> Toast.makeText(this, "Panel RBAC: Toca a cualquier usuario en la lista de usuarios activos para cambiar su rol.", Toast.LENGTH_LONG).show());
+        if (btnManageManagers != null) btnManageManagers.setOnClickListener(v -> showManageManagersDialog());
 
         View btnManagerActivity = findViewById(R.id.btn_manager_activity);
         if (btnManagerActivity != null) btnManagerActivity.setOnClickListener(v -> showAuditLogDialog());
@@ -175,7 +178,10 @@ public class AdminActivity extends AppCompatActivity {
                 } else if (id == R.id.admin_tab_publicar) {
                     if (tab3 != null) tab3.setVisibility(View.VISIBLE);
                 } else if (id == R.id.admin_tab_instrucciones) {
-                    if (tab4 != null) tab4.setVisibility(View.VISIBLE);
+                    if (tab4 != null) {
+                        tab4.setVisibility(View.VISIBLE);
+                        updateInstructionsVisibility();
+                    }
                 }
                 return true;
             });
@@ -297,6 +303,53 @@ public class AdminActivity extends AppCompatActivity {
         }
         loadSyncStatusInfo();
         setupSectionsList();
+        updateUIForRole();
+    }
+
+    private boolean isSuperAdmin() {
+        SharedPreferences pref = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+        String role = pref.getString("user_role", "");
+        String email = pref.getString("user_email", "").trim();
+
+        return "SUPER_ADMIN".equalsIgnoreCase(role) || "coluarl@gmail.com".equalsIgnoreCase(email);
+    }
+
+    private void updateUIForRole() {
+        boolean superAdmin = isSuperAdmin();
+
+        View cardSystemMaintenanceContainer = findViewById(R.id.card_system_maintenance_container);
+        View cardActiveStats = findViewById(R.id.card_active_stats);
+        View cardUserFilter = findViewById(R.id.card_user_filter);
+
+        if (cardSystemMaintenanceContainer != null) {
+            cardSystemMaintenanceContainer.setVisibility(superAdmin ? View.VISIBLE : View.GONE);
+        }
+        if (cardActiveStats != null) {
+            cardActiveStats.setVisibility(superAdmin ? View.VISIBLE : View.GONE);
+        }
+        if (cardUserFilter != null) {
+            cardUserFilter.setVisibility(superAdmin ? View.VISIBLE : View.GONE);
+        }
+
+        updateInstructionsVisibility();
+    }
+
+    private void updateInstructionsVisibility() {
+        View cardRbac = findViewById(R.id.card_instruction_rbac);
+        View cardCloud = findViewById(R.id.card_instruction_cloud);
+        View cardRollback = findViewById(R.id.card_instruction_rollback);
+
+        boolean superAdmin = isSuperAdmin();
+
+        if (cardRbac != null) {
+            cardRbac.setVisibility(superAdmin ? View.VISIBLE : View.GONE);
+        }
+        if (cardCloud != null) {
+            cardCloud.setVisibility(superAdmin ? View.VISIBLE : View.GONE);
+        }
+        if (cardRollback != null) {
+            cardRollback.setVisibility(superAdmin ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void loadSyncStatusInfo() {
@@ -351,6 +404,11 @@ public class AdminActivity extends AppCompatActivity {
                     tvStatusBadge.setText("🟢 Todo publicado (v" + info.getLocalVersion() + ")");
                     tvStatusBadge.setBackgroundTintList(ColorStateList.valueOf(0xFFE8F5E9));
                     tvStatusBadge.setTextColor(0xFF2E7D32);
+                }
+
+                TextView tvInstructionBadge = findViewById(R.id.tv_instruction_version_badge);
+                if (tvInstructionBadge != null) {
+                    tvInstructionBadge.setText("v" + info.getLocalVersion() + " • RBAC Activo");
                 }
 
                 TextView tvPantallasSummary = findViewById(R.id.tv_pantallas_summary);
@@ -755,7 +813,9 @@ public class AdminActivity extends AppCompatActivity {
                 }
 
                 authManager.updatePassword(newPass);
-                Toast.makeText(this, "✓ Contraseña administrativa actualizada correctamente", Toast.LENGTH_LONG).show();
+                final String updatedHash = AdminAuthManager.hashPassword(newPass);
+                new Thread(() -> repository.setGlobalConfig("master_admin_password_hash", updatedHash)).start();
+                Toast.makeText(this, "✓ Contraseña Maestra del CMS actualizada correctamente", Toast.LENGTH_LONG).show();
                 dialog.dismiss();
             });
         }
@@ -954,9 +1014,10 @@ public class AdminActivity extends AppCompatActivity {
                     itemHolder.btnDelete.setOnClickListener(purgeListener);
                     if (itemHolder.colDelete != null) itemHolder.colDelete.setOnClickListener(purgeListener);
                 } else {
+                    boolean superAdmin = isSuperAdmin();
                     if (itemHolder.colEdit != null) itemHolder.colEdit.setVisibility(View.VISIBLE);
                     if (itemHolder.colPreview != null) itemHolder.colPreview.setVisibility(View.VISIBLE);
-                    if (itemHolder.colDelete != null) itemHolder.colDelete.setVisibility(View.VISIBLE);
+                    if (itemHolder.colDelete != null) itemHolder.colDelete.setVisibility(superAdmin ? View.VISIBLE : View.GONE);
                     if (itemHolder.colAddContent != null) itemHolder.colAddContent.setVisibility(View.VISIBLE);
 
                     itemHolder.btnAddContent.setImageResource(R.drawable.direccion);
@@ -1507,7 +1568,6 @@ public class AdminActivity extends AppCompatActivity {
             tvCounter.setText("Mostrando " + matched + " usuarios coincidentes (Presione un usuario para modificar su rol)");
         }
     }
-
     private void showManageUserRoleDialog(Map<String, Object> user) {
         String name = String.valueOf(user.get("nombre") != null ? user.get("nombre") : "Usuario");
         String currentTipo = String.valueOf(user.get("tipoUsuario") != null ? user.get("tipoUsuario") : "ASOCIADO");
@@ -1562,20 +1622,204 @@ public class AdminActivity extends AppCompatActivity {
                 }
 
                 final String finalTipo = selectedTipo;
-                repository.cambiarRolUsuario(userId, finalTipo, (success, errorMsg) -> {
-                    runOnUiThread(() -> {
-                        if (success) {
-                            Toast.makeText(AdminActivity.this, "¡Rol de " + name + " actualizado a " + finalTipo + "!", Toast.LENGTH_SHORT).show();
-                            loadActiveUsersStats();
-                        } else {
-                            Toast.makeText(AdminActivity.this, "Error al actualizar rol: " + errorMsg, Toast.LENGTH_LONG).show();
-                        }
-                    });
-                    return Unit.INSTANCE;
-                });
                 dialog.dismiss();
+
+                // Solicitar contraseña maestra (1234) para confirmar autorización
+                showMasterPasswordAuthForRole(userId, name, finalTipo);
             });
         }
+
+        dialog.show();
+    }
+
+    private void showMasterPasswordAuthForRole(String userId, String userName, String newRole) {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_admin_login, null);
+        EditText etPassword = dialogView.findViewById(R.id.et_admin_password);
+        Button btnConfirm = dialogView.findViewById(R.id.btn_login);
+        Button btnCancel = dialogView.findViewById(R.id.btn_cancel);
+
+        if (btnConfirm != null) btnConfirm.setText("Autorizar Cambio de Rol");
+
+        AlertDialog authDialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        if (authDialog.getWindow() != null) {
+            authDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        if (btnConfirm != null) {
+            btnConfirm.setOnClickListener(v -> {
+                String inputPass = etPassword != null ? etPassword.getText().toString().trim() : "";
+                if (authManager.checkPassword(inputPass)) {
+                    authDialog.dismiss();
+                    repository.cambiarRolUsuario(userId, newRole, (success, errorMsg) -> {
+                        runOnUiThread(() -> {
+                            if (success) {
+                                Toast.makeText(AdminActivity.this, "✓ Rol de " + userName + " actualizado a " + newRole + " con éxito", Toast.LENGTH_SHORT).show();
+                                loadActiveUsersStats();
+                            } else {
+                                Toast.makeText(AdminActivity.this, "Error al actualizar rol: " + errorMsg, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                        return Unit.INSTANCE;
+                    });
+                } else {
+                    Toast.makeText(AdminActivity.this, "Contraseña maestra incorrecta (1234). Autorización denegada.", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> authDialog.dismiss());
+        }
+
+        authDialog.show();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void showManageManagersDialog() {
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_manage_managers_list, null);
+        LinearLayout containerList = view.findViewById(R.id.container_managers_list);
+        TextView tvCountLabel = view.findViewById(R.id.tv_managers_count_label);
+        Button btnClose = view.findViewById(R.id.btn_close_managers_dialog);
+        Button btnAddNew = view.findViewById(R.id.btn_add_new_manager_dialog);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(view)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        if (btnAddNew != null) {
+            btnAddNew.setOnClickListener(v -> {
+                dialog.dismiss();
+                Toast.makeText(this, "Seleccione un usuario de la lista de usuarios activos para asignarle el rol de Administrador", Toast.LENGTH_LONG).show();
+            });
+        }
+
+        repository.getUsuariosActivosReal(userList -> {
+            runOnUiThread(() -> {
+                if (containerList == null) return;
+                containerList.removeAllViews();
+
+                List<Map<String, Object>> adminList = new ArrayList<>();
+                if (userList != null) {
+                    for (Object obj : userList) {
+                        if (obj instanceof Map) {
+                            Map<String, Object> u = (Map<String, Object>) obj;
+                            String tipo = String.valueOf(u.get("tipoUsuario") != null ? u.get("tipoUsuario") : (u.get("role") != null ? u.get("role") : ""));
+                            if ("ADMIN".equalsIgnoreCase(tipo) || "SUPER_ADMIN".equalsIgnoreCase(tipo)) {
+                                adminList.add(u);
+                            }
+                        }
+                    }
+                }
+
+                if (tvCountLabel != null) {
+                    tvCountLabel.setText("Managers y Administradores Registrados: (" + adminList.size() + ")");
+                }
+
+                if (adminList.isEmpty()) {
+                    TextView tvEmpty = new TextView(AdminActivity.this);
+                    tvEmpty.setText("No hay otros administradores registrados. Promueva un usuario desde la lista de usuarios activos.");
+                    tvEmpty.setTextColor(Color.parseColor("#64748B"));
+                    tvEmpty.setTextSize(12f);
+                    tvEmpty.setPadding(0, 16, 0, 16);
+                    containerList.addView(tvEmpty);
+                } else {
+                    int index = 0;
+                    for (Map<String, Object> u : adminList) {
+                        index++;
+                        String name = String.valueOf(u.get("nombre") != null ? u.get("nombre") : "Usuario Admin");
+                        String dpi = String.valueOf(u.get("dpi") != null ? u.get("dpi") : "N/A");
+                        String phone = String.valueOf(u.get("telefono") != null ? u.get("telefono") : "N/A");
+                        String userId = String.valueOf(u.get("userId") != null ? u.get("userId") : (u.get("idNumerico") != null ? u.get("idNumerico") : ""));
+
+                        MaterialCardView cardRow = new MaterialCardView(AdminActivity.this);
+                        cardRow.setCardBackgroundColor(Color.parseColor("#F8FAFC"));
+                        cardRow.setRadius(12f);
+                        cardRow.setStrokeWidth(1);
+                        cardRow.setStrokeColor(Color.parseColor("#CBD5E1"));
+
+                        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                        cardParams.setMargins(0, 0, 0, 10);
+                        cardRow.setLayoutParams(cardParams);
+
+                        LinearLayout rowLayout = new LinearLayout(AdminActivity.this);
+                        rowLayout.setOrientation(LinearLayout.VERTICAL);
+                        rowLayout.setPadding(14, 12, 14, 12);
+
+                        TextView tvInfo = new TextView(AdminActivity.this);
+                        tvInfo.setText("#" + index + ". 🛡️ " + name + " (ADMIN)\nID: " + userId + " | Tel: " + phone + " | DPI: " + dpi);
+                        tvInfo.setTextColor(Color.parseColor("#173789"));
+                        tvInfo.setTextSize(12f);
+                        tvInfo.setTypeface(null, Typeface.BOLD);
+
+                        LinearLayout actionButtons = new LinearLayout(AdminActivity.this);
+                        actionButtons.setOrientation(LinearLayout.HORIZONTAL);
+                        actionButtons.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                        actionButtons.setPadding(0, 8, 0, 0);
+
+                        MaterialButton btnRevoke = new MaterialButton(AdminActivity.this);
+                        btnRevoke.setText("🚫 Revocar Admin");
+                        btnRevoke.setTextColor(Color.parseColor("#DC2626"));
+                        btnRevoke.setTextSize(11f);
+                        btnRevoke.setStrokeWidth(0);
+                        btnRevoke.setBackgroundColor(Color.TRANSPARENT);
+
+                        MaterialButton btnPass = new MaterialButton(AdminActivity.this);
+                        btnPass.setText("🔑 Cambiar Clave");
+                        btnPass.setTextColor(Color.parseColor("#173789"));
+                        btnPass.setTextSize(11f);
+                        btnPass.setStrokeWidth(0);
+                        btnPass.setBackgroundColor(Color.TRANSPARENT);
+
+                        String finalUserId = userId;
+                        String finalName = name;
+                        String email = String.valueOf(u.get("email") != null ? u.get("email") : "");
+
+                        btnRevoke.setOnClickListener(vRev -> {
+                            dialog.dismiss();
+                            showMasterPasswordAuthForRole(finalUserId, finalName, "ASOCIADO");
+                        });
+
+                        btnPass.setOnClickListener(vPass -> {
+                            dialog.dismiss();
+                            if (!email.isEmpty() && email.contains("@")) {
+                                DialogHelper.showLightReportDialog(AdminActivity.this, "Restablecer Clave de Manager",
+                                        "¿Deseas enviar un enlace oficial a " + email + " para que el manager '" + finalName + "' actualice su contraseña personal de inicio de sesión?",
+                                        "ENVIAR CORREO",
+                                        () -> {
+                                            FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+                                                    .addOnSuccessListener(aVoid -> Toast.makeText(AdminActivity.this, "✓ Enlace de restablecimiento enviado a " + email, Toast.LENGTH_LONG).show())
+                                                    .addOnFailureListener(e -> Toast.makeText(AdminActivity.this, "Error al enviar correo: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show());
+                                        },
+                                        "CANCELAR");
+                            } else {
+                                showChangePasswordDialog();
+                            }
+                        });
+
+                        actionButtons.addView(btnRevoke);
+                        actionButtons.addView(btnPass);
+
+                        rowLayout.addView(tvInfo);
+                        rowLayout.addView(actionButtons);
+                        cardRow.addView(rowLayout);
+
+                        containerList.addView(cardRow);
+                    }
+                }
+            });
+            return Unit.INSTANCE;
+        });
 
         dialog.show();
     }

@@ -1023,9 +1023,10 @@ public class AdminContentListActivity extends AppCompatActivity {
                         holder.btnDuplicate.setOnClickListener(v -> duplicateItem(item));
                     }
 
-                    // 👁️ Vista previa
+                    // 👁️ Ocultar / Mostrar contenido (Ojo)
                     if (holder.btnToggleVisibility != null) {
-                        holder.btnToggleVisibility.setOnClickListener(v -> openCanvasPreview());
+                        holder.btnToggleVisibility.setAlpha(item.isVisible ? 1.0f : 0.4f);
+                        holder.btnToggleVisibility.setOnClickListener(v -> toggleVisibility(item));
                     }
 
                     // 🗑️ Eliminar
@@ -1271,9 +1272,10 @@ public class AdminContentListActivity extends AppCompatActivity {
                     holder.btnDuplicate.setOnClickListener(v -> duplicateBlock(block));
                 }
 
-                // Vista Previa
+                // 👁️ Ocultar / Mostrar contenido (Ojo)
                 if (holder.btnToggleVisibility != null) {
-                    holder.btnToggleVisibility.setOnClickListener(v -> openCanvasPreview());
+                    holder.btnToggleVisibility.setAlpha(block.isVisible ? 1.0f : 0.4f);
+                    holder.btnToggleVisibility.setOnClickListener(v -> toggleBlockVisibility(block));
                 }
 
                 // Eliminar
@@ -1440,7 +1442,24 @@ public class AdminContentListActivity extends AppCompatActivity {
                         .putBoolean("has_unpublished_changes", true)
                         .apply();
                 runOnUiThread(() -> {
-                    Toast.makeText(AdminContentListActivity.this, item.isVisible ? "Bloque visible" : "Bloque oculto", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(AdminContentListActivity.this, item.isVisible ? "Elemento visible en la app" : "Elemento ocultado en la app", Toast.LENGTH_SHORT).show();
+                    loadData();
+                });
+            }).start();
+        }
+
+        private void toggleBlockVisibility(ContentBlockEntity block) {
+            block.isVisible = !block.isVisible;
+            block.isDraft = true;
+            block.updatedAt = System.currentTimeMillis();
+            new Thread(() -> {
+                repository.insertBlock(block);
+                getSharedPreferences("ConfigSyncPrefs", MODE_PRIVATE)
+                        .edit()
+                        .putBoolean("has_unpublished_changes", true)
+                        .apply();
+                runOnUiThread(() -> {
+                    Toast.makeText(AdminContentListActivity.this, block.isVisible ? "Bloque visible en la app" : "Bloque ocultado en la app", Toast.LENGTH_SHORT).show();
                     loadData();
                 });
             }).start();

@@ -54,7 +54,7 @@
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:maxHeight="360dp">
+            android:layout_weight="1">
 
             <TextView
                 android:id="@+id/tv_report_content"

@@ -62,10 +62,8 @@ public class AdminAuthManager {
         String inputHash = hashPassword(input.trim());
         String storedHash = prefs.getString(KEY_ADMIN_HASH, hashPassword("1234"));
 
-        // Comparación segura por hash SHA-256
-        boolean matches = storedHash.equalsIgnoreCase(inputHash)
-                || hashPassword("admin123").equalsIgnoreCase(inputHash)
-                || hashPassword("1234").equalsIgnoreCase(inputHash);
+        // Comparación estricta con la clave maestra almacenada activamente
+        boolean matches = storedHash.equalsIgnoreCase(inputHash);
 
         if (matches) {
             setSessionActive(true);

@@ -673,54 +673,82 @@ class ColuaRepository(private val context: Context) {
             return
         }
 
-        val isAdminEmail = email.trim().equals("coluarl@gmail.com", ignoreCase = true)
+        val cleanEmail = email.trim()
+        val isAdminEmail = cleanEmail.equals("coluarl@gmail.com", ignoreCase = true)
 
-        // Buscamos el perfil por firebaseUid
+        // 1. Buscamos el perfil por firebaseUid
         firestore.collection("usuarios").whereEqualTo("firebaseUid", uid).get()
             .addOnSuccessListener { query ->
                 if (!query.isEmpty) {
                     val doc = query.documents[0]
-                    val userId = doc.id // Esto será "0000001", "0000002", etc.
-                    val nombre = doc.getString("nombre") ?: if (isAdminEmail) "Administrador COLUA" else "Asociado COLUA"
-                    val telefono = doc.getString("telefono") ?: ""
-                    var tipoUsuario = doc.getString("tipoUsuario") ?: "ASOCIADO"
-                    
-                    if (isAdminEmail && tipoUsuario != "ADMIN") {
-                        tipoUsuario = "ADMIN"
-                        doc.reference.update("tipoUsuario", "ADMIN")
-                    }
-
-                    val role = if (tipoUsuario == "ADMIN") "ADMIN" else if (tipoUsuario == "INVITADO") "GUEST" else "MEMBER"
-                    
-                    saveLocalUser(userId, doc.getString("dpi") ?: "", nombre, telefono, email, "", role)
-                    
-                    getInstallationId { installId ->
-                        upsertDeviceSubcollection(userId, tipoUsuario, installId)
-                    }
-                    
-                    val result = mapOf(
-                        "userId" to userId,
-                        "nombre" to nombre,
-                        "telefono" to telefono,
-                        "role" to role
-                    )
-                    callback(true, result, null)
+                    processUserProfileDoc(doc, uid, cleanEmail, isAdminEmail, callback)
                 } else {
-                    if (isAdminEmail) {
-                        crearPerfilAdminOficial(uid, email, callback)
-                    } else {
-                        callback(false, null, "No se encontró el perfil de usuario asociado a esta cuenta.")
-                    }
+                    // 2. Si no se encontró por firebaseUid, buscar por email registrado
+                    firestore.collection("usuarios").whereEqualTo("email", cleanEmail).get()
+                        .addOnSuccessListener { queryEmail ->
+                            if (!queryEmail.isEmpty) {
+                                val doc = queryEmail.documents[0]
+                                doc.reference.update("firebaseUid", uid)
+                                processUserProfileDoc(doc, uid, cleanEmail, isAdminEmail, callback)
+                            } else {
+                                if (isAdminEmail) {
+                                    crearPerfilAdminOficial(uid, cleanEmail, callback)
+                                } else {
+                                    callback(false, null, "No se encontró el perfil de usuario asociado a $cleanEmail.")
+                                }
+                            }
+                        }
+                        .addOnFailureListener {
+                            if (isAdminEmail) {
+                                crearPerfilAdminOficial(uid, cleanEmail, callback)
+                            } else {
+                                callback(false, null, "No se encontró el perfil de usuario asociado a $cleanEmail.")
+                            }
+                        }
                 }
             }
             .addOnFailureListener { e ->
                 Log.e("FIREBASE_AUTH", "Error obteniendo perfil: ${e.message}")
                 if (isAdminEmail) {
-                    crearPerfilAdminOficial(uid, email, callback)
+                    crearPerfilAdminOficial(uid, cleanEmail, callback)
                 } else {
                     callback(false, null, "Error obteniendo perfil: ${e.message}")
                 }
             }
+    }
+
+    private fun processUserProfileDoc(
+        doc: DocumentSnapshot,
+        uid: String,
+        email: String,
+        isAdminEmail: Boolean,
+        callback: (Boolean, Map<String, String>?, String?) -> Unit
+    ) {
+        val userId = doc.id
+        val nombre = doc.getString("nombre") ?: if (isAdminEmail) "Administrador COLUA" else "Asociado COLUA"
+        val telefono = doc.getString("telefono") ?: ""
+        var tipoUsuario = doc.getString("tipoUsuario") ?: doc.getString("role") ?: "ASOCIADO"
+
+        if (isAdminEmail && tipoUsuario != "ADMIN") {
+            tipoUsuario = "ADMIN"
+            doc.reference.update("tipoUsuario", "ADMIN", "role", "ADMIN")
+        }
+
+        val role = if (tipoUsuario.equals("ADMIN", ignoreCase = true) || tipoUsuario.equals("SUPER_ADMIN", ignoreCase = true)) "ADMIN" else if (tipoUsuario.equals("INVITADO", ignoreCase = true) || tipoUsuario.equals("GUEST", ignoreCase = true)) "GUEST" else "MEMBER"
+
+        saveLocalUser(userId, doc.getString("dpi") ?: "", nombre, telefono, email, "", role)
+
+        getInstallationId { installId ->
+            upsertDeviceSubcollection(userId, tipoUsuario, installId)
+        }
+
+        val result = mapOf(
+            "userId" to userId,
+            "nombre" to nombre,
+            "telefono" to telefono,
+            "role" to role
+        )
+        callback(true, result, null)
     }
 
     private fun crearPerfilAdminOficial(

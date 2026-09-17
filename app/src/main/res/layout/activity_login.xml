@@ -155,7 +155,7 @@
                     android:layout_marginTop="8dp"
                     android:layout_marginBottom="24dp">
 
-                    <CheckBox
+                    <com.google.android.material.checkbox.MaterialCheckBox
                         android:id="@+id/cb_remember_login"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -165,7 +165,8 @@
                         android:text="Recordar usuario"
                         android:textColor="#334155"
                         android:textSize="12sp"
-                        android:buttonTint="@color/colua_navy" />
+                        app:buttonTint="@color/colua_navy"
+                        app:useMaterialThemeColors="true" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_forgot_password"
@@ -481,7 +482,7 @@
                         </LinearLayout>
                     </LinearLayout>
 
-                    <CheckBox
+                    <com.google.android.material.checkbox.MaterialCheckBox
                         android:id="@+id/cb_terms"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -489,7 +490,9 @@
                         android:fontFamily="@font/poppins_regular"
                         android:text="Acepto los términos y condiciones y autorizo a COLUA a enviarme correos."
                         android:textColor="#334155"
-                        android:textSize="12sp" />
+                        android:textSize="12sp"
+                        app:buttonTint="@color/colua_navy"
+                        app:useMaterialThemeColors="true" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
