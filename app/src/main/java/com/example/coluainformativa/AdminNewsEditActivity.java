@@ -52,8 +52,8 @@ public class AdminNewsEditActivity extends AppCompatActivity {
     private static final int REQUEST_PICK_MULTI_IMAGES = 101;
 
     public static final String[] NEWS_CATEGORIES = {
-            "📢 COLUA Informativa",
-            "📰 COLUA Noticias",
+            "📢 COLUA Digital",
+            "📰 COLUA Digital",
             "🌱 COLUA Verde",
             "🎓 COLUA Educación",
             "🤝 COLUA Solidaria",

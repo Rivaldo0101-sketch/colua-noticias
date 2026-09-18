@@ -516,8 +516,8 @@ public class DynamicSectionActivity extends AppCompatActivity {
                 
                 runOnUiThread(() -> {
                     FrameLayout containerNosotros = findViewById(R.id.container_nosotros_custom);
-                    if ("sec_nosotros".equalsIgnoreCase(canonicalId) || "sec_ahorros".equalsIgnoreCase(canonicalId) || "sec_creditos".equalsIgnoreCase(canonicalId) || "sec_seguros".equalsIgnoreCase(canonicalId) || "sec_remesas".equalsIgnoreCase(canonicalId) || "sec_servicios".equalsIgnoreCase(canonicalId) || "sec_beneficios".equalsIgnoreCase(canonicalId)) {
-                        // Para Nosotros, Ahorros, Créditos, Seguros, Remesas, Servicios o Beneficios mostramos sus respectivas plantillas perfectas (idénticas en todos los dispositivos)
+                    if ("sec_nosotros".equalsIgnoreCase(canonicalId) || "sec_ahorros".equalsIgnoreCase(canonicalId) || "sec_creditos".equalsIgnoreCase(canonicalId) || "sec_seguros".equalsIgnoreCase(canonicalId) || "sec_remesas".equalsIgnoreCase(canonicalId) || "sec_servicios".equalsIgnoreCase(canonicalId) || "sec_beneficios".equalsIgnoreCase(canonicalId) || "sec_sostenibilidad".equalsIgnoreCase(canonicalId)) {
+                        // Para Nosotros, Ahorros, Créditos, Seguros, Remesas, Servicios, Beneficios o Sostenibilidad mostramos sus respectivas plantillas perfectas (idénticas en todos los dispositivos)
                         findViewById(R.id.tv_dynamic_title).setVisibility(View.GONE);
                         findViewById(R.id.tv_dynamic_description).setVisibility(View.GONE);
                         findViewById(R.id.rv_dynamic_blocks).setVisibility(View.GONE);
@@ -535,6 +535,7 @@ public class DynamicSectionActivity extends AppCompatActivity {
                                               : "sec_remesas".equalsIgnoreCase(canonicalId) ? R.layout.layout_remesas_content 
                                               : "sec_servicios".equalsIgnoreCase(canonicalId) ? R.layout.layout_servicios_content 
                                               : "sec_beneficios".equalsIgnoreCase(canonicalId) ? R.layout.layout_beneficios_content 
+                                              : "sec_sostenibilidad".equalsIgnoreCase(canonicalId) ? R.layout.layout_sostenibilidad_content 
                                               : R.layout.layout_nosotros_content;
                                 View inflated = LayoutInflater.from(this).inflate(layoutRes, containerNosotros, true);
                                 if ("sec_ahorros".equalsIgnoreCase(canonicalId)) {
@@ -549,6 +550,8 @@ public class DynamicSectionActivity extends AppCompatActivity {
                                     setupServiciosView(inflated);
                                 } else if ("sec_beneficios".equalsIgnoreCase(canonicalId)) {
                                     setupBeneficiosContent(inflated);
+                                } else if ("sec_sostenibilidad".equalsIgnoreCase(canonicalId)) {
+                                    setupSostenibilidadContent(inflated);
                                 }
                             }
                         }
@@ -1214,6 +1217,32 @@ public class DynamicSectionActivity extends AppCompatActivity {
                     }
                 }
             }
+        }
+    }
+
+    private void setupSostenibilidadContent(View view) {
+        View btnSolicitar = view.findViewById(R.id.btn_solicitar_informacion);
+        if (btnSolicitar != null) {
+            btnSolicitar.setOnClickListener(v -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:77957795"));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(this, "PBX: 7795-7795", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        View btnContactanos = view.findViewById(R.id.btn_contactanos);
+        if (btnContactanos != null) {
+            btnContactanos.setOnClickListener(v -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:77957795"));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(this, "PBX: 7795-7795", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
     }
 }

@@ -213,7 +213,7 @@ class ColuaRepository(private val context: Context) {
                     target != "sec_home" && target != "sec_agencias" && target != "sec_servicios" && 
                     target != "sec_beneficios" && target != "sec_noticias" && target != "sec_nosotros" && 
                     target != "sec_creditos" && target != "sec_seguros" && target != "sec_remesas" && 
-                    target != "sec_ahorros") {
+                    target != "sec_ahorros" && target != "sec_sostenibilidad") {
                     
                     localDb.navigationDao().deleteByTargetSection(target)
                     localDb.navigationDao().deleteById(nav.id)

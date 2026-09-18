@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Colua Noticias"
+rootProject.name = "Colua Digital"
 include(":app")

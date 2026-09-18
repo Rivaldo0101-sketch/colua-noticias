@@ -355,7 +355,7 @@ public class ContentItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         private String getCategoryPillFromTags(String tags) {
-            if (tags == null || tags.trim().isEmpty()) return "📢 COLUA Informativa";
+            if (tags == null || tags.trim().isEmpty()) return "📢 COLUA Digital";
             String tagLower = tags.toLowerCase();
             if (tagLower.contains("verde") || tagLower.contains("reforestacion") || tagLower.contains("ambiente") || tagLower.contains("arbol")) {
                 return "🌱 COLUA Verde";
@@ -366,7 +366,7 @@ public class ContentItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             } else if (tagLower.contains("trabajo") || tagLower.contains("empleo") || tagLower.contains("capacitacion")) {
                 return "💼 COLUA Trabajo";
             } else if (tagLower.contains("noticia") || tagLower.contains("novedad")) {
-                return "📰 COLUA Noticias";
+                return "📰 COLUA Digital";
             } else if (tagLower.contains("beneficio") || tagLower.contains("promocion")) {
                 return "🎁 COLUA Beneficios";
             } else if (tagLower.contains("financiera") || tagLower.contains("ahorro") || tagLower.contains("credito")) {
@@ -376,7 +376,7 @@ public class ContentItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             } else if (tagLower.contains("evento") || tagLower.contains("asamblea")) {
                 return "🎉 COLUA Eventos";
             }
-            return "📢 COLUA Informativa";
+            return "📢 COLUA Digital";
         }
 
         public void bind(ContentItemEntity item, OnItemClickListener listener, boolean isEditMode) {
@@ -803,7 +803,7 @@ public class ContentItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
                 shareIntent.setType("image/png");
                 shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
-                shareIntent.putExtra(Intent.EXTRA_TEXT, item.title + " - COLUA Noticias\n" + shareUrl);
+                shareIntent.putExtra(Intent.EXTRA_TEXT, item.title + " - COLUA Digital\n" + shareUrl);
                 shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 context.startActivity(Intent.createChooser(shareIntent, "Compartir imagen de la noticia vía:"));
 
