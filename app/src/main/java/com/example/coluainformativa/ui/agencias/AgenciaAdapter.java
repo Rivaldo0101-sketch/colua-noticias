@@ -1,6 +1,8 @@
 package com.example.coluainformativa.ui.agencias;
 
+import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +11,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.coluainformativa.AdminAgenciaEditActivity;
 import com.example.coluainformativa.R;
 import com.example.coluainformativa.database.AgenciaEntity;
 
@@ -64,7 +67,7 @@ public class AgenciaAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             
             vh.btnEdit.setVisibility(isEditMode ? View.VISIBLE : View.GONE);
             vh.btnEdit.setOnClickListener(v -> {
-                android.content.Intent intent = new android.content.Intent(vh.itemView.getContext(), com.example.coluainformativa.AdminAgenciaEditActivity.class);
+                Intent intent = new Intent(vh.itemView.getContext(), AdminAgenciaEditActivity.class);
                 intent.putExtra("extra_agencia_id", agencia.id);
                 vh.itemView.getContext().startActivity(intent);
             });
@@ -72,16 +75,25 @@ public class AgenciaAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             // Acción de Google Maps
             vh.itemView.findViewById(R.id.btn_google_maps).setOnClickListener(v -> {
                 if (agencia.mapUrl != null && !agencia.mapUrl.isEmpty()) {
-                    android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(agencia.mapUrl));
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(agencia.mapUrl));
                     vh.itemView.getContext().startActivity(intent);
                 } else {
                     // Fallback: buscar nombre + direccion
                     String nombre = agencia.nombre != null ? agencia.nombre : "";
                     String direccion = agencia.direccion != null ? agencia.direccion : "";
-                    String query = android.net.Uri.encode(nombre + " " + direccion);
-                    android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("geo:0,0?q=" + query));
+                    String query = Uri.encode(nombre + " " + direccion);
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + query));
                     vh.itemView.getContext().startActivity(intent);
                 }
+            });
+
+            // Acción de llamada telefónica
+            vh.itemView.findViewById(R.id.btn_agencia_call).setOnClickListener(v -> {
+                String tel = agencia.telefono != null && !agencia.telefono.isEmpty() ? agencia.telefono.trim() : "77957795";
+                try {
+                    Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tel));
+                    vh.itemView.getContext().startActivity(intent);
+                } catch (Exception ignored) {}
             });
             
             try {

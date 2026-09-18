@@ -6,158 +6,209 @@
     android:layout_marginHorizontal="16dp"
     android:layout_marginVertical="8dp"
     app:cardBackgroundColor="@color/white"
-    app:cardCornerRadius="14dp"
-    app:cardElevation="6dp"
-    app:strokeWidth="0dp">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="3dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#E2E8F0">
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="20dp">
+            android:orientation="horizontal"
+            android:baselineAligned="false">
 
-        <View
-            android:id="@+id/side_border_agencia"
-            android:layout_width="4dp"
-            android:layout_height="0dp"
-            android:background="@color/colua_orange"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:orientation="vertical"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/side_border_agencia"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <TextView
-                android:id="@+id/tv_agencia_nombre"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/poppins_regular"
-                android:text="Agencia Corporativa"
-                android:textColor="@color/colua_navy"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tv_agencia_depto"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/poppins_regular"
-                android:text="Sololá"
-                android:textColor="@color/colua_green"
-                android:textSize="14sp"
-                android:layout_marginTop="2dp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_location"
-                    app:tint="@color/black" />
-                <TextView
-                    android:id="@+id/tv_agencia_direccion"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:fontFamily="@font/poppins_regular"
-                    android:text="Dirección de la agencia"
-                    android:textColor="#555555"
-                    android:textSize="13sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btn_google_maps"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingVertical="4dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true">
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_location"
-                    app:tint="@color/colua_green" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:text="Ver en Google Maps"
-                    android:textColor="@color/colua_green"
-                    android:textStyle="bold"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_phone"
-                    app:tint="@color/black" />
-                <TextView
-                    android:id="@+id/tv_agencia_telefono"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:fontFamily="@font/poppins_regular"
-                    android:text="7795-7795"
-                    android:textColor="#555555"
-                    android:textSize="13sp" />
-            </LinearLayout>
-
+            <!-- 1. Borde vertical de color izquierdo -->
             <View
+                android:id="@+id/side_border_agencia"
+                android:layout_width="6dp"
+                android:layout_height="match_parent"
+                android:background="#EF8819" />
+
+            <!-- 2. Contenido de la Agencia -->
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="16dp"
-                android:background="#F0F0F0" />
-
-            <TextView
-                android:id="@+id/tv_agencia_footer"
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:fontFamily="@font/poppins_regular"
-                android:text="Visitanos, será un placer atenderte"
-                android:textColor="@color/text_grey"
-                android:textSize="11sp" />
+                android:orientation="vertical"
+                android:padding="20dp">
 
+                <!-- Fila Superior: Nombre y Badge Departamento -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:id="@+id/tv_agencia_nombre"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:layout_toStartOf="@id/tv_agencia_depto"
+                        android:layout_marginEnd="8dp"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="Agencia Corporativa"
+                        android:textColor="@color/colua_navy"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_agencia_depto"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:background="@drawable/bg_rounded_rectangle"
+                        android:backgroundTint="#FEE2E2"
+                        android:fontFamily="@font/poppins_regular"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp"
+                        android:text="Sololá"
+                        android:textColor="#DC2626"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </RelativeLayout>
+
+                <!-- Dirección -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_marginEnd="10dp"
+                        android:src="@drawable/ic_location"
+                        app:tint="#DC2626"
+                        android:contentDescription="Ubicación" />
+
+                    <TextView
+                        android:id="@+id/tv_agencia_direccion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="Aldea San Juan Argueta, Sololá\nCarretera Interamericana, KM. 138.5"
+                        android:textColor="#334155"
+                        android:textSize="13sp"
+                        android:lineSpacingMultiplier="1.2" />
+                </LinearLayout>
+
+                <!-- Fila de Botones de Acción: Cómo llegar + Teléfono -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2"
+                    android:layout_marginBottom="16dp"
+                    android:baselineAligned="false">
+
+                    <!-- Botón Cómo llegar -->
+                    <LinearLayout
+                        android:id="@+id/btn_google_maps"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_rounded_rectangle"
+                        android:backgroundTint="#FEF2F2"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_marginEnd="6dp"
+                            android:src="@drawable/ic_location"
+                            app:tint="#DC2626"
+                            android:contentDescription="Mapa" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="Cómo llegar"
+                            android:textColor="#DC2626"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Botón Teléfono -->
+                    <LinearLayout
+                        android:id="@+id/btn_agencia_call"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="6dp"
+                        android:background="@drawable/bg_rounded_rectangle"
+                        android:backgroundTint="#F8FAFC"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_marginEnd="6dp"
+                            android:src="@drawable/ic_phone"
+                            app:tint="#0F172A"
+                            android:contentDescription="Teléfono" />
+
+                        <TextView
+                            android:id="@+id/tv_agencia_telefono"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins_regular"
+                            android:text="7795-7795"
+                            android:textColor="#0F172A"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E2E8F0"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Footer -->
+                <TextView
+                    android:id="@+id/tv_agencia_footer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="Visítanos, será un placer atenderte"
+                    android:textColor="#94A3B8"
+                    android:textSize="11sp" />
+
+            </LinearLayout>
         </LinearLayout>
-        </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <!-- Botón de Edición en Modo CMS -->
         <ImageButton
             android:id="@+id/btn_edit_agencia"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_gravity="top|end"
             android:layout_margin="12dp"
-            android:src="@android:drawable/ic_menu_edit"
-            android:background="@drawable/circle_background"
+            android:background="@drawable/bg_rounded_rectangle"
             android:backgroundTint="@color/colua_orange"
-            app:tint="@color/white"
-            android:visibility="gone" />
+            android:contentDescription="Editar"
+            android:src="@android:drawable/ic_menu_edit"
+            android:visibility="gone"
+            app:tint="@color/white" />
 
     </FrameLayout>
 </com.google.android.material.card.MaterialCardView>

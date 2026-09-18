@@ -353,6 +353,10 @@ class ColuaRepository(private val context: Context) {
             }
         }
 
+        if (cleanId == "sec_noticias" || cleanId == "noticias") {
+            return local.sortedByDescending { it.updatedAt }
+        }
+
         return local.sortedBy { it.displayOrder }
     }
 
@@ -653,6 +657,10 @@ class ColuaRepository(private val context: Context) {
             } catch (e: Exception) {
                 Log.e("REPO", "Error syncing blocks from Firestore: ${e.message}")
             }
+        }
+
+        if (cleanId == "sec_noticias" || cleanId == "noticias") {
+            return local.sortedByDescending { it.updatedAt }
         }
 
         return local.sortedBy { it.displayOrder }
