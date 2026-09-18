@@ -291,24 +291,19 @@ public class MainActivity extends AppCompatActivity {
                             if (resId != 0) imgDistintivo.setImageResource(resId);
                         }
 
-                        // Título y Subtítulo
+                        // Título 1 (SOMOS EL LADO HUMANO)
                         if (instBlock.title != null && !instBlock.title.isEmpty()) {
                             tvSlogan1.setText(instBlock.title);
                         }
 
-                        if (instBlock.content != null && !instBlock.content.isEmpty()) {
-                            String[] lines = instBlock.content.split("\n\n");
-                            if (lines.length > 0) {
-                                String[] sloganLines = lines[0].split("\n");
-                                if (sloganLines.length > 0) tvSlogan2.setText(sloganLines[0]);
-                            }
-                            if (lines.length > 1) {
-                                tvHelpTitle.setText(lines[1]);
-                            }
-                            if (lines.length > 2) {
-                                tvHelpDesc.setText(lines[2]);
-                            }
-                        }
+                        // Título 2 (de los Ahorros y Créditos)
+                        tvSlogan2.setText("de los Ahorros y Créditos");
+
+                        // Título de Ayuda
+                        tvHelpTitle.setText("¿Necesitas ayuda adicional?");
+
+                        // Descripción de Ayuda
+                        tvHelpDesc.setText("Comunícate a nuestro PBX central o búscanos en nuestras redes sociales oficiales.");
 
                         // Botón PBX
                         if (btnPbx != null) {
@@ -334,8 +329,8 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         // Aplicar Ayuda Global
-                        if (!helpTitleGlobal.isEmpty()) tvHelpTitle.setText(helpTitleGlobal);
-                        if (!helpDescGlobal.isEmpty()) tvHelpDesc.setText(helpDescGlobal);
+                        tvHelpTitle.setText("¿Necesitas ayuda adicional?");
+                        tvHelpDesc.setText("Comunícate a nuestro PBX central o búscanos en nuestras redes sociales oficiales.");
 
                         // Configurar PBX
                         btnPbx.setOnClickListener(v -> showPbxSelectionDialog(pbxListJson));

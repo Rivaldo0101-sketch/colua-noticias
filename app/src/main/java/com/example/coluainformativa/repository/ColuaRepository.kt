@@ -234,29 +234,95 @@ class ColuaRepository(private val context: Context) {
         return match?.id ?: sectionIdOrSlug
     }
 
-    fun getItemsBySection(sectionId: String): List<ContentItemEntity> {
-        val cleanId = sectionId.lowercase(Locale.getDefault())
-        val altId = if (cleanId.startsWith("sec_")) cleanId.replace("sec_", "") else "sec_$cleanId"
+    private fun ensureSostenibilidadItemsSynced() {
+        try {
+            val seedItems = listOf(
+                ContentItemEntity(
+                    "item_sostenibilidad_1",
+                    "sec_sostenibilidad",
+                    "Educación y Formación Cooperativa",
+                    "Ver más detalles",
+                    "Empoderando a la niñez, juventud y comunidades rurales del departamento con herramientas financieras, valores y liderazgo.\n\n• Programa Wachalal (2,284 Alumnos): Formación lúdica y fomento al ahorro en Concepción, Panajachel, Santiago Atitlán, Sololá y San Juan La Laguna.\n\n• Educación Financiera (1,305 Personas): Talleres prácticos en Nahualá, Santiago Atitlán, San Andrés Semetabaj y Concordia Totonicapán.\n\n• Becas Jóvenes Cooperativistas (160 Becados): Impulso académico y mentoría solidaria para nuevas generaciones de líderes locales.\n\n• Programa Huellas (436 Atendidos): Fortalecimiento de valores éticos para estudiantes y colaboradores del equipo COLUA.",
+                    "#173789",
+                    1
+                ).apply {
+                    imagePath = "sostenibilidad_cooperativa"
+                    tags = "#COLUAEducación #Wachalal #MICOOPE"
+                    isFeatured = true
+                    isDraft = false
+                    targetSectionId = "https://coluarl.com.gt/"
+                },
+                ContentItemEntity(
+                    "item_sostenibilidad_2",
+                    "sec_sostenibilidad",
+                    "Nuestra Historia y Raíces",
+                    "Conoce más",
+                    "Desde el 22 de mayo de 1965\n\nCOLUA MICOOPE nació gracias al coraje de 25 visionarios guiados por la misionera Elena Harding. Con un aporte inicial de Q5.00 y cuotas semanales de Q0.25, demostraron que la solidaridad comunitaria es el motor financiero más poderoso.\n\n• 60 Años de solidez\n• 25 Socios pioneros\n• Q5.00 Capital semilla",
+                    "#59B8A4",
+                    2
+                ).apply {
+                    imagePath = "grupo"
+                    tags = "#HistoriaCOLUA #60Años #MICOOPE"
+                    isFeatured = true
+                    isDraft = false
+                    targetSectionId = "https://coluarl.com.gt/"
+                },
+                ContentItemEntity(
+                    "item_sostenibilidad_3",
+                    "sec_sostenibilidad",
+                    "Nuestra Propuesta de Valor",
+                    "Leer más",
+                    "“En COLUA reconocemos tu valor como persona para alcanzar tu bienestar integral y el de tu familia.”",
+                    "#E42A67",
+                    3
+                ).apply {
+                    imagePath = "noticias_colua"
+                    tags = "#PropuestaDeValor #BienestarIntegral #MICOOPE"
+                    isFeatured = false
+                    isDraft = false
+                    targetSectionId = "https://coluarl.com.gt/"
+                },
+                ContentItemEntity(
+                    "item_sostenibilidad_4",
+                    "sec_sostenibilidad",
+                    "Huella e Impacto Social (Sololá & Occidente)",
+                    "Visitar sitio web oficial",
+                    "Bienestar comunitario durante 2025\n\n• 22,775 Personas beneficiadas (Directas)\n• 18,672 Asociados y comunidad (Indirectas)\n• 41,447 Vidas tocadas (Impacto Global Acumulado)",
+                    "#173789",
+                    4
+                ).apply {
+                    imagePath = "sostenibilidad_cooperativa"
+                    tags = "#ImpactoSocial #VidasTocadas #MICOOPE"
+                    isFeatured = true
+                    isDraft = false
+                    targetSectionId = "https://coluarl.com.gt/"
+                }
+            )
 
-        if (isCloudEnabled()) {
-            try {
-                val task = firestore.collection("content_items").whereIn("sectionId", listOf(cleanId, altId)).get()
-                val cloud = await(task)?.toObjects(ContentItemEntity::class.java)
-                if (cloud != null) {
-                    val cloudIds = cloud.map { it.id }.toSet()
-                    val oldLocal = localDb.contentDao().getItemsBySection(cleanId)
-                    for (loc in oldLocal) {
-                        if (!cloudIds.contains(loc.id)) {
-                            localDb.contentDao().deleteItemById(loc.id)
+            for (item in seedItems) {
+                val existing = localDb.contentDao().getItemById(item.id)
+                if (existing == null) {
+                    localDb.contentDao().insertItem(item)
+                    if (isCloudEnabled()) {
+                        try {
+                            firestore.collection("content_items").document(item.id).set(item)
+                        } catch (e: Exception) {
+                            Log.e("REPO", "Error uploading seed sostenibilidad item to cloud: ${e.message}")
                         }
                     }
-                    cloud.forEach { localDb.contentDao().insertItem(it) }
-                    return cloud.sortedBy { it.displayOrder }
                 }
-            } catch (e: Exception) {
-                Log.e("REPO", "Error syncing items from Firestore: ${e.message}")
             }
+        } catch (e: Exception) {
+            Log.e("REPO", "Error in ensureSostenibilidadItemsSynced: ${e.message}")
         }
+    }
+
+    fun getItemsBySection(sectionId: String): List<ContentItemEntity> {
+        val cleanId = sectionId.lowercase(Locale.getDefault())
+        if (cleanId == "sec_sostenibilidad" || cleanId == "sostenibilidad") {
+            ensureSostenibilidadItemsSynced()
+        }
+        val altId = if (cleanId.startsWith("sec_")) cleanId.replace("sec_", "") else "sec_$cleanId"
 
         val local = localDb.contentDao().getItemsBySection(cleanId).toMutableList()
         val altLocal = localDb.contentDao().getItemsBySection(altId)
@@ -264,6 +330,26 @@ class ColuaRepository(private val context: Context) {
         for (item in altLocal) {
             if (local.none { it.id == item.id }) {
                 local.add(item)
+            }
+        }
+
+        if (isCloudEnabled()) {
+            try {
+                val task = firestore.collection("content_items").whereIn("sectionId", listOf(cleanId, altId)).get()
+                val cloud = await(task)?.toObjects(ContentItemEntity::class.java)
+                if (cloud != null && cloud.isNotEmpty()) {
+                    cloud.forEach { cloudItem ->
+                        localDb.contentDao().insertItem(cloudItem)
+                        if (local.none { it.id == cloudItem.id }) {
+                            local.add(cloudItem)
+                        } else {
+                            val idx = local.indexOfFirst { it.id == cloudItem.id }
+                            if (idx >= 0) local[idx] = cloudItem
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("REPO", "Error syncing items from Firestore: ${e.message}")
             }
         }
 
@@ -302,29 +388,243 @@ class ColuaRepository(private val context: Context) {
     }
 
     // --- BLOQUES ---
-    fun getBlocksBySection(sectionId: String): List<ContentBlockEntity> {
-        val cleanId = sectionId.lowercase(Locale.getDefault())
-        val altId = if (cleanId.startsWith("sec_")) cleanId.replace("sec_", "") else "sec_$cleanId"
+    private fun ensureNosotrosBlocksSynced() {
+        try {
+            val seedBlocks = listOf(
+                ContentBlockEntity("block_nosotros_propuesta", null, "CARD", "\"En COLUA reconocemos tu valor como persona para alcanzar tu bienestar integral y el de tu familia, a través de productos y servicios financieros éticos, ágiles y accesibles, basados en el poder de la cooperación\".", 1, "ic_verified", "Propuesta de Valor", null, null, "sec_nosotros", "#59B8A4", null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_nosotros_vision", null, "CARD", "\"Ser un modelo de desarrollo y sostenibilidad integral de las comunidades basado en la cooperación\".", 2, "ic_info", "Visión", null, null, "sec_nosotros", "#173789", null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_nosotros_proposito", null, "CARD", "\"Ser la cooperativa financiera que mejora la calidad de vida de sus asociados y comunidades de Guatemala\".", 3, "ic_campaign", "Propósito Visionario", null, null, "sec_nosotros", "#E42A67", null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_nosotros_valores_title", null, "TEXT", "", 4, null, "Valores de COLUA MICOOPE", null, null, "sec_nosotros", null, null, "NORMAL", "BOLD", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_nosotros_integridad", null, "TEXT", "Actuar con coherencia con nuestros valores, manteniendo transparencia en todo lo que hacemos y fomentando la cooperación en cada acción.", 5, null, "INTEGRIDAD", null, null, "sec_nosotros", null, null, "NORMAL", "BOLD", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_nosotros_cooperacion", null, "TEXT", "COOPERACIÓN:\nTrabajar juntos para alcanzar un objetivo común, basada en la ayuda mutua, la solidaridad y el esfuerzo compartido.\n\nRESPONSABILIDAD:\nAdministramos y cuidamos los ahorros de nuestros asociados que nos han confiado.", 6, null, "COOPERACIÓN Y RESPONSABILIDAD", null, null, "sec_nosotros", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_nosotros_grafico", null, "IMAGE", "", 7, "valores_colua_1", "Gráfico de Valores", null, null, "sec_nosotros", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_nosotros_enfoque", null, "TEXT", "El centro de atención de nuestros esfuerzos y nuestra lealtad son los asociados, a quienes entregamos siempre soluciones de calidad.", 8, null, "ENFOQUE AL ASOCIADO", null, null, "sec_nosotros", null, null, "NORMAL", "BOLD", "CENTER").apply { isDraft = false; isVisible = true }
+            )
 
-        if (isCloudEnabled()) {
-            try {
-                val task = firestore.collection("content_blocks").whereIn("sectionId", listOf(cleanId, altId)).get()
-                val cloud = await(task)?.toObjects(ContentBlockEntity::class.java)
-                if (cloud != null) {
-                    val cloudIds = cloud.map { it.id }.toSet()
-                    val oldLocal = localDb.contentDao().getBlocksBySection(cleanId)
-                    for (loc in oldLocal) {
-                        if (!cloudIds.contains(loc.id)) {
-                            localDb.contentDao().deleteBlockById(loc.id)
+            for (b in seedBlocks) {
+                val existing = localDb.contentDao().getBlockById(b.id)
+                if (existing == null) {
+                    localDb.contentDao().insertBlock(b)
+                    if (isCloudEnabled()) {
+                        try {
+                            firestore.collection("content_blocks").document(b.id).set(b)
+                        } catch (e: Exception) {
+                            Log.e("REPO", "Error uploading seed block to cloud: ${e.message}")
                         }
                     }
-                    cloud.forEach { localDb.contentDao().insertBlock(it) }
-                    return cloud.sortedBy { it.displayOrder }
                 }
-            } catch (e: Exception) {
-                Log.e("REPO", "Error syncing blocks from Firestore: ${e.message}")
             }
+        } catch (e: Exception) {
+            Log.e("REPO", "Error in ensureNosotrosBlocksSynced: ${e.message}")
         }
+    }
+
+    private fun ensureAhorrosBlocksSynced() {
+        try {
+            val seedBlocks = listOf(
+                ContentBlockEntity("block_ahorros_header", null, "CONTAINER", "Construye un futuro financiero sólido con nuestras cuentas de ahorro diseñadas para cada etapa de tu vida. Excelentes tasas, cero comisiones de manejo y total disponibilidad.", 1, "logo_composite", "NUESTRAS CUENTAS DE AHORRO", "Abre tu cuenta", "tel:77957795", "sec_ahorros", "#173789", "#173789", "NORMAL", "BOLD", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_ahorro_1", null, "CARD", "Es la cuenta que otorga el derecho a la persona natural a asociarse a la cooperativa, lo convierte en dueño con voz y voto en las decisiones de la asamblea general (no es una cuenta corriente).\n\n• Monto de apertura: desde Q50.00.\n• Tasa de interés: 5% anual afecto a ISR.\n• Intereses: capitalizables anualmente.", 2, null, "Cuenta Aportación Adulto", "Conocer Más", "", "sec_ahorros", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_ahorro_2", null, "CARD", "Es la cuenta que otorga el derecho al menor de edad a asociarse a la cooperativa e iniciar el hábito del ahorro (no es una cuenta corriente).\n\n• Monto de apertura: desde Q50.00.\n• Tasa de interés: 5% anual afecto a ISR.\n• Intereses: capitalizables anualmente.", 3, null, "Cuenta Aportación Infanto Juvenil", "Conocer Más", "", "sec_ahorros", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_ahorro_3", null, "CARD", "Es la cuenta diseñada para motivar y fomentar en los niños y adolescentes la cultura del ahorro.\n\n• Monto de apertura: desde Q10.00.\n• Tasa de interés: 3% anual afecto a ISR.\n• Obtiene 5 beneficios al mantener mínimo Q500.00 en su cuenta corriente después de 180 días de haberla aperturado.", 4, "ahorro_infanto_juvenil", "Cuenta Ahorro Infanto Juvenil", "Conocer Más", "", "sec_ahorros", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_ahorro_4", null, "CARD", "Es la cuenta que el asociado podrá utilizar para poder darle movimiento a sus ahorros de acuerdo con sus necesidades y conveniencias.\n\n• Monto de apertura: desde Q50.00 y/o $100.\n• Tasa de interés en Q: 3% anual afecto a ISR.\n• Tasa de interés en $: 1.50% anual afecto a ISR.\n• Intereses: capitalizables mensualmente.\n• Acceso a canales digitales sin costos.", 5, "ahorro_disponible", "Cuenta Ahorro Disponible", "Conocer Más", "", "sec_ahorros", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_ahorro_5", null, "CARD", "Es la cuenta que les permite a los asociados aportar cuotas fijas mensuales para un objetivo específico en el futuro.\n\n• Apertura desde Q25.00.\n• Tasa de interés: 7.50% anual, afecto a ISR.\n• Plazos de 3, 5, 10, 15 o 20 años.\n• Intereses capitalizables mensualmente.", 6, "ahorro_programado", "Cuenta Ahorro Programado", "Conocer Más", "", "sec_ahorros", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_ahorro_6", null, "CARD", "Es la cuenta que le permite al asociado obtener alto rendimiento y seguridad sobre sus ahorros.\n\n• Apertura desde Q1,000.00 y/o $200.\n• Plazos de 90, 180 y 365 días.\n• Intereses capitalizables trimestralmente.", 7, "ahorro_plazo_fijo", "Cuenta Ahorro Plazo Fijo", "Conocer Más", "", "sec_ahorros", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true }
+            )
+
+            for (b in seedBlocks) {
+                val existing = localDb.contentDao().getBlockById(b.id)
+                if (existing == null) {
+                    localDb.contentDao().insertBlock(b)
+                    if (isCloudEnabled()) {
+                        try {
+                            firestore.collection("content_blocks").document(b.id).set(b)
+                        } catch (e: Exception) {
+                            Log.e("REPO", "Error uploading seed ahorro block to cloud: ${e.message}")
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("REPO", "Error in ensureAhorrosBlocksSynced: ${e.message}")
+        }
+    }
+
+    private fun ensureCreditosBlocksSynced() {
+        try {
+            val seedBlocks = listOf(
+                ContentBlockEntity("block_creditos_header", null, "CONTAINER", "Soluciones financieras a tu medida. Impulsa tus proyectos con nosotros.", 1, "logo_composite", "NUESTROS CRÉDITOS", "PBX: 7795-7795", "tel:77957795", "sec_creditos", "#173789", "#173789", "NORMAL", "BOLD", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_credito_1", null, "CARD", "• Ideal para capital de trabajo, inventarios y/o mercadería.\n• Adquisición y/o remodelación de activos fijos (mobiliario, herramientas, equipo).\n• Compra de vehículo.\n\nMonto: desde Q1,000.00 en adelante.", 2, "credito_productivo", "Crédito Productivo", "Solicitar Ahora (PBX)", "tel:77957795", "sec_creditos", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_credito_2", null, "CARD", "• Gastos personales (varios destinos).\n• Adquisición de menaje de casa.\n• Compra de vehículo.\n• Crédito educativo.\n\nMonto: desde Q1,000.00 en adelante.", 3, "credito_consumo", "Crédito Consumo", "Solicitar Ahora (PBX)", "tel:77957795", "sec_creditos", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_credito_3", null, "CARD", "• Mejoramiento y ampliación de vivienda residencial.\n• Construcción de vivienda nueva en terreno propio.\n• Compra de terreno con fines de vivienda.\n• Compra de vivienda.\n• Liberación de gravamen hipotecario (compra de deuda).\n\nMonto: desde Q1,000.00 en adelante.", 4, "credito_vivienda", "Crédito Vivienda", "Solicitar Ahora (PBX)", "tel:77957795", "sec_creditos", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_credito_4", null, "CARD", "• Adquisición de motocicletas o vehículos para actividades comerciales o para uso personal.\n\nMonto: desde Q1,000.00 en adelante.", 5, "credi_vehiculo", "Crédi Vehículo", "Solicitar Ahora (PBX)", "tel:77957795", "sec_creditos", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_credito_5", null, "CARD", "• Servicio, industria, capital de trabajo o inversiones productivas.\n\nMonto: desde Q1,000.00 en adelante.", 6, "credito", "Crédito MIPYMES", "Solicitar Ahora (PBX)", "tel:77957795", "sec_creditos", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_credito_6", null, "CARD", "• Capital de trabajo destinado para siembra, renovación, mantenimiento e insumos para todo tipo de cultivo, siempre que este sea lícito.\n• Adquisición de activos fijos destinados para actividades agrícolas.\n\nMonto: desde Q1,000.00 en adelante.", 7, "credito", "Crédito Agrícola", "Solicitar Ahora (PBX)", "tel:77957795", "sec_creditos", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_credito_7", null, "CARD", "• Libre disponibilidad (Cualquier destino).\n\nMonto: desde Q1,000.00 siempre y когда el monto del crédito no sea mayor al 90% del monto de la inversión.", 8, "credito", "Crédito Automático", "Solicitar Ahora (PBX)", "tel:77957795", "sec_creditos", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_credito_8", null, "CARD", "• Financiamiento para pequeños negocios dedicados a la producción, comercio o servicios, con pagos respaldados por los ingresos de sus ventas.\n\nMonto: desde Q1,000.00 en adelante.", 9, "credito", "Microcréditos", "Solicitar Ahora (PBX)", "tel:77957795", "sec_creditos", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true }
+            )
+
+            for (b in seedBlocks) {
+                val existing = localDb.contentDao().getBlockById(b.id)
+                if (existing == null) {
+                    localDb.contentDao().insertBlock(b)
+                    if (isCloudEnabled()) {
+                        try {
+                            firestore.collection("content_blocks").document(b.id).set(b)
+                        } catch (e: Exception) {
+                            Log.e("REPO", "Error uploading seed credito block to cloud: ${e.message}")
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("REPO", "Error in ensureCreditosBlocksSynced: ${e.message}")
+        }
+    }
+
+    private fun ensureSegurosBlocksSynced() {
+        try {
+            val seedBlocks = listOf(
+                ContentBlockEntity("block_seguros_header", null, "CONTAINER", "Tranquilidad para ti y tu familia con nuestras opciones de seguros adaptadas a tus necesidades.", 1, "seguros_columna", "Protegemos lo que más quieres", "PBX: 0000-0000", "tel:00000000", "sec_seguros", "#173789", "#173789", "NORMAL", "BOLD", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_seguro_1", null, "CARD", "", 2, "seguro_cv_personal", "Seguro CV Especial", "Solicitar Información →", "tel:00000000", "sec_seguros", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_seguro_2", null, "CARD", "", 3, "seguro_vida_saludable", "Seguro Vida Saludable", "Solicitar Información →", "tel:00000000", "sec_seguros", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_seguro_3", null, "CARD", "", 4, "seguro_edad_de_oro", "Seguro de Accidentes Edad de Oro", "Solicitar Información →", "tel:00000000", "sec_seguros", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_seguro_4", null, "CARD", "", 5, "seguro_de_cancer", "Seguro de Cáncer", "Solicitar Información →", "tel:00000000", "sec_seguros", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_seguro_5", null, "CARD", "", 6, "seguro_accidentes_infanto_juvenil", "Seguro de Accidentes Personales Infanto Juvenil", "Solicitar Información →", "tel:00000000", "sec_seguros", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_seguro_6", null, "CARD", "", 7, "seguro_manejo", "Seguro de Manejo", "Solicitar Información →", "tel:00000000", "sec_seguros", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_seguro_7", null, "CARD", "", 8, "seguro_de_vida_individual_o_familar", "Seguro de Vida Individual o Familiar", "Solicitar Información →", "tel:00000000", "sec_seguros", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true }
+            )
+
+            for (b in seedBlocks) {
+                val existing = localDb.contentDao().getBlockById(b.id)
+                if (existing == null) {
+                    localDb.contentDao().insertBlock(b)
+                    if (isCloudEnabled()) {
+                        try {
+                            firestore.collection("content_blocks").document(b.id).set(b)
+                        } catch (e: Exception) {
+                            Log.e("REPO", "Error uploading seed seguro block to cloud: ${e.message}")
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("REPO", "Error in ensureSegurosBlocksSynced: ${e.message}")
+        }
+    }
+
+    private fun ensureRemesasBlocksSynced() {
+        try {
+            val seedBlocks = listOf(
+                ContentBlockEntity("block_remesas_header", null, "CONTAINER", "Recibe tu dinero de forma segura, rápida y sin complicaciones a través de nuestra red de remesadoras aliadas.", 1, "remesa", "Remesas", "Buscar Agencia", "sec_agencias", "sec_remesas", "#173789", "#173789", "NORMAL", "BOLD", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_remesas_aliadas", null, "IMAGE", "Red de remesadoras aliadas oficiales.", 2, "remesadoras_afiliadas2", "Remesadoras Aliadas", null, null, "sec_remesas", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_remesas_dirigidas", null, "CARD", "En caso de fallecimiento en el extranjero, te ofrecemos el BENEFICIO DE REPATRIACIÓN, garantizando que tu último viaje sea de regreso a casa, sin costo alguno para tu familia.", 3, null, "BENEFICIO AL RECIBIR TU REMESA DIRIGIDA A TU CUENTA DISPONIBLE", "Solicitar Información →", "tel:22135580", "sec_remesas", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_rd1", null, "IMAGE", "Asistencia de repatriación para remitente.", 4, "rd1", "Asistencia de repatriación para remitente.", null, null, "sec_remesas", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_rd2", null, "IMAGE", "Asistencia funeraria para remitente (persona en el extranjero).", 5, "rd2", "Asistencia funeraria para remitente (persona en el extranjero).", null, null, "sec_remesas", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_rd3", null, "IMAGE", "Referencias médicas. Información de médicos, farmacias o laboratorios.", 6, "rd3", "Referencias médicas. Información de médicos, farmacias o laboratorios.", null, null, "sec_remesas", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_rd4", null, "IMAGE", "Orientación médica telefónica. Apoyo en interpretación de pruebas de laboratorio y recomendación de medicamentos.", 7, "rd4", "Orientación médica telefónica.", null, null, "sec_remesas", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_rd5", null, "IMAGE", "Teledoctor. Aplicación móvil para consultas médicas.", 8, "rd5", "Teledoctor. Aplicación móvil para consultas médicas.", null, null, "sec_remesas", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true }
+            )
+
+            for (b in seedBlocks) {
+                val existing = localDb.contentDao().getBlockById(b.id)
+                if (existing == null) {
+                    localDb.contentDao().insertBlock(b)
+                    if (isCloudEnabled()) {
+                        try {
+                            firestore.collection("content_blocks").document(b.id).set(b)
+                        } catch (e: Exception) {
+                            Log.e("REPO", "Error uploading seed remesas block to cloud: ${e.message}")
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("REPO", "Error in ensureRemesasBlocksSynced: ${e.message}")
+        }
+    }
+
+    private fun ensureServiciosBlocksSynced() {
+        try {
+            val seedBlocks = listOf(
+                ContentBlockEntity("block_servicios_header", null, "CONTAINER", "Tu cooperativa al alcance de tu mano. Gestiona tus finanzas, realiza pagos y solicita servicios desde la comodidad de tu dispositivo.", 1, "logo_composite", "Servicios Digitales", "Descargar", "tel:77957795", "sec_servicios", "#173789", "#173789", "NORMAL", "BOLD", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_servicio_1", null, "CARD", "Lleva el control de tus ahorros y préstamos a donde vayas. Consulta saldos, realiza transferencias entre cuentas y paga servicios de forma rápida y segura.\n\n• Transferencias 24/7\n• Pago de préstamos", 2, "micoope_enlinea", "MICOOPE en línea", "Descargar App", "https://micoope.com.gt", "sec_servicios", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_servicio_2", null, "CARD", "Envía y recibe dinero al instante usando solo el número de teléfono. Pagos rápidos y sin complicaciones con la red Fri.", 3, "logo_fri", "Fri", "Vincular Cuenta", "https://fri.gt", "sec_servicios", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_servicio_3", null, "CARD", "Obtén tu tarjeta de crédito o débito COLUA MICOOPE sin salir de casa. Disfruta de aceptación internacional, beneficios exclusivos y la seguridad que necesitas para tus compras diarias.", 4, "tarjeta_debito", "Solicitud de Tarjetas", "Solicitar Ahora", "tel:77957795", "sec_servicios", null, null, "NORMAL", "NORMAL", "LEFT").apply { isDraft = false; isVisible = true }
+            )
+
+            for (b in seedBlocks) {
+                val existing = localDb.contentDao().getBlockById(b.id)
+                if (existing == null) {
+                    localDb.contentDao().insertBlock(b)
+                    if (isCloudEnabled()) {
+                        try {
+                            firestore.collection("content_blocks").document(b.id).set(b)
+                        } catch (e: Exception) {
+                            Log.e("REPO", "Error uploading seed servicio block to cloud: ${e.message}")
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("REPO", "Error in ensureServiciosBlocksSynced: ${e.message}")
+        }
+    }
+
+    private fun ensureBeneficiosBlocksSynced() {
+        try {
+            val seedBlocks = listOf(
+                ContentBlockEntity("block_beneficios_header", null, "CONTAINER", "Para realizar el reclamo de tus beneficios deberás acercarte a tu agencia más cercana y realizar el proceso correspondiente.", 1, "obten_tus_seis_beneficios", "BENEFICIOS COLUA MICOOPE", null, null, "sec_beneficios", "#173789", "#173789", "NORMAL", "BOLD", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_beneficio_1", null, "CARD", "La cooperativa apoya económicamente al asociado en caso de que sea internado en un hospital público o privado, por enfermedad o accidente, calculando el pago según el monto de sus ahorros (1 a 69 años inclusive).", 2, "renta_diaria", "Renta Diaria por Hospitalización", null, null, "sec_beneficios", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_beneficio_2", null, "CARD", "La cooperativa otorgará al asociado un apoyo económico para los gastos médicos incurridos por alguna cirugía como consecuencia de una enfermedad o accidente. (Este beneficio es de por vida, siempre y cuando se asocie en la edad de 1 a 70 años).", 3, "apoyo_quirurgico", "Apoyo Quirúrgico", null, null, "sec_beneficios", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_beneficio_3", null, "CARD", "En caso de fallecimiento, la cooperativa apoya a la familia del asociado con un sepelio digno, proporcionándoles un ataúd fúnebre en coordinación con la red de funerarias autorizadas. (Este beneficio es de por vida, siempre y cuando se asocie en la edad de 1 a 68 años inclusive).", 4, "servicio_funerario", "Servicio Funerario", null, null, "sec_beneficios", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_beneficio_4", null, "CARD", "En caso de fallecimiento del asociado, la cooperativa garantiza la devolución de los ahorros a sus beneficiarios, así mismo se hace entrega del seguro sobre su dinero depositado en sus cuentas, hasta un monto máximo de Q150,000.00. (Este beneficio es de por vida, siempre y cuando se asocie en la edad de 1 a 68 años inclusive).", 5, "beneficio_de_ahorrantes", "Seguro de Ahorrantes", null, null, "sec_beneficios", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_beneficio_5", null, "CARD", "En caso de fallecimiento del asociado con crédito vigente, la cooperativa ofrece un seguro que cubre los saldos insolutos hasta un monto máximo de Q200,000.00 (Asociados de 18 a 69 años inclusive).", 6, "beneficio_de_deudores", "Seguro de Deudores", null, null, "sec_beneficios", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true },
+                ContentBlockEntity("block_beneficio_6", null, "CARD", "La cooperativa brinda un apoyo económico a los asociados mayores de 70 años que sean diagnosticados por una enfermedad grave de acuerdo con el catálogo, a través de un único desembolso y cumpliendo con los requisitos establecidos.", 7, "beneficio_de_oro", "Beneficio de Oro", null, null, "sec_beneficios", null, null, "NORMAL", "NORMAL", "CENTER").apply { isDraft = false; isVisible = true }
+            )
+
+            for (b in seedBlocks) {
+                val existing = localDb.contentDao().getBlockById(b.id)
+                if (existing == null) {
+                    localDb.contentDao().insertBlock(b)
+                    if (isCloudEnabled()) {
+                        try {
+                            firestore.collection("content_blocks").document(b.id).set(b)
+                        } catch (e: Exception) {
+                            Log.e("REPO", "Error uploading seed beneficio block to cloud: ${e.message}")
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("REPO", "Error in ensureBeneficiosBlocksSynced: ${e.message}")
+        }
+    }
+
+    fun getBlocksBySection(sectionId: String): List<ContentBlockEntity> {
+        val cleanId = sectionId.lowercase(Locale.getDefault())
+        if (cleanId == "sec_nosotros" || cleanId == "nosotros") {
+            ensureNosotrosBlocksSynced()
+        }
+        if (cleanId == "sec_ahorros" || cleanId == "ahorros") {
+            ensureAhorrosBlocksSynced()
+        }
+        if (cleanId == "sec_creditos" || cleanId == "creditos") {
+            ensureCreditosBlocksSynced()
+        }
+        if (cleanId == "sec_seguros" || cleanId == "seguros") {
+            ensureSegurosBlocksSynced()
+        }
+        if (cleanId == "sec_remesas" || cleanId == "remesas") {
+            ensureRemesasBlocksSynced()
+        }
+        if (cleanId == "sec_servicios" || cleanId == "servicios") {
+            ensureServiciosBlocksSynced()
+        }
+        if (cleanId == "sec_beneficios" || cleanId == "beneficios") {
+            ensureBeneficiosBlocksSynced()
+        }
+
+        val altId = if (cleanId.startsWith("sec_")) cleanId.replace("sec_", "") else "sec_$cleanId"
 
         val local = localDb.contentDao().getBlocksBySection(cleanId).toMutableList()
         val altLocal = localDb.contentDao().getBlocksBySection(altId)
@@ -332,6 +632,26 @@ class ColuaRepository(private val context: Context) {
         for (b in altLocal) {
             if (local.none { it.id == b.id }) {
                 local.add(b)
+            }
+        }
+
+        if (isCloudEnabled()) {
+            try {
+                val task = firestore.collection("content_blocks").whereIn("sectionId", listOf(cleanId, altId)).get()
+                val cloud = await(task)?.toObjects(ContentBlockEntity::class.java)
+                if (cloud != null && cloud.isNotEmpty()) {
+                    cloud.forEach { cloudBlock ->
+                        localDb.contentDao().insertBlock(cloudBlock)
+                        if (local.none { it.id == cloudBlock.id }) {
+                            local.add(cloudBlock)
+                        } else {
+                            val idx = local.indexOfFirst { it.id == cloudBlock.id }
+                            if (idx >= 0) local[idx] = cloudBlock
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("REPO", "Error syncing blocks from Firestore: ${e.message}")
             }
         }
 

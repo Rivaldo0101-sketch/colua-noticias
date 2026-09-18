@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="10dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="3dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#E2E8F0">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Foto Principal Ancho Completo -->
+        <RelativeLayout
+            android:id="@+id/layout_sostenibilidad_photo_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/iv_sostenibilidad_photo"
+                android:layout_width="match_parent"
+                android:layout_height="220dp"
+                android:adjustViewBounds="true"
+                android:contentDescription="Imagen"
+                android:scaleType="centerCrop"
+                android:src="@drawable/sin_conexion" />
+
+            <!-- Boton de expandir (opcional para admin o diseño) -->
+            <ImageView
+                android:id="@+id/btn_toggle_expand_sostenibilidad"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentBottom="true"
+                android:layout_margin="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp"
+                android:src="@drawable/punta_de_flecha_hacia_abajo"
+                app:tint="@color/white"
+                android:visibility="gone" />
+
+            <!-- Pill Tag Izquierdo (Oculto permanentemente en XML) -->
+            <TextView
+                android:id="@+id/tv_sostenibilidad_tag_pill"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_margin="12dp"
+                android:background="@drawable/circle_background"
+                android:backgroundTint="#B3173789"
+                android:fontFamily="@font/poppins_regular"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <!-- Edit button (for Admin) -->
+            <ImageView
+                android:id="@+id/btn_edit_content_item"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:layout_margin="12dp"
+                android:background="@drawable/circle_background"
+                android:backgroundTint="#CCFFFFFF"
+                android:padding="8dp"
+                android:src="@android:drawable/ic_menu_edit"
+                app:tint="#173789"
+                android:visibility="gone" />
+
+            <!-- Puntos de Paginación en la parte inferior central de la foto -->
+            <TextView
+                android:id="@+id/tv_carousel_dots_indicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/circle_background"
+                android:backgroundTint="#80000000"
+                android:fontFamily="@font/poppins_regular"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="2dp"
+                android:text="●  ○  ○"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </RelativeLayout>
+
+        <!-- Contenido Inferior con Padding Normal -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="20dp">
+
+            <!-- Título -->
+            <TextView
+                android:id="@+id/tv_sostenibilidad_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppins_regular"
+                android:text="Jornada de Reforestación: 500 árboles sembrados"
+                android:textColor="@color/colua_navy"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <!-- Párrafo descriptivo -->
+            <TextView
+                android:id="@+id/tv_sostenibilidad_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:fontFamily="@font/poppins_regular"
+                android:lineSpacingMultiplier="1.2"
+                android:text="Junto a decenas de familias asociadas y voluntarios de nuestra cooperativa, llevamos a cabo con éxito la siembra..."
+                android:textColor="#475569"
+                android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sostenibilidad_cta"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:layout_marginTop="14dp"
+                android:fontFamily="@font/poppins_regular"
+                android:text="Leer artículo completo ›"
+                android:textColor="@color/colua_navy"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:backgroundTint="#EFF6FF"
+                app:cornerRadius="12dp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

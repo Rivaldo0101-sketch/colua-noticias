@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:paddingBottom="60dp">
+
+    <!-- Header Ahorros (Blue Card) -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="@color/colua_navy">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NUESTRAS CUENTAS\nDE AHORRO"
+                android:textColor="@color/white"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:fontFamily="@font/poppins_regular" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Construye un futuro financiero sólido con nuestras cuentas de ahorro diseñadas para cada etapa de tu vida. Excelentes tasas, cero comisiones de manejo y total disponibilidad."
+                android:textColor="#E2E8F0"
+                android:textSize="13sp"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.2"
+                android:fontFamily="@font/poppins_regular" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_abre_tu_cuenta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Abre tu cuenta"
+                android:textAllCaps="false"
+                android:textColor="@color/colua_navy"
+                app:backgroundTint="@color/white"
+                app:cornerRadius="24dp"
+                android:fontFamily="@font/poppins_regular" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Account Card 1: Cuenta Aportación Adulto -->
+    <include layout="@layout/item_ahorros_card"
+        android:id="@+id/card_ahorro_1" />
+
+    <!-- Account Card 2: Cuenta Aportación Infanto Juvenil -->
+    <include layout="@layout/item_ahorros_card"
+        android:id="@+id/card_ahorro_2" />
+
+    <!-- Account Card 3: Cuenta Ahorro Infanto Juvenil -->
+    <include layout="@layout/item_ahorros_card"
+        android:id="@+id/card_ahorro_3" />
+
+    <!-- Account Card 4: Cuenta Ahorro Disponible -->
+    <include layout="@layout/item_ahorros_card"
+        android:id="@+id/card_ahorro_4" />
+
+    <!-- Account Card 5: Cuenta Ahorro Programado -->
+    <include layout="@layout/item_ahorros_card"
+        android:id="@+id/card_ahorro_5" />
+
+    <!-- Account Card 6: Cuenta Ahorro Plazo Fijo -->
+    <include layout="@layout/item_ahorros_card"
+        android:id="@+id/card_ahorro_6" />
+
+    <!-- Feature Cards Header -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:text="Ventajas de Ahorrar en COLUA"
+        android:textColor="@color/colua_navy"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/poppins_regular" />
+
+    <!-- Feature 1: Tasas Competitivas -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/white">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_trending_up"
+                app:tint="#59B8A4"
+                android:layout_marginEnd="16dp"
+                android:contentDescription="Icono" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tasas Competitivas"
+                    android:textColor="@color/colua_navy"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/poppins_regular" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Obtén los mejores rendimientos del mercado cooperativo para que tu dinero trabaje para ti."
+                    android:textColor="#555555"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/poppins_regular" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Feature 2: Sin Cobros por Manejo -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/white">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_security"
+                app:tint="#173789"
+                android:layout_marginEnd="16dp"
+                android:contentDescription="Icono" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sin Cobros por Manejo"
+                    android:textColor="@color/colua_navy"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/poppins_regular" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="El 100% de tu dinero es tuyo. No realizamos deducciones por administración de tu cuenta."
+                    android:textColor="#555555"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/poppins_regular" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Feature 3: Acceso 24/7 -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/white">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_phone_android"
+                app:tint="#EF8819"
+                android:layout_marginEnd="16dp"
+                android:contentDescription="Icono" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Acceso 24/7"
+                    android:textColor="@color/colua_navy"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/poppins_regular" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Gestiona tus ahorros desde MICOOPE en línea o nuestra app móvil desde cualquier lugar."
+                    android:textColor="#555555"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/poppins_regular" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</LinearLayout>

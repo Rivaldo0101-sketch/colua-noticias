@@ -7,8 +7,11 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -81,6 +84,14 @@ public class DynamicSectionActivity extends AppCompatActivity {
         isVisualEditMode = getIntent().getBooleanExtra(EXTRA_VISUAL_EDIT_MODE, false);
 
         if (sectionId == null) {
+            finish();
+            return;
+        }
+
+        if ("sec_home".equalsIgnoreCase(sectionId) || "home".equalsIgnoreCase(sectionId)) {
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
             finish();
             return;
         }
@@ -202,20 +213,38 @@ public class DynamicSectionActivity extends AppCompatActivity {
             List<NavigationItemEntity> rawSideItems = repository.getRobustSidebarItems();
 
             List<NavigationItemEntity> sideItems = rawSideItems.stream()
-                    .filter(item -> !"action_reset".equalsIgnoreCase(item.targetSectionId)
-                                 && !"side_reset".equalsIgnoreCase(item.id)
+                    .filter(item -> !"action_reset".equals(item.targetSectionId)
+                                 && !"side_reset".equals(item.id)
+                                 && !"side_cuentas".equals(item.id)
+                                 && !"sec_comunidad".equalsIgnoreCase(item.targetSectionId)
+                                 && !"Cuentas".equalsIgnoreCase(item.label)
                                  && !"Restablecer".equalsIgnoreCase(item.label))
                     .collect(Collectors.toList());
 
-            Collections.sort(sideItems, (item1, item2) -> Integer.compare(item1.displayOrder, item2.displayOrder));
+            Collections.sort(sideItems, (i1, i2) -> {
+                boolean isLogout1 = "side_logout".equalsIgnoreCase(i1.id) || "action_logout".equalsIgnoreCase(i1.targetSectionId);
+                boolean isLogout2 = "side_logout".equalsIgnoreCase(i2.id) || "action_logout".equalsIgnoreCase(i2.targetSectionId);
+                if (isLogout1 && !isLogout2) return 1;
+                if (!isLogout1 && isLogout2) return -1;
+
+                return Integer.compare(i1.displayOrder, i2.displayOrder);
+            });
 
             List<NavigationItemEntity> finalItems = sideItems;
             runOnUiThread(() -> {
                 navigationView.getMenu().clear();
                 for (NavigationItemEntity item : finalItems) {
                     int iconRes = getResources().getIdentifier(item.iconName, "drawable", getPackageName());
-                    navigationView.getMenu().add(0, item.id.hashCode(), item.displayOrder, item.label)
-                            .setIcon(iconRes != 0 ? iconRes : android.R.drawable.ic_menu_info_details);
+                    MenuItem menuItem = navigationView.getMenu().add(0, item.id.hashCode(), item.displayOrder, item.label);
+                    menuItem.setIcon(iconRes != 0 ? iconRes : android.R.drawable.ic_menu_info_details);
+                    if ("side_logout".equalsIgnoreCase(item.id) || "action_logout".equalsIgnoreCase(item.targetSectionId)) {
+                        SpannableString s = new SpannableString(item.label);
+                        s.setSpan(new ForegroundColorSpan(Color.RED), 0, s.length(), 0);
+                        menuItem.setTitle(s);
+                        if (menuItem.getIcon() != null) {
+                            menuItem.getIcon().setTint(Color.RED);
+                        }
+                    }
                 }
 
                 navigationView.setNavigationItemSelectedListener(menuItem -> {
@@ -449,8 +478,8 @@ public class DynamicSectionActivity extends AppCompatActivity {
                 
                 runOnUiThread(() -> {
                     FrameLayout containerNosotros = findViewById(R.id.container_nosotros_custom);
-                    if ("sec_nosotros".equalsIgnoreCase(canonicalId) && blocks.isEmpty() && items.isEmpty()) {
-                        // Si NO hay bloques ni elementos dinámicos creados desde el panel de administración, mostramos la plantilla estática
+                    if ("sec_nosotros".equalsIgnoreCase(canonicalId) || "sec_ahorros".equalsIgnoreCase(canonicalId) || "sec_creditos".equalsIgnoreCase(canonicalId) || "sec_seguros".equalsIgnoreCase(canonicalId) || "sec_remesas".equalsIgnoreCase(canonicalId) || "sec_servicios".equalsIgnoreCase(canonicalId) || "sec_beneficios".equalsIgnoreCase(canonicalId)) {
+                        // Para Nosotros, Ahorros, Créditos, Seguros, Remesas, Servicios o Beneficios mostramos sus respectivas plantillas perfectas (idénticas en todos los dispositivos)
                         findViewById(R.id.tv_dynamic_title).setVisibility(View.GONE);
                         findViewById(R.id.tv_dynamic_description).setVisibility(View.GONE);
                         findViewById(R.id.rv_dynamic_blocks).setVisibility(View.GONE);
@@ -462,7 +491,27 @@ public class DynamicSectionActivity extends AppCompatActivity {
                         if (containerNosotros != null) {
                             containerNosotros.setVisibility(View.VISIBLE);
                             if (containerNosotros.getChildCount() == 0) {
-                                LayoutInflater.from(this).inflate(R.layout.layout_nosotros_content, containerNosotros, true);
+                                int layoutRes = "sec_ahorros".equalsIgnoreCase(canonicalId) ? R.layout.layout_ahorros_content 
+                                              : "sec_creditos".equalsIgnoreCase(canonicalId) ? R.layout.layout_creditos_content 
+                                              : "sec_seguros".equalsIgnoreCase(canonicalId) ? R.layout.layout_seguros_content 
+                                              : "sec_remesas".equalsIgnoreCase(canonicalId) ? R.layout.layout_remesas_content 
+                                              : "sec_servicios".equalsIgnoreCase(canonicalId) ? R.layout.layout_servicios_content 
+                                              : "sec_beneficios".equalsIgnoreCase(canonicalId) ? R.layout.layout_beneficios_content 
+                                              : R.layout.layout_nosotros_content;
+                                View inflated = LayoutInflater.from(this).inflate(layoutRes, containerNosotros, true);
+                                if ("sec_ahorros".equalsIgnoreCase(canonicalId)) {
+                                    setupAhorrosView(inflated);
+                                } else if ("sec_creditos".equalsIgnoreCase(canonicalId)) {
+                                    setupCreditosView(inflated);
+                                } else if ("sec_seguros".equalsIgnoreCase(canonicalId)) {
+                                    setupSegurosView(inflated);
+                                } else if ("sec_remesas".equalsIgnoreCase(canonicalId)) {
+                                    setupRemesasView(inflated);
+                                } else if ("sec_servicios".equalsIgnoreCase(canonicalId)) {
+                                    setupServiciosView(inflated);
+                                } else if ("sec_beneficios".equalsIgnoreCase(canonicalId)) {
+                                    setupBeneficiosContent(inflated);
+                                }
                             }
                         }
                     } else {
@@ -657,5 +706,444 @@ public class DynamicSectionActivity extends AppCompatActivity {
         rvBlocks.setLayoutManager(new LinearLayoutManager(this));
         blockAdapter = new BlockAdapter(blockList);
         rvBlocks.setAdapter(blockAdapter);
+    }
+
+    private void setupAhorrosView(View view) {
+        View btnAbreCuenta = view.findViewById(R.id.btn_abre_tu_cuenta);
+        if (btnAbreCuenta != null) {
+            btnAbreCuenta.setOnClickListener(v -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:77957795"));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(this, "PBX: 7795-7795", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        class AhorroInfo {
+            String title;
+            String desc;
+            String fullInfo;
+            String accentColor;
+            String logoResName;
+            AhorroInfo(String t, String d, String f, String c, String l) {
+                title = t; desc = d; fullInfo = f; accentColor = c; logoResName = l;
+            }
+        }
+
+        List<AhorroInfo> list = new ArrayList<>();
+        list.add(new AhorroInfo(
+            "Cuenta Aportación Adulto",
+            "Es la cuenta que otorga el derecho a la persona natural a asociarse a la cooperativa, lo convierte en dueño con voz y voto en las decisiones de la asamblea general (no es una cuenta corriente).",
+            "• Monto de apertura: desde Q50.00.\n• Tasa de interés: 5% anual afecto a ISR.\n• Intereses: capitalizables anualmente.",
+            "#EF8819",
+            null
+        ));
+        list.add(new AhorroInfo(
+            "Cuenta Aportación Infanto Juvenil",
+            "Es la cuenta que otorga el derecho al menor de edad a asociarse a la cooperativa e iniciar el hábito del ahorro (no es una cuenta corriente).",
+            "• Monto de apertura: desde Q50.00.\n• Tasa de interés: 5% anual afecto a ISR.\n• Intereses: capitalizables anualmente.",
+            "#E42A67",
+            null
+        ));
+        list.add(new AhorroInfo(
+            "Cuenta Ahorro Infanto Juvenil",
+            "Es la cuenta diseñada para motivar y fomentar en los niños y adolescentes la cultura del ahorro.",
+            "• Monto de apertura: desde Q10.00.\n• Tasa de interés: 3% anual afecto a ISR.\n• Obtiene 5 beneficios al mantener mínimo Q500.00 en su cuenta corriente después de 180 días de haberla aperturado (not aplica el beneficio de seguro de deudores hasta que cumpla +18 años).",
+            "#59B8A4",
+            "ahorro_infanto_juvenil"
+        ));
+        list.add(new AhorroInfo(
+            "Cuenta Ahorro Disponible",
+            "Es la cuenta que el asociado podrá utilizar para poder darle movimiento a sus ahorros de acuerdo con sus necesidades y conveniencias.",
+            "• Monto de apertura: desde Q50.00 y/o $100.\n• Tasa de interés en Q: 3% anual afecto a ISR.\n• Tasa de interés en $: 1.50% anual afecto a ISR.\n• Intereses: capitalizables mensualmente.\n• Acceso a canales digitales (Tarjeta de Débito VISA, MICOOPE en línea y Fri) sin costos.\n• Obtiene 6 beneficios al mantener mínimo Q500.00 en su cuenta después de 180 días de haberla aperturado.\n• Recepción de remesa dirigida.",
+            "#173789",
+            "ahorro_disponible"
+        ));
+        list.add(new AhorroInfo(
+            "Cuenta Ahorro Programado",
+            "Es la cuenta que les permite a los asociados aportar cuotas fijas mensuales para un objetivo específico en el futuro.",
+            "• Apertura desde Q25.00.\n• Tasa de interés: 7.50% anual, afecto a ISR.\n• Plazos de 3, 5, 10, 15 o 20 años.\n• Programas desde Q25.00, Q50.00, Q100.00 y múltiplos de Q100.00.\n• Intereses capitalizables mensualmente.\n• Obtiene 6 beneficios al mantener mínimo Q500.00 en su cuenta después de 180 días de haberla aperturado.\n• Crédito automático de inmediato.",
+            "#634794",
+            "ahorro_programado"
+        ));
+        list.add(new AhorroInfo(
+            "Cuenta Ahorro Plazo Fijo",
+            "Es la cuenta que le permite al asociado obtener alto rendimiento y seguridad sobre sus ahorros.",
+            "• Apertura desde Q1,000.00 y/o $200.\n• Plazos de 90, 180 y 365 días.\n• Intereses capitalizables trimestralmente.\n• Obtiene 6 beneficios después de 180 días de haber aperturado la cuenta.\n• Crédito automático de inmediato.",
+            "#EF8819",
+            "ahorro_plazo_fijo"
+        ));
+
+        int[] cardIds = {R.id.card_ahorro_1, R.id.card_ahorro_2, R.id.card_ahorro_3, R.id.card_ahorro_4, R.id.card_ahorro_5, R.id.card_ahorro_6};
+        for (int i = 0; i < cardIds.length && i < list.size(); i++) {
+            View card = view.findViewById(cardIds[i]);
+            AhorroInfo info = list.get(i);
+            if (card != null) {
+                TextView tvTitle = card.findViewById(R.id.card_ahorro_title);
+                TextView tvDesc = card.findViewById(R.id.card_ahorro_desc);
+                Button btnConocer = card.findViewById(R.id.btn_conocer_mas);
+                ImageView ivLogo = card.findViewById(R.id.card_ahorro_logo);
+
+                if (tvTitle != null) tvTitle.setText(info.title);
+                if (tvDesc != null) tvDesc.setText(info.desc);
+                if (ivLogo != null) {
+                    if (info.logoResName != null && !info.logoResName.isEmpty()) {
+                        int resId = getResources().getIdentifier(info.logoResName, "drawable", getPackageName());
+                        if (resId != 0) {
+                            ivLogo.setImageResource(resId);
+                            ivLogo.setVisibility(View.VISIBLE);
+                            if (tvTitle != null) tvTitle.setVisibility(View.GONE); // Ocultar título redundante cuando hay imagen
+                        } else {
+                            ivLogo.setVisibility(View.GONE);
+                            if (tvTitle != null) tvTitle.setVisibility(View.VISIBLE);
+                        }
+                    } else {
+                        ivLogo.setVisibility(View.GONE);
+                        if (tvTitle != null) tvTitle.setVisibility(View.VISIBLE);
+                    }
+                }
+                if (btnConocer != null) {
+                    btnConocer.setOnClickListener(v -> showAhorroDetailsDialog(info.title, info.fullInfo, info.accentColor));
+                }
+            }
+        }
+    }
+
+    private void showAhorroDetailsDialog(String title, String fullInfo, String colorHex) {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_account_details, null);
+        TextView tvTitle = dialogView.findViewById(R.id.dialog_title);
+        TextView tvContent = dialogView.findViewById(R.id.dialog_content);
+        View btnClose = dialogView.findViewById(R.id.btn_close_dialog);
+        Button btnCall = dialogView.findViewById(R.id.btn_dialog_call);
+
+        if (tvTitle != null) tvTitle.setText(title);
+        if (tvContent != null) tvContent.setText(fullInfo);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        if (btnClose != null) btnClose.setOnClickListener(v -> dialog.dismiss());
+        if (btnCall != null) {
+            btnCall.setText("Llamar al PBX: 7795-7795");
+            btnCall.setOnClickListener(v -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:77957795"));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(this, "PBX: 7795-7795", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        dialog.show();
+    }
+
+    private void setupCreditosView(View view) {
+        class CreditoInfo {
+            String title;
+            String desc;
+            String logoResName;
+            CreditoInfo(String t, String d, String l) {
+                title = t; desc = d; logoResName = l;
+            }
+        }
+
+        List<CreditoInfo> list = new ArrayList<>();
+        list.add(new CreditoInfo(
+            "Crédito Productivo",
+            "• Ideal para capital de trabajo, inventarios y/o mercadería.\n• Adquisición y/o remodelación de activos fijos (mobiliario, herramientas, equipo).\n• Compra de vehículo.\n\nMonto: desde Q1,000.00 en adelante.",
+            "credito_productivo"
+        ));
+        list.add(new CreditoInfo(
+            "Crédito Consumo",
+            "• Gastos personales (varios destinos).\n• Adquisición de menaje de casa.\n• Compra de vehículo.\n• Crédito educativo.\n\nMonto: desde Q1,000.00 en adelante.",
+            "credito_consumo"
+        ));
+        list.add(new CreditoInfo(
+            "Crédito Vivienda",
+            "• Mejoramiento y ampliación de vivienda residencial.\n• Construcción de vivienda nueva en terreno propio.\n• Compra de terreno con fines de vivienda.\n• Compra de vivienda.\n• Liberación de gravamen hipotecario (compra de deuda).\n\nMonto: desde Q1,000.00 en adelante.",
+            "credito_vivienda"
+        ));
+        list.add(new CreditoInfo(
+            "Crédi Vehículo",
+            "• Adquisición de motocicletas o vehículos para actividades comerciales o para uso personal.\n\nMonto: desde Q1,000.00 en adelante.",
+            "credi_vehiculo"
+        ));
+        list.add(new CreditoInfo(
+            "Crédito MIPYMES",
+            "• Servicio, industria, capital de trabajo o inversiones productivas.\n\nMonto: desde Q1,000.00 en adelante.",
+            null
+        ));
+        list.add(new CreditoInfo(
+            "Crédito Agrícola",
+            "• Capital de trabajo destinado para siembra, renovación, mantenimiento e insumos para todo tipo de cultivo, siempre que este sea lícito.\n• Adquisición de activos fijos destinados para actividades agrícolas (maquinaria, equipo de trabajo, semovientes y herramientas).\n• Compra de terreno apto para cultivo y/o crianza de ganado.\n• Compra de animales para crianza y engorde, así como insumos para su desarrollo.\n\nMonto: desde Q1,000.00 en adelante.",
+            null
+        ));
+        list.add(new CreditoInfo(
+            "Crédito Automático",
+            "• Libre disponibilidad (Cualquier destino).\n\nMonto: desde Q1,000.00 siempre y cuando el monto del crédito no sea mayor al 90% del monto de la inversión.",
+            null
+        ));
+        list.add(new CreditoInfo(
+            "Microcréditos",
+            "• Financiamiento para pequeños negocios dedicados a la producción, comercio o servicios, con pagos respaldados por los ingresos de sus ventas.\n\nMonto: desde Q1,000.00 en adelante.",
+            null
+        ));
+
+        int[] cardIds = {
+            R.id.card_credito_1, R.id.card_credito_2, R.id.card_credito_3, 
+            R.id.card_credito_4, R.id.card_credito_5, R.id.card_credito_6,
+            R.id.card_credito_7, R.id.card_credito_8
+        };
+
+        for (int i = 0; i < cardIds.length && i < list.size(); i++) {
+            View card = view.findViewById(cardIds[i]);
+            CreditoInfo info = list.get(i);
+            if (card != null) {
+                TextView tvTitle = card.findViewById(R.id.card_credito_title);
+                TextView tvDesc = card.findViewById(R.id.card_credito_desc);
+                Button btnSolicitar = card.findViewById(R.id.btn_solicitar);
+                ImageView ivLogo = card.findViewById(R.id.card_credito_logo);
+
+                if (tvTitle != null) tvTitle.setText(info.title);
+                if (tvDesc != null) tvDesc.setText(info.desc);
+
+                if (ivLogo != null) {
+                    if (info.logoResName != null && !info.logoResName.isEmpty()) {
+                        int resId = getResources().getIdentifier(info.logoResName, "drawable", getPackageName());
+                        if (resId != 0) {
+                            ivLogo.setImageResource(resId);
+                            ivLogo.setVisibility(View.VISIBLE);
+                            if (tvTitle != null) tvTitle.setVisibility(View.GONE); // Ocultar título redundante cuando hay imagen
+                        } else {
+                            ivLogo.setVisibility(View.GONE);
+                            if (tvTitle != null) tvTitle.setVisibility(View.VISIBLE);
+                        }
+                    } else {
+                        ivLogo.setVisibility(View.GONE);
+                        if (tvTitle != null) tvTitle.setVisibility(View.VISIBLE);
+                    }
+                }
+
+                if (btnSolicitar != null) {
+                    btnSolicitar.setText("Solicitar Información");
+                    btnSolicitar.setOnClickListener(v -> {
+                        try {
+                            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:77957795"));
+                            startActivity(intent);
+                        } catch (Exception e) {
+                            Toast.makeText(this, "PBX: 7795-7795", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    private void setupSegurosView(View view) {
+        View btnPbx = view.findViewById(R.id.btn_seguros_pbx);
+        if (btnPbx != null) {
+            btnPbx.setOnClickListener(v -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:00000000"));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(this, "PBX: 0000-0000", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        String[] logoNames = {
+            "seguro_cv_personal",
+            "seguro_vida_saludable",
+            "seguro_edad_de_oro",
+            "seguro_de_cancer",
+            "seguro_accidentes_infanto_juvenil",
+            "seguro_manejo",
+            "seguro_de_vida_individual_o_familar"
+        };
+
+        String[] accentColors = {
+            "#EF8819", "#E42A67", "#59B8A4", "#634794", "#173789", "#59B8A4", "#E42A67"
+        };
+
+        int[] cardIds = {
+            R.id.card_seguro_1, R.id.card_seguro_2, R.id.card_seguro_3, 
+            R.id.card_seguro_4, R.id.card_seguro_5, R.id.card_seguro_6,
+            R.id.card_seguro_7
+        };
+
+        for (int i = 0; i < cardIds.length && i < logoNames.length; i++) {
+            View card = view.findViewById(cardIds[i]);
+            String logoName = logoNames[i];
+            String colorHex = accentColors[i % accentColors.length];
+            if (card != null) {
+                View accent = card.findViewById(R.id.card_seguro_accent);
+                ImageView ivLogo = card.findViewById(R.id.card_seguro_logo);
+                Button btnSolicitar = card.findViewById(R.id.btn_solicitar_seguro);
+
+                if (accent != null) {
+                    try { accent.setBackgroundColor(Color.parseColor(colorHex)); } catch (Exception ignored) {}
+                }
+
+                if (ivLogo != null) {
+                    int resId = getResources().getIdentifier(logoName, "drawable", getPackageName());
+                    if (resId != 0) {
+                        ivLogo.setImageResource(resId);
+                        ivLogo.setVisibility(View.VISIBLE);
+                    } else {
+                        ivLogo.setVisibility(View.GONE);
+                    }
+                }
+
+                if (btnSolicitar != null) {
+                    btnSolicitar.setText("Solicitar Información →");
+                    btnSolicitar.setOnClickListener(v -> {
+                        try {
+                            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:00000000"));
+                            startActivity(intent);
+                        } catch (Exception e) {
+                            Toast.makeText(this, "PBX: 0000-0000", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    private void setupRemesasView(View view) {
+        View btnBuscarAgencia = view.findViewById(R.id.btn_buscar_agencia);
+        if (btnBuscarAgencia != null) {
+            btnBuscarAgencia.setOnClickListener(v -> {
+                startActivity(new Intent(this, AgenciasActivity.class));
+            });
+        }
+
+        View btnSolicitarRemesa = view.findViewById(R.id.btn_solicitar_remesa);
+        if (btnSolicitarRemesa != null) {
+            btnSolicitarRemesa.setOnClickListener(v -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:22135580"));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(this, "Atención al Asociado: (+502) 2213-5580", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        View tvPhone = view.findViewById(R.id.tv_remesas_phone);
+        if (tvPhone != null) {
+            tvPhone.setOnClickListener(v -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:22135580"));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(this, "Atención al Asociado: (+502) 2213-5580", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
+    private void setupServiciosView(View view) {
+        View btnMicoope = view.findViewById(R.id.btn_micooope);
+        if (btnMicoope != null) {
+            btnMicoope.setOnClickListener(v -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=gt.coop.micoope"));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(this, "MICOOPE en línea", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        View btnFri = view.findViewById(R.id.btn_fri);
+        if (btnFri != null) {
+            btnFri.setOnClickListener(v -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=gt.com.fri"));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(this, "Red Fri", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
+    private void setupBeneficiosContent(View view) {
+        class BeneficioInfo {
+            String title;
+            String desc;
+            String iconName;
+            BeneficioInfo(String t, String d, String i) {
+                title = t; desc = d; iconName = i;
+            }
+        }
+
+        List<BeneficioInfo> list = new ArrayList<>();
+        list.add(new BeneficioInfo(
+            "Renta Diaria por Hospitalización",
+            "La cooperativa apoya económicamente al asociado en caso de que sea internado en un hospital público o privado, por enfermedad o accidente, calculando el pago según el monto de sus ahorros (1 a 69 años inclusive).",
+            "renta_diaria"
+        ));
+        list.add(new BeneficioInfo(
+            "Apoyo Quirúrgico",
+            "La cooperativa otorgará al asociado un apoyo económico para los gastos médicos incurridos por alguna cirugía como consecuencia de una enfermedad o accidente. (Este beneficio es de por vida, siempre y cuando se asocie en la edad de 1 a 70 años).",
+            "apoyo_quirurgico"
+        ));
+        list.add(new BeneficioInfo(
+            "Servicio Funerario",
+            "En caso de fallecimiento, la cooperativa apoya a la familia del asociado con un sepelio digno, proporcionándoles un ataúd fúnebre en coordinación con la red de funerarias autorizadas. (Este beneficio es de por vida, siempre y cuando se asocie en la edad de 1 a 68 años inclusive).",
+            "servicio_funerario"
+        ));
+        list.add(new BeneficioInfo(
+            "Seguro de Ahorrantes",
+            "En caso de fallecimiento del asociado, la cooperativa garantiza la devolución de los ahorros a sus beneficiarios, así mismo se hace entrega del seguro sobre su dinero depositado en sus cuentas, hasta un monto máximo de Q150,000.00. (Este beneficio es de por vida, siempre y cuando se asocie en la edad de 1 a 68 años inclusive).",
+            "beneficio_de_ahorrantes"
+        ));
+        list.add(new BeneficioInfo(
+            "Seguro de Deudores",
+            "En caso de fallecimiento del asociado con crédito vigente, la cooperativa ofrece un seguro que cubre los saldos insolutos hasta un monto máximo de Q200,000.00 (Asociados de 18 a 69 años inclusive).",
+            "beneficio_de_deudores"
+        ));
+        list.add(new BeneficioInfo(
+            "Beneficio de Oro",
+            "La cooperativa brinda un apoyo económico a los asociados mayores de 70 años que sean diagnosticados por una enfermedad grave de acuerdo con el catálogo, a través de un único desembolso y cumpliendo con los requisitos establecidos.",
+            "beneficio_de_oro"
+        ));
+
+        int[] cardIds = {
+            R.id.card_beneficio_1, R.id.card_beneficio_2, R.id.card_beneficio_3,
+            R.id.card_beneficio_4, R.id.card_beneficio_5, R.id.card_beneficio_6
+        };
+
+        for (int i = 0; i < cardIds.length && i < list.size(); i++) {
+            View card = view.findViewById(cardIds[i]);
+            BeneficioInfo info = list.get(i);
+            if (card != null) {
+                TextView tvTitle = card.findViewById(R.id.card_beneficio_title);
+                TextView tvDesc = card.findViewById(R.id.card_beneficio_desc);
+                ImageView ivIcon = card.findViewById(R.id.card_beneficio_icon);
+
+                if (tvTitle != null) tvTitle.setText(info.title);
+                if (tvDesc != null) tvDesc.setText(info.desc);
+                if (ivIcon != null) {
+                    int resId = getResources().getIdentifier(info.iconName, "drawable", getPackageName());
+                    if (resId != 0) {
+                        ivIcon.setImageResource(resId);
+                        ivIcon.setVisibility(View.VISIBLE);
+                    } else {
+                        ivIcon.setVisibility(View.GONE);
+                    }
+                }
+            }
+        }
     }
 }

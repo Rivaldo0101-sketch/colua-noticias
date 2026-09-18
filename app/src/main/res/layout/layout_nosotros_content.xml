@@ -4,45 +4,50 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingBottom="40dp">
+    android:padding="16dp"
+    android:paddingBottom="60dp">
 
-    <!-- Título Principal -->
+    <!-- Header Nosotros -->
     <TextView
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         android:text="Nosotros"
         android:textColor="@color/colua_navy"
         android:textSize="28sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:fontFamily="@font/poppins_regular" />
 
-    <!-- Subtítulo -->
     <TextView
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="24dp"
         android:text="El lado humano de los ahorros y créditos."
-        android:textColor="@color/black"
-        android:textSize="14sp" />
+        android:textColor="#555555"
+        android:textSize="14sp"
+        android:fontFamily="@font/poppins_regular" />
 
-    <!-- 1. Tarjeta “Propuesta de Valor” -->
-    <com.google.android.material.card.MaterialCardView
+    <!-- Card 1: Propuesta de Valor -->
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        app:cardBackgroundColor="@color/white"
+        android:layout_marginBottom="16dp"
         app:cardCornerRadius="16dp"
         app:cardElevation="3dp"
-        app:strokeWidth="0dp">
+        app:cardBackgroundColor="@color/white">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
+            <!-- Green Left Accent Bar -->
             <View
-                android:layout_width="5dp"
+                android:layout_width="6dp"
                 android:layout_height="match_parent"
-                android:background="@color/colua_green" />
+                android:background="#59B8A4" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -54,55 +59,58 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp">
 
                     <ImageView
                         android:layout_width="32dp"
                         android:layout_height="32dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/propuesta_de_valor1"
-                        android:contentDescription="Icono Propuesta de Valor" />
+                        android:src="@drawable/ic_verified"
+                        app:tint="#59B8A4"
+                        android:layout_marginEnd="12dp"
+                        android:contentDescription="Propuesta de valor" />
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
                         android:text="Propuesta de Valor"
                         android:textColor="@color/colua_navy"
                         android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:fontFamily="@font/poppins_regular" />
                 </LinearLayout>
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="En COLUA reconocemos tu valor como persona para alcanzar tu bienestar integral y el de tu familia, a través de productos y servicios financieros éticos, ágiles y accesibles, basados en el poder de la cooperación."
+                    android:text="&quot;En COLUA reconocemos tu valor como persona para alcanzar tu bienestar integral y el de tu familia, a través de productos y servicios financieros éticos, ágiles y accesibles, basados en el poder de la cooperación&quot;."
                     android:textColor="#333333"
-                    android:textSize="14sp" />
+                    android:textSize="14sp"
+                    android:lineSpacingMultiplier="1.2"
+                    android:fontFamily="@font/poppins_regular" />
             </LinearLayout>
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+    </androidx.cardview.widget.CardView>
 
-    <!-- 2. Tarjeta “Visión” -->
-    <com.google.android.material.card.MaterialCardView
+    <!-- Card 2: Visión -->
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        app:cardBackgroundColor="@color/white"
+        android:layout_marginBottom="16dp"
         app:cardCornerRadius="16dp"
         app:cardElevation="3dp"
-        app:strokeWidth="0dp">
+        app:cardBackgroundColor="@color/white">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
+            <!-- Blue Left Accent Bar -->
             <View
-                android:layout_width="5dp"
+                android:layout_width="6dp"
                 android:layout_height="match_parent"
-                android:background="@color/colua_purple" />
+                android:background="@color/colua_navy" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -114,55 +122,58 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp">
 
                     <ImageView
                         android:layout_width="32dp"
                         android:layout_height="32dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/vision1"
-                        android:contentDescription="Icono Visión" />
+                        android:src="@drawable/ic_info"
+                        app:tint="@color/colua_navy"
+                        android:layout_marginEnd="12dp"
+                        android:contentDescription="Visión" />
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
                         android:text="Visión"
                         android:textColor="@color/colua_navy"
                         android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:fontFamily="@font/poppins_regular" />
                 </LinearLayout>
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="Ser un modelo de desarrollo y sostenibilidad integral de las comunidades basado en la cooperación."
+                    android:text="&quot;Ser un modelo de desarrollo y sostenibilidad integral de las comunidades basado en la cooperación&quot;."
                     android:textColor="#333333"
-                    android:textSize="14sp" />
+                    android:textSize="14sp"
+                    android:lineSpacingMultiplier="1.2"
+                    android:fontFamily="@font/poppins_regular" />
             </LinearLayout>
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+    </androidx.cardview.widget.CardView>
 
-    <!-- 3. Tarjeta “Propósito Visionario” -->
-    <com.google.android.material.card.MaterialCardView
+    <!-- Card 3: Propósito Visionario -->
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        app:cardBackgroundColor="@color/white"
+        android:layout_marginBottom="28dp"
         app:cardCornerRadius="16dp"
         app:cardElevation="3dp"
-        app:strokeWidth="0dp">
+        app:cardBackgroundColor="@color/white">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
+            <!-- Red/Pink Left Accent Bar -->
             <View
-                android:layout_width="5dp"
+                android:layout_width="6dp"
                 android:layout_height="match_parent"
-                android:background="@color/colua_pink" />
+                android:background="#E42A67" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -174,206 +185,184 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp">
 
                     <ImageView
                         android:layout_width="32dp"
                         android:layout_height="32dp"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/propositovisionario"
-                        android:contentDescription="Icono Propósito Visionario" />
+                        android:src="@drawable/ic_campaign"
+                        app:tint="#E42A67"
+                        android:layout_marginEnd="12dp"
+                        android:contentDescription="Propósito Visionario" />
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
                         android:text="Propósito Visionario"
                         android:textColor="@color/colua_navy"
                         android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:fontFamily="@font/poppins_regular" />
                 </LinearLayout>
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="Ser la cooperativa financiera que mejora la calidad de vida de sus asociados y comunidades de Guatemala."
+                    android:text="&quot;Ser la cooperativa financiera que mejora la calidad de vida de sus asociados y comunidades de Guatemala&quot;."
                     android:textColor="#333333"
-                    android:textSize="14sp" />
+                    android:textSize="14sp"
+                    android:lineSpacingMultiplier="1.2"
+                    android:fontFamily="@font/poppins_regular" />
             </LinearLayout>
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+    </androidx.cardview.widget.CardView>
 
-    <!-- Sección de valores: Encabezado centrado -->
+    <!-- Header: Valores de COLUA MICOOPE -->
     <TextView
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        android:gravity="center"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="24dp"
         android:text="Valores de COLUA MICOOPE"
         android:textColor="@color/colua_navy"
         android:textSize="22sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:fontFamily="@font/poppins_regular"
+        android:gravity="center" />
 
-    <!-- Imagen Valores Semicircular -->
-    <ImageView
+    <!-- Valor 1: INTEGRIDAD -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginHorizontal="20dp"
-        android:adjustViewBounds="true"
-        android:scaleType="fitCenter"
-        android:src="@drawable/valores_colua_1"
-        android:contentDescription="Gráfico de Valores COLUA" />
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:layout_marginBottom="20dp"
+        android:paddingHorizontal="16dp">
 
-    <!-- 4 Tarjetas de Valores Institucionales -->
-
-    <!-- Integridad -->
-    <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        app:cardBackgroundColor="#F0F4F8"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="1dp"
-        app:strokeColor="#DEE2E6"
-        app:strokeWidth="1dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:text="INTEGRIDAD"
+            android:textColor="@color/colua_navy"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/poppins_regular"
+            android:gravity="center" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="INTEGRIDAD"
-                android:textColor="@color/colua_purple"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Actuar con coherencia con nuestros valores, manteniendo transparencia en todo lo que hacemos y fomentando la cooperación en cada acción."
+            android:textColor="#333333"
+            android:textSize="13sp"
+            android:gravity="center"
+            android:fontFamily="@font/poppins_regular" />
+    </LinearLayout>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center"
-                android:text="Actuar con coherencia con nuestros valores, manteniendo transparencia en todo lo que hacemos y fomentando la cooperación en cada acción."
-                android:textColor="#333333"
-                android:textSize="14sp" />
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
-    <!-- Cooperación -->
-    <com.google.android.material.card.MaterialCardView
+    <!-- Two columns for Cooperación and Responsabilidad -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        app:cardBackgroundColor="#F0F4F8"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="1dp"
-        app:strokeColor="#DEE2E6"
-        app:strokeWidth="1dp">
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp"
+        android:weightSum="2">
 
+        <!-- Cooperación -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingEnd="8dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
                 android:text="COOPERACIÓN"
-                android:textColor="@color/colua_green"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textColor="@color/colua_navy"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/poppins_regular" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center"
+                android:layout_marginTop="4dp"
                 android:text="Trabajar juntos para alcanzar un objetivo común, basada en la ayuda mutua, la solidaridad y el esfuerzo compartido."
                 android:textColor="#333333"
-                android:textSize="14sp" />
+                android:textSize="12sp"
+                android:fontFamily="@font/poppins_regular" />
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
 
-    <!-- Responsabilidad -->
-    <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        app:cardBackgroundColor="#F0F4F8"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="1dp"
-        app:strokeColor="#DEE2E6"
-        app:strokeWidth="1dp">
-
+        <!-- Responsabilidad -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingStart="8dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
                 android:text="RESPONSABILIDAD"
-                android:textColor="@color/colua_pink"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textColor="@color/colua_navy"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/poppins_regular"
+                android:gravity="end" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center"
+                android:layout_marginTop="4dp"
                 android:text="Administramos y cuidamos los ahorros de nuestros asociados que nos han confiado."
                 android:textColor="#333333"
-                android:textSize="14sp" />
+                android:textSize="12sp"
+                android:gravity="end"
+                android:fontFamily="@font/poppins_regular" />
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
 
-    <!-- Enfoque al Asociado -->
-    <com.google.android.material.card.MaterialCardView
+    <!-- Imagen Central: valores_colua_1 -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="240dp"
+        android:layout_marginVertical="16dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/valores_colua_1"
+        android:contentDescription="Valores COLUA MICOOPE Gráfico" />
+
+    <!-- Valor Final: ENFOQUE AL ASOCIADO -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        app:cardBackgroundColor="#F0F4F8"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="1dp"
-        app:strokeColor="#DEE2E6"
-        app:strokeWidth="1dp">
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:layout_marginTop="12dp"
+        android:paddingHorizontal="16dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:text="ENFOQUE AL ASOCIADO"
+            android:textColor="@color/colua_navy"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/poppins_regular"
+            android:gravity="center" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="ENFOQUE AL ASOCIADO"
-                android:textColor="@color/colua_navy"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center"
-                android:text="El centro de atención de nuestros esfuerzos y nuestra lealtad son los asociados, a quienes entregamos siempre soluciones de calidad."
-                android:textColor="#333333"
-                android:textSize="14sp" />
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="El centro de atención de nuestros esfuerzos y nuestra lealtad son los asociados, a quienes entregamos siempre soluciones de calidad."
+            android:textColor="#333333"
+            android:textSize="13sp"
+            android:gravity="center"
+            android:fontFamily="@font/poppins_regular" />
+    </LinearLayout>
 
 </LinearLayout>

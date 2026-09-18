@@ -63,7 +63,8 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:contentDescription="Cerrar sesión"
-                    android:focusable="true" />
+                    android:focusable="true"
+                    android:visibility="gone" />
 
             </RelativeLayout>
         </androidx.appcompat.widget.Toolbar>

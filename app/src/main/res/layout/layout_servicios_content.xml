@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:paddingBottom="60dp">
+
+    <!-- Header Servicios Electrónicos -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="Nuestros Servicios Electrónicos"
+        android:textColor="@color/colua_navy"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:fontFamily="@font/poppins_regular" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="24dp"
+        android:text="Tu cooperativa al alcance de tu mano. Gestiona tus finanzas, realiza pagos y solicita servicios."
+        android:textColor="#555555"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:fontFamily="@font/poppins_regular" />
+
+    <!-- 1. Tarjeta de Débito Micoope Visa -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="3dp"
+        app:cardBackgroundColor="@color/white">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp" android:gravity="center">
+            <ImageView android:layout_width="240dp" android:layout_height="145dp" android:src="@drawable/tarjeta_debito" android:scaleType="fitCenter" android:layout_marginBottom="12dp" android:contentDescription="Tarjeta Débito" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TARJETA DE DÉBITO MICOOPE VISA" android:textColor="@color/colua_navy" android:textSize="16sp" android:textStyle="bold" android:gravity="center" android:fontFamily="@font/poppins_regular" android:layout_marginBottom="8dp" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Realiza compras en comercios afiliados a VISA en Guatemala y el extranjero, notificaciones por mensajes de texto, cobertura contra fraude y clonación." android:textColor="#333333" android:textSize="13sp" android:lineSpacingMultiplier="1.2" android:fontFamily="@font/poppins_regular" android:gravity="center" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- 2. Descarga la App Micoope en Línea -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="3dp"
+        app:cardBackgroundColor="@color/white">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp" android:gravity="center">
+            <ImageView android:layout_width="200dp" android:layout_height="80dp" android:src="@drawable/micoope_enlinea" android:scaleType="fitCenter" android:layout_marginBottom="8dp" android:contentDescription="Micoope En Línea" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Realiza consulta de tus cuentas, transferencias, pago de servicios, pago de préstamos y mucho más." android:textColor="#333333" android:textSize="13sp" android:lineSpacingMultiplier="1.2" android:fontFamily="@font/poppins_regular" android:gravity="center" android:layout_marginBottom="16dp" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_micooope"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="DESCARGA LA APP MICOOPE EN LINEA"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                app:backgroundTint="#59B8A4"
+                app:cornerRadius="24dp"
+                android:fontFamily="@font/poppins_regular"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- 3. Tarjeta de Crédito Micoope Visa -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="3dp"
+        app:cardBackgroundColor="@color/white">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp" android:gravity="center">
+            <ImageView android:layout_width="240dp" android:layout_height="145dp" android:src="@drawable/tarjeta_debito" android:scaleType="fitCenter" android:layout_marginBottom="12dp" android:contentDescription="Tarjeta Crédito" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TARJETA DE CRÉDITO MICOOPE VISA" android:textColor="@color/colua_navy" android:textSize="16sp" android:textStyle="bold" android:gravity="center" android:fontFamily="@font/poppins_regular" android:layout_marginBottom="8dp" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Tienes hasta 55 días para pagar, membresía gratis de por vida, tarjeta VISA internacional, cobertura por fraude, robo o atraco y pérdida, con la tasa más baja del mercado." android:textColor="#333333" android:textSize="13sp" android:lineSpacingMultiplier="1.2" android:fontFamily="@font/poppins_regular" android:gravity="center" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- 4. Cajeros Modernos Automáticos -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="3dp"
+        app:cardBackgroundColor="@color/white">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp" android:gravity="center">
+            <ImageView android:layout_width="200dp" android:layout_height="145dp" android:src="@drawable/ic_atm" app:tint="#173789" android:scaleType="fitCenter" android:layout_marginBottom="12dp" android:contentDescription="Cajeros" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CAJEROS MODERNOS AUTOMÁTICOS" android:textColor="@color/colua_navy" android:textSize="16sp" android:textStyle="bold" android:gravity="center" android:fontFamily="@font/poppins_regular" android:layout_marginBottom="8dp" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Consulta de saldos, retiros y depósitos en efectivo; sin cobros por comisión. Servicio las 24 horas los 365 días del año." android:textColor="#333333" android:textSize="13sp" android:lineSpacingMultiplier="1.2" android:fontFamily="@font/poppins_regular" android:gravity="center" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- 5. Descarga la App Fri -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="3dp"
+        app:cardBackgroundColor="@color/white">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp" android:gravity="center">
+            <ImageView android:layout_width="180dp" android:layout_height="75dp" android:src="@drawable/logo_fri" android:scaleType="fitCenter" android:layout_marginBottom="8dp" android:contentDescription="Logo Fri" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Envía, recibe y solicita dinero de forma rápida entre tu cooperativa y bancos del sistema. Descarga la app en Google Play y App Store." android:textColor="#333333" android:textSize="13sp" android:lineSpacingMultiplier="1.2" android:fontFamily="@font/poppins_regular" android:gravity="center" android:layout_marginBottom="16dp" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_fri"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="DESCARGA LA APP FRI"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                app:backgroundTint="#59B8A4"
+                app:cornerRadius="24dp"
+                android:fontFamily="@font/poppins_regular"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- 6. Red de Agentes Colua Micoope -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="28dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="3dp"
+        app:cardBackgroundColor="@color/white">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp" android:gravity="center">
+            <ImageView android:layout_width="200dp" android:layout_height="145dp" android:src="@drawable/ic_store" app:tint="#173789" android:scaleType="fitCenter" android:layout_marginBottom="12dp" android:contentDescription="Agentes" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="RED DE AGENTES COLUA MICOOPE" android:textColor="@color/colua_navy" android:textSize="16sp" android:textStyle="bold" android:gravity="center" android:fontFamily="@font/poppins_regular" android:layout_marginBottom="8dp" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Cobra tus remesas, paga tu préstamo y tarjeta de crédito, realiza depósitos y retiros de tus cuentas y mucho más." android:textColor="#333333" android:textSize="13sp" android:lineSpacingMultiplier="1.2" android:fontFamily="@font/poppins_regular" android:gravity="center" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- ==================== OTROS SERVICIOS ==================== -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="20dp"
+        android:text="OTROS SERVICIOS"
+        android:textColor="@color/colua_navy"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/poppins_regular" />
+
+    <!-- Other Service 1: Pago de energía eléctrica -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/white">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+            <View android:layout_width="8dp" android:layout_height="match_parent" android:background="#FACC15" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="16dp" android:gravity="center_vertical">
+                <ImageView android:layout_width="36dp" android:layout_height="36dp" android:src="@drawable/ic_lightbulb" app:tint="#FACC15" android:layout_marginEnd="16dp" android:contentDescription="Luz" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Pago de energía eléctrica\nDEOCSA-DEORSA" android:textColor="@color/colua_navy" android:textSize="14sp" android:textStyle="bold" android:fontFamily="@font/poppins_regular" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Other Service 2: Pago de servicio telefónico -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/white">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+            <View android:layout_width="8dp" android:layout_height="match_parent" android:background="#59B8A4" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="16dp" android:gravity="center_vertical">
+                <ImageView android:layout_width="36dp" android:layout_height="36dp" android:src="@drawable/ic_phone" app:tint="#59B8A4" android:layout_marginEnd="16dp" android:contentDescription="Teléfono" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Pago de servicio telefónico\nPre y Pospago: CLARO Y TIGO" android:textColor="@color/colua_navy" android:textSize="14sp" android:textStyle="bold" android:fontFamily="@font/poppins_regular" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Other Service 3: Cajeros 5B, BI y BAC -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/white">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+            <View android:layout_width="8dp" android:layout_height="match_parent" android:background="#DB2777" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="16dp" android:gravity="center_vertical">
+                <ImageView android:layout_width="36dp" android:layout_height="36dp" android:src="@drawable/ic_credit_card" app:tint="#DB2777" android:layout_marginEnd="16dp" android:contentDescription="Cajeros" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Cajeros: 5B, BI y BAC. Consulta de saldos y retiros en efectivo con recargo de Q5.00 por transacción." android:textColor="@color/colua_navy" android:textSize="13sp" android:textStyle="bold" android:fontFamily="@font/poppins_regular" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</LinearLayout>

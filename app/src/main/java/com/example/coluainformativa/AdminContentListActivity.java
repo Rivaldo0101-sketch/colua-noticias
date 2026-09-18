@@ -83,7 +83,7 @@ public class AdminContentListActivity extends AppCompatActivity {
 
     private String searchQuery = "";
     private int currentPage = 1;
-    private int itemsPerPage = 6;
+    private int itemsPerPage = 50;
 
     private String currentIssuerAvatarPath = "";
     private ImageView ivDialogIssuerAvatar = null;

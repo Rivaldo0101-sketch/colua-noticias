@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:paddingBottom="60dp">
+
+    <!-- Header Créditos (Clean text matching Nosotros / Ahorros) -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="Nuestros Créditos"
+        android:textColor="@color/colua_navy"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/poppins_regular" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="24dp"
+        android:text="Soluciones financieras a tu medida. Impulsa tus proyectos con nosotros."
+        android:textColor="#555555"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:fontFamily="@font/poppins_regular" />
+
+    <!-- Credit Card 1 -->
+    <include layout="@layout/item_credito_card" android:id="@+id/card_credito_1" />
+    <!-- Credit Card 2 -->
+    <include layout="@layout/item_credito_card" android:id="@+id/card_credito_2" />
+    <!-- Credit Card 3 -->
+    <include layout="@layout/item_credito_card" android:id="@+id/card_credito_3" />
+    <!-- Credit Card 4 -->
+    <include layout="@layout/item_credito_card" android:id="@+id/card_credito_4" />
+    <!-- Credit Card 5 -->
+    <include layout="@layout/item_credito_card" android:id="@+id/card_credito_5" />
+    <!-- Credit Card 6 -->
+    <include layout="@layout/item_credito_card" android:id="@+id/card_credito_6" />
+    <!-- Credit Card 7 -->
+    <include layout="@layout/item_credito_card" android:id="@+id/card_credito_7" />
+    <!-- Credit Card 8 -->
+    <include layout="@layout/item_credito_card" android:id="@+id/card_credito_8" />
+
+    <!-- Requirements Card at the bottom -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="3dp"
+        app:cardBackgroundColor="@color/colua_navy">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/ic_verified"
+                    app:tint="@color/colua_green"
+                    android:layout_marginEnd="12dp"
+                    android:contentDescription="Requisitos" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Requisitos para solicitar tu crédito"
+                    android:textColor="@color/white"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/poppins_regular" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• Ser asociado de la cooperativa.\n• Documento Personal de Identificación DPI.\n• Garantía derechos posesorios (escritura pública y registrada) o fiduciaria (voucher).\n• Constancia de ingresos.\n• Plan de inversión.\n• Recibo de luz."
+                android:textColor="#E2E8F0"
+                android:textSize="13sp"
+                android:lineSpacingMultiplier="1.4"
+                android:fontFamily="@font/poppins_regular" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</LinearLayout>

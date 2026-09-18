@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:paddingBottom="60dp">
+
+    <!-- Top Title Image: obten_tus_seis_beneficios -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="210dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/obten_tus_seis_beneficios"
+        android:scaleType="fitCenter"
+        android:contentDescription="Obtén Tus 6 Beneficios" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:text="El lado humano de los ahorros y créditos."
+        android:textColor="#555555"
+        android:textSize="14sp"
+        android:fontFamily="@font/poppins_regular" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="BENEFICIOS COLUA MICOOPE"
+        android:textColor="@color/colua_navy"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/poppins_regular"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:text="Para realizar el reclamo de tus beneficios deberás acercarte a tu agencia más cercana y realizar el proceso correspondiente."
+        android:textColor="#555555"
+        android:textSize="13sp"
+        android:gravity="center"
+        android:fontFamily="@font/poppins_regular"
+        android:lineSpacingMultiplier="1.2" />
+
+    <!-- Benefit Card 1: Renta Diaria por Hospitalización -->
+    <include layout="@layout/item_beneficio_card" android:id="@+id/card_beneficio_1" />
+    <!-- Benefit Card 2: Apoyo Quirúrgico -->
+    <include layout="@layout/item_beneficio_card" android:id="@+id/card_beneficio_2" />
+    <!-- Benefit Card 3: Servicio Funerario -->
+    <include layout="@layout/item_beneficio_card" android:id="@+id/card_beneficio_3" />
+    <!-- Benefit Card 4: Seguro de Ahorrantes -->
+    <include layout="@layout/item_beneficio_card" android:id="@+id/card_beneficio_4" />
+    <!-- Benefit Card 5: Seguro de Deudores -->
+    <include layout="@layout/item_beneficio_card" android:id="@+id/card_beneficio_5" />
+    <!-- Benefit Card 6: Beneficio de Oro -->
+    <include layout="@layout/item_beneficio_card" android:id="@+id/card_beneficio_6" />
+
+    <!-- PBX Call Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_beneficios_pbx"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:layout_marginTop="8dp"
+        android:text="PBX: 7795-7795"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        app:backgroundTint="@color/colua_navy"
+        app:cornerRadius="27dp"
+        android:fontFamily="@font/poppins_regular"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

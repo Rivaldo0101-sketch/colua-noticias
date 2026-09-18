@@ -8,9 +8,12 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.SpannableString;
 import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
@@ -151,20 +154,38 @@ public class AgenciasActivity extends AppCompatActivity {
             List<NavigationItemEntity> rawSideItems = repository.getRobustSidebarItems();
 
             List<NavigationItemEntity> sideItems = rawSideItems.stream()
-                    .filter(item -> !"action_reset".equalsIgnoreCase(item.targetSectionId)
-                                 && !"side_reset".equalsIgnoreCase(item.id)
+                    .filter(item -> !"action_reset".equals(item.targetSectionId)
+                                 && !"side_reset".equals(item.id)
+                                 && !"side_cuentas".equals(item.id)
+                                 && !"sec_comunidad".equalsIgnoreCase(item.targetSectionId)
+                                 && !"Cuentas".equalsIgnoreCase(item.label)
                                  && !"Restablecer".equalsIgnoreCase(item.label))
                     .collect(Collectors.toList());
 
-            Collections.sort(sideItems, (item1, item2) -> Integer.compare(item1.displayOrder, item2.displayOrder));
+            Collections.sort(sideItems, (i1, i2) -> {
+                boolean isLogout1 = "side_logout".equalsIgnoreCase(i1.id) || "action_logout".equalsIgnoreCase(i1.targetSectionId);
+                boolean isLogout2 = "side_logout".equalsIgnoreCase(i2.id) || "action_logout".equalsIgnoreCase(i2.targetSectionId);
+                if (isLogout1 && !isLogout2) return 1;
+                if (!isLogout1 && isLogout2) return -1;
+
+                return Integer.compare(i1.displayOrder, i2.displayOrder);
+            });
 
             List<NavigationItemEntity> finalItems = sideItems;
             runOnUiThread(() -> {
                 navigationView.getMenu().clear();
                 for (NavigationItemEntity item : finalItems) {
                     int iconRes = getResources().getIdentifier(item.iconName, "drawable", getPackageName());
-                    navigationView.getMenu().add(0, item.id.hashCode(), item.displayOrder, item.label)
-                            .setIcon(iconRes != 0 ? iconRes : android.R.drawable.ic_menu_info_details);
+                    MenuItem menuItem = navigationView.getMenu().add(0, item.id.hashCode(), item.displayOrder, item.label);
+                    menuItem.setIcon(iconRes != 0 ? iconRes : android.R.drawable.ic_menu_info_details);
+                    if ("side_logout".equalsIgnoreCase(item.id) || "action_logout".equalsIgnoreCase(item.targetSectionId)) {
+                        SpannableString s = new SpannableString(item.label);
+                        s.setSpan(new ForegroundColorSpan(Color.RED), 0, s.length(), 0);
+                        menuItem.setTitle(s);
+                        if (menuItem.getIcon() != null) {
+                            menuItem.getIcon().setTint(Color.RED);
+                        }
+                    }
                 }
 
                 navigationView.setNavigationItemSelectedListener(menuItem -> {

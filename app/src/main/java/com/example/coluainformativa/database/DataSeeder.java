@@ -32,6 +32,8 @@ public class DataSeeder {
                 db.sectionDao().deleteAll();
                 db.agenciaDao().deleteAll();
                 db.navigationDao().deleteAll(); 
+                db.contentDao().deleteAllItems();
+                db.contentDao().deleteAllBlocks();
             }
 
             if (db.sectionDao().getAllSections().isEmpty()) {
@@ -170,6 +172,52 @@ public class DataSeeder {
                 news3.targetSectionId = "https://colua.com.gt/noticias/asamblea-2026";
                 db.contentDao().insertItem(news3);
 
+                // --- SOSTENIBILIDAD INICIAL ---
+                ContentItemEntity sostPropuesta = new ContentItemEntity("sost_propuesta", "sec_sostenibilidad", "Nuestra Propuesta de Valor", "", "\"En COLUA reconocemos tu valor como persona para alcanzar tu bienestar integral y el de tu familia.\"", "", 1);
+                sostPropuesta.imagePath = "sin_conexion";
+                sostPropuesta.isDraft = false;
+                db.contentDao().insertItem(sostPropuesta);
+
+                ContentItemEntity sostImpacto = new ContentItemEntity("sost_impacto", "sec_sostenibilidad", "Huella e Impacto Social (Sololá & Occidente)", "", "Bienestar comunitario durante 2025.\n\n• DIRECTAS: 22,775 personas beneficiadas\n• INDIRECTAS: 18,672 asociados y comunidad\n\nIMPACTO GLOBAL ACUMULADO:\n41,447 vidas tocadas", "", 2);
+                sostImpacto.imagePath = "sin_conexion";
+                sostImpacto.isDraft = false;
+                db.contentDao().insertItem(sostImpacto);
+
+                ContentItemEntity sostEducacion = new ContentItemEntity("sost_educacion", "sec_sostenibilidad", "Educación y Formación Cooperativa", "", "Empoderando a la niñez, juventud y comunidades rurales del departamento con herramientas financieras, valores y liderazgo.", "", 3);
+                sostEducacion.imagePath = "sin_conexion";
+                sostEducacion.isDraft = false;
+                db.contentDao().insertItem(sostEducacion);
+
+                ContentItemEntity sostWachalal = new ContentItemEntity("sost_wachalal", "sec_sostenibilidad", "Programa Wachalal", "", "2,284 Alumnos beneficiados.\n\nFormación lúdica y fomento al ahorro en Concepción, Panajachel, Santiago Atitlán, Sololá y San Juan La Laguna.", "", 4);
+                sostWachalal.imagePath = "sin_conexion";
+                sostWachalal.isDraft = false;
+                db.contentDao().insertItem(sostWachalal);
+
+                ContentItemEntity sostFinanciera = new ContentItemEntity("sost_financiera", "sec_sostenibilidad", "Educación Financiera", "", "1,305 Personas alcanzadas.\n\nTalleres prácticos en Nahualá, Santiago Atitlán, San Andrés Semetabaj y Concordia Totonicapán.", "", 5);
+                sostFinanciera.imagePath = "sin_conexion";
+                sostFinanciera.isDraft = false;
+                db.contentDao().insertItem(sostFinanciera);
+
+                ContentItemEntity sostBecas = new ContentItemEntity("sost_becas", "sec_sostenibilidad", "Becas Jóvenes Cooperativistas", "", "160 Becados.\n\nImpulso académico y mentoría solidaria para nuevas generaciones de líderes locales.", "", 6);
+                sostBecas.imagePath = "sin_conexion";
+                sostBecas.isDraft = false;
+                db.contentDao().insertItem(sostBecas);
+
+                ContentItemEntity sostHuellas = new ContentItemEntity("sost_huellas", "sec_sostenibilidad", "Programa Huellas", "", "436 Atendidos.\n\nFortalecimiento de valores éticos para estudiantes y colaboradores del equipo COLUA.", "", 7);
+                sostHuellas.imagePath = "sin_conexion";
+                sostHuellas.isDraft = false;
+                db.contentDao().insertItem(sostHuellas);
+
+                ContentItemEntity sostHistoria = new ContentItemEntity("sost_historia", "sec_sostenibilidad", "Nuestra Historia y Raíces", "", "Desde el 22 de mayo de 1965.\n\nCOLUA MICOOPE nació gracias al coraje de 25 visionarios guiados por la misionera Elena Harding. Con un aporte inicial de Q5.00 y cuotas semanales de Q0.25, demostraron que la solidaridad comunitaria es el motor financiero más poderoso.\n\n• 60 Años de solidez\n• 25 Socios pioneros\n• Q5.00 Capital semilla", "", 8);
+                sostHistoria.imagePath = "sin_conexion";
+                sostHistoria.isDraft = false;
+                db.contentDao().insertItem(sostHistoria);
+
+                ContentItemEntity sostUnirme = new ContentItemEntity("sost_unirme", "sec_sostenibilidad", "¿Quieres ser parte de este impacto?", "", "Conoce cómo asociarte y acceder a los programas sociales. Únete a la familia COLUA MICOOPE.", "", 9);
+                sostUnirme.imagePath = "sin_conexion";
+                sostUnirme.isDraft = false;
+                db.contentDao().insertItem(sostUnirme);
+
                 ContentBlockEntity sloganBlock = new ContentBlockEntity(
                         "block_home_slogan",
                         null,
@@ -195,7 +243,7 @@ public class DataSeeder {
                         "block_home_institutional_contact",
                         null,
                         "CONTAINER",
-                        "de los Ahorros y Créditos\n\n¿Necesitas ayuda adicional?\nComunícate a nuestro PBX central o búscanos en nuestras redes sociales oficiales.",
+                        "Comunícate a nuestro PBX central o búscanos en nuestras redes sociales oficiales.",
                         5,
                         "distintivo_colua",
                         "SOMOS EL LADO HUMANO",
@@ -214,9 +262,100 @@ public class DataSeeder {
 
                 Log.d("SEEDER", "Siembra inicial completada exitosamente.");
             }
+
+            // Asegurar que la pantalla de Nosotros tenga sus bloques iniciales en la base de datos para el Portal Administrativo
+            seedNosotrosBlocks(context);
+
         } catch (Exception e) {
             Log.e("SEEDER", "Error en siembra: " + e.getMessage());
         }
+    }
+
+    public static void seedNosotrosBlocks(Context context) {
+        try {
+            AppDatabase db = AppDatabase.getDatabase(context);
+            if (db.contentDao().getBlocksBySection("sec_nosotros").isEmpty()) {
+                // 1. Propuesta de Valor
+                ContentBlockEntity b1 = new ContentBlockEntity(
+                    "block_nosotros_propuesta", null, "CARD",
+                    "\"En COLUA reconocemos tu valor como persona para alcanzar tu bienestar integral y el de tu familia, a través de productos y servicios financieros éticos, ágiles y accesibles, basados en el poder de la cooperación\".",
+                    1, "ic_verified", "Propuesta de Valor", null, null,
+                    "sec_nosotros", "#59B8A4", null, "NORMAL", "NORMAL", "LEFT"
+                );
+                b1.isDraft = false; b1.isVisible = true;
+                db.contentDao().insertBlock(b1);
+
+                // 2. Visión
+                ContentBlockEntity b2 = new ContentBlockEntity(
+                    "block_nosotros_vision", null, "CARD",
+                    "\"Ser un modelo de desarrollo y sostenibilidad integral de las comunidades basado en la cooperación\".",
+                    2, "ic_info", "Visión", null, null,
+                    "sec_nosotros", "#173789", null, "NORMAL", "NORMAL", "LEFT"
+                );
+                b2.isDraft = false; b2.isVisible = true;
+                db.contentDao().insertBlock(b2);
+
+                // 3. Propósito Visionario
+                ContentBlockEntity b3 = new ContentBlockEntity(
+                    "block_nosotros_proposito", null, "CARD",
+                    "\"Ser la cooperativa financiera que mejora la calidad de vida de sus asociados y comunidades de Guatemala\".",
+                    3, "ic_campaign", "Propósito Visionario", null, null,
+                    "sec_nosotros", "#E42A67", null, "NORMAL", "NORMAL", "LEFT"
+                );
+                b3.isDraft = false; b3.isVisible = true;
+                db.contentDao().insertBlock(b3);
+
+                // 4. Título Valores
+                ContentBlockEntity b4 = new ContentBlockEntity(
+                    "block_nosotros_valores_title", null, "TEXT",
+                    "",
+                    4, null, "Valores de COLUA MICOOPE", null, null,
+                    "sec_nosotros", null, null, "NORMAL", "BOLD", "CENTER"
+                );
+                b4.isDraft = false; b4.isVisible = true;
+                db.contentDao().insertBlock(b4);
+
+                // 5. Integridad
+                ContentBlockEntity b5 = new ContentBlockEntity(
+                    "block_nosotros_integridad", null, "TEXT",
+                    "Actuar con coherencia con nuestros valores, manteniendo transparencia en todo lo que hacemos y fomentando la cooperación en cada acción.",
+                    5, null, "INTEGRIDAD", null, null,
+                    "sec_nosotros", null, null, "NORMAL", "BOLD", "CENTER"
+                );
+                b5.isDraft = false; b5.isVisible = true;
+                db.contentDao().insertBlock(b5);
+
+                // 6. Cooperación y Responsabilidad
+                ContentBlockEntity b6 = new ContentBlockEntity(
+                    "block_nosotros_cooperacion", null, "TEXT",
+                    "COOPERACIÓN:\nTrabajar juntos para alcanzar un objetivo común, basada en la ayuda mutua, la solidaridad y el esfuerzo compartido.\n\nRESPONSABILIDAD:\nAdministramos y cuidamos los ahorros de nuestros asociados que nos han confiado.",
+                    6, null, "COOPERACIÓN Y RESPONSABILIDAD", null, null,
+                    "sec_nosotros", null, null, "NORMAL", "NORMAL", "LEFT"
+                );
+                b6.isDraft = false; b6.isVisible = true;
+                db.contentDao().insertBlock(b6);
+
+                // 7. Gráfico valores_colua_1
+                ContentBlockEntity b7 = new ContentBlockEntity(
+                    "block_nosotros_grafico", null, "IMAGE",
+                    "",
+                    7, "valores_colua_1", "Gráfico de Valores", null, null,
+                    "sec_nosotros", null, null, "NORMAL", "NORMAL", "CENTER"
+                );
+                b7.isDraft = false; b7.isVisible = true;
+                db.contentDao().insertBlock(b7);
+
+                // 8. Enfoque al Asociado
+                ContentBlockEntity b8 = new ContentBlockEntity(
+                    "block_nosotros_enfoque", null, "TEXT",
+                    "El centro de atención de nuestros esfuerzos y nuestra lealtad son los asociados, a quienes entregamos siempre soluciones de calidad.",
+                    8, null, "ENFOQUE AL ASOCIADO", null, null,
+                    "sec_nosotros", null, null, "NORMAL", "BOLD", "CENTER"
+                );
+                b8.isDraft = false; b8.isVisible = true;
+                db.contentDao().insertBlock(b8);
+            }
+        } catch (Exception ignored) {}
     }
 
     private static AgenciaEntity createAgencia(String nombre, String depto, String dir, String tel, String color, String tipo, String mapUrl) {

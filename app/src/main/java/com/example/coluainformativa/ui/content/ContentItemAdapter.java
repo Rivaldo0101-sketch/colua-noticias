@@ -325,14 +325,16 @@ public class ContentItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     static class NewsViewHolder extends RecyclerView.ViewHolder {
         private final View layoutPhotoContainer;
-        private final ImageView ivPhoto, ivAuthorAvatar;
+        private final ImageView ivPhoto, ivAuthorAvatar, btnToggleExpand;
         private final TextView tvAuthor, tvDate, tvLikesBtn, tvShareBtn, tvTitle, tvDesc, tvHashtags, tvCarouselBadge, tvCarouselDots, tvPhotoTagPill, btnCta;
         private final View btnEdit;
+        private boolean isExpanded = false;
 
         public NewsViewHolder(@NonNull View itemView) {
             super(itemView);
             layoutPhotoContainer = itemView.findViewById(R.id.layout_public_news_photo_container);
             ivPhoto = itemView.findViewById(R.id.iv_public_news_photo);
+            btnToggleExpand = itemView.findViewById(R.id.btn_toggle_expand_news);
             tvCarouselBadge = itemView.findViewById(R.id.tv_photo_carousel_badge);
             tvCarouselDots = itemView.findViewById(R.id.tv_carousel_dots_indicator);
             tvPhotoTagPill = itemView.findViewById(R.id.tv_news_photo_tag_pill);
@@ -395,18 +397,53 @@ public class ContentItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 AdminNewsEditActivity.loadNewsImageIntoView(itemView.getContext(), ivAuthorAvatar, avatarPath);
             }
 
-            // Etiqueta píldora sobre la foto según la categoría seleccionada o hashtags
+            // Etiqueta píldora sobre la foto (solo mostrar si es texto real, ocultar si es color hex o vacío)
             if (tvPhotoTagPill != null) {
-                String tagPill = (item.accentColor != null && !item.accentColor.trim().isEmpty())
+                String tagPill = (item.accentColor != null && !item.accentColor.trim().isEmpty() && !item.accentColor.trim().startsWith("#"))
                         ? item.accentColor.trim()
-                        : getCategoryPillFromTags(item.tags);
+                        : "";
 
-                tvPhotoTagPill.setText(tagPill);
-                tvPhotoTagPill.setVisibility(View.VISIBLE);
+                if (tagPill != null && !tagPill.isEmpty() && !tagPill.startsWith("#")) {
+                    tvPhotoTagPill.setText(tagPill);
+                    tvPhotoTagPill.setVisibility(View.VISIBLE);
+                } else {
+                    tvPhotoTagPill.setVisibility(View.GONE);
+                }
             }
 
-            // Manejo dinámico de fotos y carrusel táctil con gestos de deslizar
+            // Botón Expandir / Colapsar
+            if (btnToggleExpand != null) {
+                float density = itemView.getContext().getResources().getDisplayMetrics().density;
+                int collapsedHeight = (int) (260 * density);
+
+                ViewGroup.LayoutParams lp = layoutPhotoContainer.getLayoutParams();
+                lp.height = collapsedHeight;
+                layoutPhotoContainer.setLayoutParams(lp);
+                if (ivPhoto != null) ivPhoto.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                btnToggleExpand.setRotation(0f);
+                isExpanded = false;
+
+                btnToggleExpand.setOnClickListener(v -> {
+                    isExpanded = !isExpanded;
+                    ViewGroup.LayoutParams params = layoutPhotoContainer.getLayoutParams();
+                    if (isExpanded) {
+                        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                        if (ivPhoto != null) ivPhoto.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        btnToggleExpand.animate().rotation(180f).setDuration(200).start();
+                    } else {
+                        params.height = collapsedHeight;
+                        if (ivPhoto != null) ivPhoto.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        btnToggleExpand.animate().rotation(0f).setDuration(200).start();
+                    }
+                    layoutPhotoContainer.setLayoutParams(params);
+                });
+            }
+
+            // Manejo dinámico de fotos y carrusel táctil con gestos de deslizar (con fallback a sin_conexion si falta la imagen)
             List<String> photos = parsePhotosList(item);
+            if (photos.isEmpty()) {
+                photos.add("sin_conexion");
+            }
             if (layoutPhotoContainer != null) {
                 if (photos.isEmpty()) {
                     layoutPhotoContainer.setVisibility(View.GONE);

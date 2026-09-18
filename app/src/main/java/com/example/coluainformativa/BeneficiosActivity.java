@@ -2,8 +2,13 @@ package com.example.coluainformativa;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -46,6 +51,7 @@ public class BeneficiosActivity extends AppCompatActivity {
         setupNavigation();
         setupNavbar();
         setupDrawer();
+        setupBeneficiosContent();
 
         NavInsetHelper.applySystemWindowInsets(
                 findViewById(R.id.drawer_layout),
@@ -53,6 +59,88 @@ public class BeneficiosActivity extends AppCompatActivity {
                 findViewById(R.id.bottom_navigation),
                 findViewById(R.id.scroll_content_beneficios)
         );
+    }
+
+    private void setupBeneficiosContent() {
+        class BeneficioInfo {
+            String title;
+            String desc;
+            String iconName;
+            BeneficioInfo(String t, String d, String i) {
+                title = t; desc = d; iconName = i;
+            }
+        }
+
+        List<BeneficioInfo> list = new ArrayList<>();
+        list.add(new BeneficioInfo(
+            "Renta Diaria por Hospitalización",
+            "La cooperativa apoya económicamente al asociado en caso de que sea internado en un hospital público o privado, por enfermedad o accidente, calculando el pago según el monto de sus ahorros (1 a 69 años inclusive).",
+            "renta_diaria"
+        ));
+        list.add(new BeneficioInfo(
+            "Apoyo Quirúrgico",
+            "La cooperativa otorgará al asociado un apoyo económico para los gastos médicos incurridos por alguna cirugía como consecuencia de una enfermedad o accidente. (Este beneficio es de por vida, siempre y cuando se asocie en la edad de 1 a 70 años).",
+            "apoyo_quirurgico"
+        ));
+        list.add(new BeneficioInfo(
+            "Servicio Funerario",
+            "En caso de fallecimiento, la cooperativa apoya a la familia del asociado con un sepelio digno, proporcionándoles un ataúd fúnebre en coordinación con la red de funerarias autorizadas. (Este beneficio es de por vida, siempre y cuando se asocie en la edad de 1 a 68 años inclusive).",
+            "servicio_funerario"
+        ));
+        list.add(new BeneficioInfo(
+            "Seguro de Ahorrantes",
+            "En caso de fallecimiento del asociado, la cooperativa garantiza la devolución de los ahorros a sus beneficiarios, así mismo se hace entrega del seguro sobre su dinero depositado en sus cuentas, hasta un monto máximo de Q150,000.00. (Este beneficio es de por vida, siempre y cuando se asocie en la edad de 1 a 68 años inclusive).",
+            "beneficio_de_ahorrantes"
+        ));
+        list.add(new BeneficioInfo(
+            "Seguro de Deudores",
+            "En caso de fallecimiento del asociado con crédito vigente, la cooperativa ofrece un seguro que cubre los saldos insolutos hasta un monto máximo de Q200,000.00 (Asociados de 18 a 69 años inclusive).",
+            "beneficio_de_deudores"
+        ));
+        list.add(new BeneficioInfo(
+            "Beneficio de Oro",
+            "La cooperativa brinda un apoyo económico a los asociados mayores de 70 años que sean diagnosticados por una enfermedad grave de acuerdo con el catálogo, a través de un único desembolso y cumpliendo con los requisitos establecidos.",
+            "beneficio_de_oro"
+        ));
+
+        int[] cardIds = {
+            R.id.card_beneficio_1, R.id.card_beneficio_2, R.id.card_beneficio_3,
+            R.id.card_beneficio_4, R.id.card_beneficio_5, R.id.card_beneficio_6
+        };
+
+        for (int i = 0; i < cardIds.length && i < list.size(); i++) {
+            View card = findViewById(cardIds[i]);
+            BeneficioInfo info = list.get(i);
+            if (card != null) {
+                TextView tvTitle = card.findViewById(R.id.card_beneficio_title);
+                TextView tvDesc = card.findViewById(R.id.card_beneficio_desc);
+                ImageView ivIcon = card.findViewById(R.id.card_beneficio_icon);
+
+                if (tvTitle != null) tvTitle.setText(info.title);
+                if (tvDesc != null) tvDesc.setText(info.desc);
+                if (ivIcon != null) {
+                    int resId = getResources().getIdentifier(info.iconName, "drawable", getPackageName());
+                    if (resId != 0) {
+                        ivIcon.setImageResource(resId);
+                        ivIcon.setVisibility(View.VISIBLE);
+                    } else {
+                        ivIcon.setVisibility(View.GONE);
+                    }
+                }
+            }
+        }
+
+        View btnPbx = findViewById(R.id.btn_beneficios_pbx);
+        if (btnPbx != null) {
+            btnPbx.setOnClickListener(v -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:77957795"));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(this, "PBX: 7795-7795", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     @Override
@@ -91,20 +179,38 @@ public class BeneficiosActivity extends AppCompatActivity {
             List<NavigationItemEntity> rawSideItems = repository.getRobustSidebarItems();
 
             List<NavigationItemEntity> sideItems = rawSideItems.stream()
-                    .filter(item -> !"action_reset".equalsIgnoreCase(item.targetSectionId)
-                                 && !"side_reset".equalsIgnoreCase(item.id)
+                    .filter(item -> !"action_reset".equals(item.targetSectionId)
+                                 && !"side_reset".equals(item.id)
+                                 && !"side_cuentas".equals(item.id)
+                                 && !"sec_comunidad".equalsIgnoreCase(item.targetSectionId)
+                                 && !"Cuentas".equalsIgnoreCase(item.label)
                                  && !"Restablecer".equalsIgnoreCase(item.label))
                     .collect(Collectors.toList());
 
-            Collections.sort(sideItems, (item1, item2) -> Integer.compare(item1.displayOrder, item2.displayOrder));
+            Collections.sort(sideItems, (i1, i2) -> {
+                boolean isLogout1 = "side_logout".equalsIgnoreCase(i1.id) || "action_logout".equalsIgnoreCase(i1.targetSectionId);
+                boolean isLogout2 = "side_logout".equalsIgnoreCase(i2.id) || "action_logout".equalsIgnoreCase(i2.targetSectionId);
+                if (isLogout1 && !isLogout2) return 1;
+                if (!isLogout1 && isLogout2) return -1;
+
+                return Integer.compare(i1.displayOrder, i2.displayOrder);
+            });
 
             List<NavigationItemEntity> finalItems = sideItems;
             runOnUiThread(() -> {
                 navigationView.getMenu().clear();
                 for (NavigationItemEntity item : finalItems) {
                     int iconRes = getResources().getIdentifier(item.iconName, "drawable", getPackageName());
-                    navigationView.getMenu().add(0, item.id.hashCode(), item.displayOrder, item.label)
-                            .setIcon(iconRes != 0 ? iconRes : android.R.drawable.ic_menu_info_details);
+                    MenuItem menuItem = navigationView.getMenu().add(0, item.id.hashCode(), item.displayOrder, item.label);
+                    menuItem.setIcon(iconRes != 0 ? iconRes : android.R.drawable.ic_menu_info_details);
+                    if ("side_logout".equalsIgnoreCase(item.id) || "action_logout".equalsIgnoreCase(item.targetSectionId)) {
+                        SpannableString s = new SpannableString(item.label);
+                        s.setSpan(new ForegroundColorSpan(Color.RED), 0, s.length(), 0);
+                        menuItem.setTitle(s);
+                        if (menuItem.getIcon() != null) {
+                            menuItem.getIcon().setTint(Color.RED);
+                        }
+                    }
                 }
 
                 navigationView.setNavigationItemSelectedListener(menuItem -> {

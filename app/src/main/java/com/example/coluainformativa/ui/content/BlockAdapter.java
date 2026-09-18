@@ -33,6 +33,7 @@ public class BlockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private static final int TYPE_BUTTON = 3;
     private static final int TYPE_CONTACT = 4;
     private static final int TYPE_SAVINGS_HERO = 5;
+    private static final int TYPE_CARD = 6;
 
     private final List<ContentBlockEntity> blocks;
 
@@ -55,8 +56,9 @@ public class BlockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 return TYPE_BUTTON;
             case "CONTACT":
                 return TYPE_CONTACT;
-            case "SAVINGS_HERO":
             case "CARD":
+                return TYPE_CARD;
+            case "SAVINGS_HERO":
             case "PRODUCT_CARD":
             case "CONTAINER":
                 return TYPE_SAVINGS_HERO;
@@ -78,6 +80,8 @@ public class BlockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 return new ButtonViewHolder(inflater.inflate(R.layout.block_button, parent, false));
             case TYPE_CONTACT:
                 return new ContactViewHolder(inflater.inflate(R.layout.block_button, parent, false));
+            case TYPE_CARD:
+                return new CardViewHolder(inflater.inflate(R.layout.block_nosotros_card, parent, false));
             case TYPE_SAVINGS_HERO:
                 return new SavingsHeroViewHolder(inflater.inflate(R.layout.block_savings_header, parent, false));
             default:
@@ -98,6 +102,8 @@ public class BlockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             ((ButtonViewHolder) holder).bind(block);
         } else if (holder instanceof ContactViewHolder) {
             ((ContactViewHolder) holder).bind(block);
+        } else if (holder instanceof CardViewHolder) {
+            ((CardViewHolder) holder).bind(block);
         } else if (holder instanceof SavingsHeroViewHolder) {
             ((SavingsHeroViewHolder) holder).bind(block);
         }
@@ -306,6 +312,31 @@ public class BlockAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     }
                 }
             });
+        }
+    }
+
+    static class CardViewHolder extends RecyclerView.ViewHolder {
+        TextView tvTitle, tvContent;
+        ImageView ivIcon;
+        View viewAccent;
+        CardViewHolder(View v) {
+            super(v);
+            tvTitle = v.findViewById(R.id.block_card_title);
+            tvContent = v.findViewById(R.id.block_card_content);
+            ivIcon = v.findViewById(R.id.block_card_icon);
+            viewAccent = v.findViewById(R.id.block_card_accent);
+        }
+        void bind(ContentBlockEntity block) {
+            if (tvTitle != null) tvTitle.setText(block.title != null ? block.title : "");
+            if (tvContent != null) tvContent.setText(block.content != null ? block.content : "");
+            if (ivIcon != null && block.mediaPath != null && !block.mediaPath.trim().isEmpty()) {
+                AdminNewsEditActivity.loadNewsImageIntoView(itemView.getContext(), ivIcon, block.mediaPath.trim());
+            }
+            if (viewAccent != null && block.backgroundColor != null && !block.backgroundColor.trim().isEmpty()) {
+                try {
+                    viewAccent.setBackgroundColor(Color.parseColor(block.backgroundColor.trim()));
+                } catch (Exception ignored) {}
+            }
         }
     }
 

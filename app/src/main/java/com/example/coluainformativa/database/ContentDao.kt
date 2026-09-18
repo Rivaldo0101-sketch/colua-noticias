@@ -40,6 +40,12 @@ interface ContentDao {
     @Query("DELETE FROM content_items WHERE sectionId = :sectionId")
     fun deleteItemsBySection(sectionId: String)
 
+    @Query("DELETE FROM content_items")
+    fun deleteAllItems()
+
+    @Query("DELETE FROM content_blocks")
+    fun deleteAllBlocks()
+
     // Blocks
     @Query("SELECT * FROM content_blocks WHERE contentItemId = :itemId ORDER BY displayOrder ASC")
     fun getBlocksByItem(itemId: String): List<ContentBlockEntity>

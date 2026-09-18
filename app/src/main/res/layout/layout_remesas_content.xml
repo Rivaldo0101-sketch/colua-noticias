@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:paddingBottom="60dp">
+
+    <!-- Header Remesas -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="Remesas"
+        android:textColor="@color/colua_navy"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/poppins_regular" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="16dp"
+        android:text="Recibe tu dinero de forma segura, rápida y sin complicaciones a través de nuestra red de remesadoras aliadas."
+        android:textColor="#555555"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:fontFamily="@font/poppins_regular" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_buscar_agencia"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:text="Buscar Agencia"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        app:backgroundTint="@color/colua_navy"
+        app:cornerRadius="24dp"
+        android:fontFamily="@font/poppins_regular" />
+
+    <!-- Mas que una remesa Banner Image -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="3dp">
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:src="@drawable/mas_que_una_remesa"
+            android:scaleType="centerCrop"
+            android:contentDescription="Más que una remesa unimos familias" />
+    </androidx.cardview.widget.CardView>
+
+    <!-- Remesadoras Aliadas Section -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="12dp"
+        android:text="Remesadoras Aliadas"
+        android:textColor="@color/colua_navy"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/poppins_regular" />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="28dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:src="@drawable/remesadoras_afiliadas2"
+        android:contentDescription="Remesadoras Aliadas" />
+
+    <!-- Remesas Dirigidas Banner Card -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="@color/white">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="BENEFICIO AL RECIBIR TU REMESA DIRIGIDA A TU CUENTA DISPONIBLE"
+                android:textColor="@color/colua_navy"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:fontFamily="@font/poppins_regular" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="En caso de fallecimiento en el extranjero, te ofrecemos el BENEFICIO DE REPATRIACIÓN, garantizando que tu último viaje sea de regreso a casa, sin costo alguno para tu familia."
+                android:textColor="#333333"
+                android:textSize="13sp"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.2"
+                android:fontFamily="@font/poppins_regular" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_solicitar_remesa"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="16dp"
+                android:text="Solicitar Información →"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                app:backgroundTint="@color/colua_navy"
+                app:cornerRadius="24dp"
+                android:fontFamily="@font/poppins_regular" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- 5 Assistance Items (RD1 to RD5) -->
+    <!-- RD1 -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:layout_marginBottom="24dp">
+        <ImageView android:layout_width="72dp" android:layout_height="72dp" android:src="@drawable/rd1" android:scaleType="fitCenter" android:contentDescription="RD1" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Asistencia de repatriación para remitente." android:textColor="@color/colua_navy" android:textSize="14sp" android:textStyle="bold" android:gravity="center" android:fontFamily="@font/poppins_regular" />
+    </LinearLayout>
+
+    <!-- RD2 -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:layout_marginBottom="24dp">
+        <ImageView android:layout_width="72dp" android:layout_height="72dp" android:src="@drawable/rd2" android:scaleType="fitCenter" android:contentDescription="RD2" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Asistencia funeraria para remitente (persona en el extranjero)." android:textColor="@color/colua_navy" android:textSize="14sp" android:textStyle="bold" android:gravity="center" android:fontFamily="@font/poppins_regular" />
+    </LinearLayout>
+
+    <!-- RD3 -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:layout_marginBottom="24dp">
+        <ImageView android:layout_width="72dp" android:layout_height="72dp" android:src="@drawable/rd3" android:scaleType="fitCenter" android:contentDescription="RD3" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Referencias médicas. Información de médicos, farmacias o laboratorios." android:textColor="@color/colua_navy" android:textSize="14sp" android:textStyle="bold" android:gravity="center" android:fontFamily="@font/poppins_regular" />
+    </LinearLayout>
+
+    <!-- RD4 -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:layout_marginBottom="24dp">
+        <ImageView android:layout_width="72dp" android:layout_height="72dp" android:src="@drawable/rd4" android:scaleType="fitCenter" android:contentDescription="RD4" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Orientación médica telefónica. Apoyo en interpretación de pruebas de laboratorio y recomendación de medicamentos." android:textColor="@color/colua_navy" android:textSize="14sp" android:textStyle="bold" android:gravity="center" android:fontFamily="@font/poppins_regular" />
+    </LinearLayout>
+
+    <!-- RD5 -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:layout_marginBottom="24dp">
+        <ImageView android:layout_width="72dp" android:layout_height="72dp" android:src="@drawable/rd5" android:scaleType="fitCenter" android:contentDescription="RD5" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Teledoctor. Aplicación móvil para consultas médicas." android:textColor="@color/colua_navy" android:textSize="14sp" android:textStyle="bold" android:gravity="center" android:fontFamily="@font/poppins_regular" />
+    </LinearLayout>
+
+    <!-- Footer Support Card -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="3dp"
+        app:cardBackgroundColor="@color/colua_navy">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Todos estos beneficios son exclusivos al recibir tu remesa directo en tu cuenta de ahorro disponible."
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                android:lineSpacingMultiplier="1.2"
+                android:fontFamily="@font/poppins_regular"
+                android:layout_marginBottom="16dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#40FFFFFF"
+                android:layout_marginBottom="16dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:src="@drawable/ic_phone"
+                    app:tint="@color/colua_green"
+                    android:layout_marginEnd="12dp"
+                    android:contentDescription="Teléfono" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Número de atención al ASOCIADO"
+                        android:textColor="#E2E8F0"
+                        android:textSize="11sp"
+                        android:fontFamily="@font/poppins_regular" />
+
+                    <TextView
+                        android:id="@+id/tv_remesas_phone"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="(+502) 2213-5580"
+                        android:textColor="@color/white"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/poppins_regular" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</LinearLayout>
