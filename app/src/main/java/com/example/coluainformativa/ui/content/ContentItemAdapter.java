@@ -38,11 +38,14 @@ import android.content.ClipData;
 import java.io.FileOutputStream;
 import com.example.coluainformativa.security.AdminAuthManager;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class ContentItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -388,8 +391,12 @@ public class ContentItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             if (tvAuthor != null) tvAuthor.setText(item.issuerName != null && !item.issuerName.isEmpty() ? item.issuerName : "Cooperativa COLUA");
 
             if (tvDate != null) {
-                String role = item.issuerRole != null && !item.issuerRole.isEmpty() ? item.issuerRole : "Oficial";
-                tvDate.setText(role);
+                String dateStr = "Oficial";
+                if (item.updatedAt > 0) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd MMM, yyyy", new Locale("es", "ES"));
+                    dateStr = "Oficial • " + sdf.format(new Date(item.updatedAt));
+                }
+                tvDate.setText(dateStr);
             }
 
             if (ivAuthorAvatar != null) {

@@ -7,7 +7,9 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.SpannableString;
+import android.text.TextWatcher;
 import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -44,6 +46,7 @@ import com.example.coluainformativa.ui.content.BlockAdapter;
 import com.example.coluainformativa.utils.NavInsetHelper;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.navigation.NavigationBarView;
 import com.google.android.material.navigation.NavigationView;
 
@@ -70,6 +73,9 @@ public class DynamicSectionActivity extends AppCompatActivity {
     private List<ContentItemEntity> itemList = new ArrayList<>();
     private List<ContentItemEntity> paginatedItemList = new ArrayList<>();
     private List<ContentBlockEntity> blockList = new ArrayList<>();
+    private List<ContentItemEntity> masterItemList = new ArrayList<>();
+    private String currentSearchQuery = "";
+    private int currentDateFilter = 0; // 0: All, 1: Last week, 2: This month
     
     private int currentPage = 1;
     private int itemsPerPage = 6; // Un poco más de 5 para llenar mejor la pantalla
@@ -119,6 +125,38 @@ public class DynamicSectionActivity extends AppCompatActivity {
                 findViewById(R.id.bottom_navigation),
                 findViewById(R.id.scroll_content_dynamic)
         );
+
+        View layoutSearchFilter = findViewById(R.id.layout_news_search_filter);
+        if ("sec_noticias".equalsIgnoreCase(sectionId) || "noticias".equalsIgnoreCase(sectionId)) {
+            if (layoutSearchFilter != null) layoutSearchFilter.setVisibility(View.VISIBLE);
+            
+            EditText etSearch = findViewById(R.id.et_news_search);
+            if (etSearch != null) {
+                etSearch.addTextChangedListener(new TextWatcher() {
+                    @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                    @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                        currentSearchQuery = s.toString();
+                        applyNewsFilter();
+                    }
+                    @Override public void afterTextChanged(Editable s) {}
+                });
+            }
+
+            MaterialButtonToggleGroup toggleGroup = findViewById(R.id.toggle_group_date_filter);
+            if (toggleGroup != null) {
+                toggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+                    if (isChecked) {
+                        if (checkedId == R.id.btn_filter_all) currentDateFilter = 0;
+                        else if (checkedId == R.id.btn_filter_recent) currentDateFilter = 1;
+                        else if (checkedId == R.id.btn_filter_month) currentDateFilter = 2;
+                        applyNewsFilter();
+                    }
+                });
+                toggleGroup.check(R.id.btn_filter_all);
+            }
+        } else {
+            if (layoutSearchFilter != null) layoutSearchFilter.setVisibility(View.GONE);
+        }
 
         // Escuchar actualizaciones de configuración publicada silenciosamente en segundo plano
         repository.subscribeToPublishedConfig(newVersion -> Unit.INSTANCE);
@@ -541,9 +579,9 @@ public class DynamicSectionActivity extends AppCompatActivity {
                             ((TextView) findViewById(R.id.tv_dynamic_description)).setText("");
                         }
                         
-                        itemList.clear();
-                        itemList.addAll(items);
-                        updatePagination();
+                        masterItemList.clear();
+                        masterItemList.addAll(items);
+                        applyNewsFilter();
 
                         blockList.clear();
                         blockList.addAll(blocks);
@@ -565,6 +603,38 @@ public class DynamicSectionActivity extends AppCompatActivity {
                 });
             }
         }).start();
+    }
+
+    private void applyNewsFilter() {
+        itemList.clear();
+        long now = System.currentTimeMillis();
+        long weekMillis = 7L * 24 * 60 * 60 * 1000;
+        long monthMillis = 30L * 24 * 60 * 60 * 1000;
+
+        for (ContentItemEntity item : masterItemList) {
+            boolean matchesSearch = true;
+            if (currentSearchQuery != null && !currentSearchQuery.trim().isEmpty()) {
+                String q = currentSearchQuery.toLowerCase().trim();
+                String title = item.title != null ? item.title.toLowerCase() : "";
+                String desc = item.description != null ? item.description.toLowerCase() : "";
+                String tags = item.tags != null ? item.tags.toLowerCase() : "";
+                matchesSearch = title.contains(q) || desc.contains(q) || tags.contains(q);
+            }
+
+            boolean matchesDate = true;
+            if (currentDateFilter == 1) { // Última semana
+                matchesDate = (now - item.updatedAt) <= weekMillis;
+            } else if (currentDateFilter == 2) { // Este mes
+                matchesDate = (now - item.updatedAt) <= monthMillis;
+            }
+
+            if (matchesSearch && matchesDate) {
+                itemList.add(item);
+            }
+        }
+
+        currentPage = 1;
+        updatePagination();
     }
 
     private void updatePagination() {

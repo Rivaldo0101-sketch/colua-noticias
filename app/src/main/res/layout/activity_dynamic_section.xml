@@ -135,6 +135,99 @@
                     android:layout_height="wrap_content"
                     android:visibility="gone" />
 
+                <!-- Contenedor de Búsqueda y Filtro de Fechas (Visible solo en Noticias) -->
+                <LinearLayout
+                    android:id="@+id/layout_news_search_filter"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="12dp"
+                    android:visibility="gone">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:boxCornerRadiusTopStart="16dp"
+                        app:boxCornerRadiusTopEnd="16dp"
+                        app:boxCornerRadiusBottomStart="16dp"
+                        app:boxCornerRadiusBottomEnd="16dp"
+                        app:startIconDrawable="@android:drawable/ic_menu_search"
+                        app:boxStrokeColor="@color/colua_navy">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_news_search"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Buscar noticias por título o contenido..."
+                            android:inputType="text"
+                            android:maxLines="1"
+                            android:textSize="14sp"
+                            android:fontFamily="@font/poppins_regular" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Filtros rápidos de fecha -->
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:scrollbars="none">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Filtrar por fecha:"
+                                android:textColor="@color/colua_navy"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:fontFamily="@font/poppins_regular"
+                                android:layout_marginEnd="8dp" />
+
+                            <com.google.android.material.button.MaterialButtonToggleGroup
+                                android:id="@+id/toggle_group_date_filter"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                app:singleSelection="true"
+                                app:selectionRequired="true">
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btn_filter_all"
+                                    style="@style/Widget.Material3.Button.OutlinedButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="36dp"
+                                    android:text="Todas"
+                                    android:textSize="11sp"
+                                    android:fontFamily="@font/poppins_regular" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btn_filter_recent"
+                                    style="@style/Widget.Material3.Button.OutlinedButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="36dp"
+                                    android:text="Última semana"
+                                    android:textSize="11sp"
+                                    android:fontFamily="@font/poppins_regular" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btn_filter_month"
+                                    style="@style/Widget.Material3.Button.OutlinedButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="36dp"
+                                    android:text="Este mes"
+                                    android:textSize="11sp"
+                                    android:fontFamily="@font/poppins_regular" />
+                            </com.google.android.material.button.MaterialButtonToggleGroup>
+                        </LinearLayout>
+                    </HorizontalScrollView>
+                </LinearLayout>
+
                 <ProgressBar
                     android:id="@+id/pb_dynamic_loading"
                     android:layout_width="wrap_content"
